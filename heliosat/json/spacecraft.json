@@ -1,0 +1,70 @@
+{
+    "dscovr": {
+        "mag": {
+            "file_format": "npy",
+            "reference_frame": "GSE",
+            "remote_files": "{0}/{1:02d}/oe_m1m_dscovr_s{0}{1:02d}{2:02d}000000_e{0}{1:02d}{2:02d}235959_p[0-9]{{14}}_pub.nc.gz",
+            "remote_folder": "https://www.ngdc.noaa.gov/dscovr/data/",
+            "valid_range": [-1000, 1000]
+        },
+        "start_time": "2016-09-02T01:00:00.000"
+    },
+    "messenger": {
+        "kernel_group": "messenger",
+        "mag": {
+            "file_format": "npy",
+            "reference_frame": "MSGR_RTN",
+            "remote_files": "{0}/{2:03d}_{3:03d}_{4}/MAGRTNSCIAVG{5:02d}{1:03d}_60_V08.TAB",
+            "remote_folder": "https://pds-ppi.igpp.ucla.edu/ditdos/download?id=pds://PPI/MESS-E_V_H_SW-MAG-4-SUMM-CALIBRATED-V1.0/DATA/RTN/",
+            "valid_range": [-500, 500]
+        },
+        "start_time": "2004-09-01T01:00:00.000",
+        "stop_time": "2015-04-30T15:08:00.000"
+    },
+    "stereo_ahead": {
+        "kernel_group": "stereo",
+        "mag": {
+            "cdf_keys": ["Epoch", "BFIELD"],
+            "file_format": "cdf",
+            "reference_frame": "STAHGRTN",
+            "remote_files": "{0}/{1:02d}/STA_L1_MAG_RTN_{0}{1:02d}{2:02d}_V06.cdf",
+            "remote_folder": "https://stereo-ssc.nascom.nasa.gov/data/ins_data/impact/level1/ahead/mag/RTN/"
+        },
+        "start_time": "2006-11-09T00:00:00.000"
+    },
+    "stereo_behind": {
+        "kernel_group": "stereo",
+        "mag": {
+            "cdf_keys": ["Epoch", "BFIELD"],
+            "file_format": "cdf",
+            "reference_frame": "STBHGRTN",
+            "remote_files": "{0}/{1:02d}/STB_L1_MAG_RTN_{0}{1:02d}{2:02d}_V06.cdf",
+            "remote_folder": "https://stereo-ssc.nascom.nasa.gov/data/ins_data/impact/level1/behind/mag/RTN/"
+        },
+        "start_time": "2006-11-09T00:00:00.000",
+        "stop_time": "2014-09-26T00:00:00.000"
+    },
+    "venus_express": {
+        "kernel_group": "venus_express",
+        "mag": {
+            "file_format": "npy",
+            "reference_frame": "VEX_SPACECRAFT",
+            "remote_files": "ORB{0}{1:02d}_S004/MAG_{0}{1:02d}{2:02d}_DOY{3:03d}_S004_V1.TAB",
+            "remote_folder": "ftp://psa.esac.esa.int/pub/mirror/VENUS-EXPRESS/MAG/VEX-V-Y-MAG-4-{0}V1.0/DATA/",
+            "valid_range": [-1000, 1000]
+        },
+        "start_time": "2006-05-15T00:00:00.000",
+        "stop_time": "2014-11-26T00:00:00.000"        
+    },
+    "wind": {
+        "mag": {
+            "cdf_keys": ["Epoch3", "B3GSE"],
+            "file_format": "cdf",
+            "reference_frame": "GSE",
+            "remote_files": "{0}/wi_h0_mfi_{0}{1:02d}{2:02d}_v05.cdf",
+            "remote_folder": "https://spdf.gsfc.nasa.gov/pub/data/wind/mfi/mfi_h0/",
+            "valid_range": [-1000, 1000]
+        },
+        "start_time": "1995-01-01T00:00:00.000"
+    }
+}
