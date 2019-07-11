@@ -74,7 +74,7 @@ if __name__ == "__main__":
 
         axes[i][1].grid(True)
 
-    # adatpvei gaussian normalized smoothing
+    # adaptive gaussian normalized smoothing
     for i in range(0, 3):
         smooth_mag_data = wind.get_mag_proc(smooth_times, smoothing="adaptive_gaussian_normalized",
                                             smoothing_scale=scales[i],

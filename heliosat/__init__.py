@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from . import proc
+
 from .spacecraft import DSCOVR, MES, STA, STB, VEX, WIND  # noqa: F401
 from .spice import SpiceObject
 from .util import configure_logging  # noqa: F401
