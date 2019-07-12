@@ -5,12 +5,12 @@ from setuptools import setup
 
 setup(
     name="HelioSat",
-    packages=["heliosat", "heliosat.proc"],
+    packages=["heliosat", "heliosat.instruments", "heliosat.proc"],
     package_data={"heliosat": ["json/*.json"]},
-    version="0.0.0",
+    version="0.0.1",
     author="Andreas J. Weiss",
     author_email="andreas.weiss@oeaw.ac.at",
-    keywords=["space weather"],
+    keywords=["astronomy", "space weather", "solar physics"],
     long_description=open("README.md", "r").read(),
     long_description_content_type="text/markdown",
     url="https://github.com/ajefweiss/HelioSat",

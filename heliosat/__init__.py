@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from . import proc
+from . import instruments  # noqa: F401
+from . import proc  # noqa: F401
 
 from .spacecraft import DSCOVR, MES, STA, STB, VEX, WIND  # noqa: F401
 from .spice import SpiceObject
@@ -10,7 +11,7 @@ from .util import configure_logging  # noqa: F401
 __author__ = "Andreas J. Weiss"
 __copyright__ = "Copyright (C) 2019 Andreas J. Weiss"
 __license__ = "MIT"
-__version__ = "0.0.0"
+__version__ = "0.0.1"
 
 _kernels_available = None
 _kernels_loaded = None

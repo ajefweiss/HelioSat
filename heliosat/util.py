@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 
+import datetime
 import logging
+import numpy as np
 import os
 import requests
 import requests_ftp
 import sys
 import time
 
+from spacepy import pycdf
 from threading import Thread
 from queue import Queue
 
@@ -120,3 +123,125 @@ def _download_files(q, folder, logger):
             os.remove(file_path)
 
         q.task_done()
+
+
+def get_day_of_year(dt):
+    """Get the day of year for datetime dt.
+
+    Parameters
+    ----------
+    dt : t : datetime.datetime
+        time
+
+    Returns
+    -------
+    int
+        day of the year
+    """
+    return (dt - datetime.datetime(dt.year, 1, 1)).days + 1
+
+
+def get_time_combination(dt):
+    """Generate tuple containing information about the datetime dt.
+
+    Parameters
+    ----------
+    t : datetime.datetime
+        time
+
+    Returns
+    -------
+    np.ndarray
+        datetime information
+    """
+    dt_yyyy = dt.year
+    dt_mm = dt.month
+    dt_dd = dt.day
+    dt_doy = get_day_of_year(dt)
+
+    # doy of first and last day of the month
+    if dt_mm < 12:
+        dt_mm_doys = (
+            get_day_of_year(datetime.datetime(dt_yyyy, dt_mm, 1)),
+            get_day_of_year(datetime.datetime(dt_yyyy, dt_mm + 1, 1)
+                            - datetime.timedelta(days=1)
+                            )
+        )
+    else:
+        dt_mm_doys = (
+            get_day_of_year(datetime.datetime(dt_yyyy, dt_mm, 1)),
+            get_day_of_year(datetime.datetime(dt_yyyy + 1, 1, 1)
+                            - datetime.timedelta(days=1)
+                            )
+        )
+
+    dt_yy = dt_yyyy - int(dt_yyyy - dt_yyyy % 1000)
+
+    return np.array([dt_yyyy, dt_mm, dt_dd, dt_doy, dt_mm_doys[0], dt_mm_doys[1], dt_yy])
+
+
+def _read_cdf_file(file_path, start_time, stop_time, keys, stride):
+    """Worker function for reading cdf data files.
+
+    Parameters
+    ----------
+    file_path : str
+        path to cdf file
+    start_time : datetime.datetime
+        starting time
+    stop_time : datetime.datetime
+        end time
+    keys: tuple
+        cdf keys
+    stride : int
+        data stride
+    """
+    cdf_file = pycdf.CDF(file_path, readonly=True)
+    epoch_key = keys[0]
+
+    epoch_all = np.array([t.timestamp() for t in np.squeeze(cdf_file[epoch_key][:])],
+                         dtype=np.float64)
+    data_all = [np.array(cdf_file[data_key][:], dtype=np.float32) for data_key in keys[1:]]
+
+    mask = np.where((epoch_all > start_time.timestamp()) & (epoch_all < stop_time.timestamp()))[0]
+
+    if len(mask) > 0:
+        dt_ts = np.squeeze(epoch_all[slice(mask[0], mask[-1] + 1)][::stride])
+        data = np.stack([np.squeeze(data_all[i][slice(mask[0], mask[-1] + 1)][::stride])
+                        for i in range(0, len(data_all))], axis=1)
+    else:
+        dt_ts = np.array([], dtype=np.float64)
+        data = np.array([], dtype=np.float32)
+
+    return dt_ts, data
+
+
+def _read_npy_file(file_path, start_time, stop_time, stride):
+    """Worker function for reading raw npy mag data files.
+
+    Parameters
+    ----------
+    file_path : str
+        path to npy file
+    start_time : datetime.datetime
+        starting time
+    stop_time : datetime.datetime
+        end time
+    stride : int
+        data stride
+    """
+    npy_file = np.load(file_path)
+
+    epoch_all = np.array(npy_file[:, 0], dtype=np.float64)
+    data_all = np.array(npy_file[:, 1:], dtype=np.float32)
+
+    mask = np.where((epoch_all > start_time.timestamp()) & (epoch_all < stop_time.timestamp()))[0]
+
+    if len(mask) > 0:
+        dt_ts = np.squeeze(epoch_all[slice(mask[0], mask[-1] + 1)][::stride])
+        data = np.squeeze(data_all[slice(mask[0], mask[-1] + 1)][::stride])
+    else:
+        dt_ts = np.array([], dtype=np.float64)
+        data = np.array([], dtype=np.float32)
+
+    return dt_ts, data

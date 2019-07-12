@@ -7,6 +7,12 @@
             "remote_folder": "https://www.ngdc.noaa.gov/dscovr/data/",
             "valid_range": [-1000, 1000]
         },
+        "fc": {
+            "file_format": "npy",
+            "remote_files": "{0}/{1:02d}/oe_f1m_dscovr_s{0}{1:02d}{2:02d}000000_e{0}{1:02d}{2:02d}235959_p[0-9]{{14}}_pub.nc.gz",
+            "remote_folder": "https://www.ngdc.noaa.gov/dscovr/data/",
+            "valid_range": [0, 1000000]
+        },
         "start_time": "2016-09-02T01:00:00.000"
     },
     "messenger": {
@@ -30,6 +36,12 @@
             "remote_files": "{0}/{1:02d}/STA_L1_MAG_RTN_{0}{1:02d}{2:02d}_V06.cdf",
             "remote_folder": "https://stereo-ssc.nascom.nasa.gov/data/ins_data/impact/level1/ahead/mag/RTN/"
         },
+        "fc": {
+            "cdf_keys": ["epoch", "proton_number_density", "proton_bulk_speed", "proton_temperature"],
+            "file_format": "cdf",
+            "remote_files": "{0}/STA_L2_PLA_1DMax_1min_{0}{1:02d}{2:02d}_{3}.cdf",
+            "remote_folder": "https://stereo-ssc.nascom.nasa.gov/data/ins_data/plastic/level2/Protons/Derived_from_1D_Maxwellian/ahead/1min/"
+        },
         "start_time": "2006-11-09T00:00:00.000"
     },
     "stereo_behind": {
@@ -40,6 +52,12 @@
             "reference_frame": "STBHGRTN",
             "remote_files": "{0}/{1:02d}/STB_L1_MAG_RTN_{0}{1:02d}{2:02d}_V06.cdf",
             "remote_folder": "https://stereo-ssc.nascom.nasa.gov/data/ins_data/impact/level1/behind/mag/RTN/"
+        },
+        "fc": {
+            "cdf_keys": ["epoch", "proton_number_density", "proton_bulk_speed", "proton_temperature"],
+            "file_format": "cdf",
+            "remote_files": "{0}/STB_L2_PLA_1DMax_1min_{0}{1:02d}{2:02d}_{3}.cdf",
+            "remote_folder": "https://stereo-ssc.nascom.nasa.gov/data/ins_data/plastic/level2/Protons/Derived_from_1D_Maxwellian/ahead/1min/"
         },
         "start_time": "2006-11-09T00:00:00.000",
         "stop_time": "2014-09-26T00:00:00.000"

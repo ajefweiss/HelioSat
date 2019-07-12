@@ -13,11 +13,10 @@ import time
 
 from bs4 import BeautifulSoup
 from netCDF4 import Dataset
-from spacepy import pycdf
 
 from heliosat.proc import smoothing_average_kernel, smoothing_adaptive_gaussian, \
     smoothing_adaptive_gaussian_normalized, transform_reference_frame
-from heliosat.util import download_files
+from heliosat.util import download_files, get_time_combination, _read_cdf_file, _read_npy_file
 
 
 class Magnetometer(object):
@@ -118,12 +117,12 @@ class Magnetometer(object):
         logger = logging.getLogger(__name__)
 
         # get year, month, day combinations for [tstart, tend]
-        t_comb = [_get_time_combination(start_time)]
+        t_comb = [get_time_combination(start_time)]
 
         while start_time < stop_time:
             start_time += datetime.timedelta(days=1)
 
-            t_comb.append(_get_time_combination(start_time))
+            t_comb.append(get_time_combination(start_time))
 
         # build urls
         urls = [self._mag_remote_folder + self._mag_remote_files.format(*list(entry[:3]))
@@ -226,12 +225,12 @@ def get_mag_files_dscovr(obj, start_time, stop_time):
     logger = logging.getLogger(__name__)
 
     # get year, month, day combinations for [tstart, tend]
-    t_comb = [_get_time_combination(start_time)]
+    t_comb = [get_time_combination(start_time)]
 
     while start_time < stop_time:
         start_time += datetime.timedelta(days=1)
 
-        t_comb.append(_get_time_combination(start_time))
+        t_comb.append(get_time_combination(start_time))
 
     # build urls
     urls = [obj._mag_remote_folder + obj._mag_remote_files.format(*list(entry[:3]))
@@ -285,7 +284,7 @@ def get_mag_files_dscovr(obj, start_time, stop_time):
 
     download_files(urls, obj._data_folder, logger=logger)
 
-    # convert all .tab files to .npy
+    # convert all .nc files to .npy
     if len(urls) > 0:
         logger.info("converting {0} dscovr data files".format(len(urls)))
 
@@ -322,12 +321,12 @@ def get_mag_files_mes(obj, start_time, stop_time):
     logger = logging.getLogger(__name__)
 
     # get year, month, day combinations for [tstart, tend]
-    t_comb = [_get_time_combination(start_time)]
+    t_comb = [get_time_combination(start_time)]
 
     while start_time < stop_time:
         start_time += datetime.timedelta(days=1)
 
-        t_comb.append(_get_time_combination(start_time))
+        t_comb.append(get_time_combination(start_time))
 
     # build urls
     urls = [obj._mag_remote_folder +
@@ -387,12 +386,12 @@ def get_mag_files_vex(obj, start_time, stop_time):
     logger = logging.getLogger(__name__)
 
     # get year, month, day combinations for [tstart, tend]
-    t_comb = [_get_time_combination(start_time)]
+    t_comb = [get_time_combination(start_time)]
 
     while start_time < stop_time:
         start_time += datetime.timedelta(days=1)
 
-        t_comb.append(_get_time_combination(start_time))
+        t_comb.append(get_time_combination(start_time))
 
     # build urls
     def _get_sub_folder(time_combination):
@@ -447,7 +446,7 @@ def get_mag_files_vex(obj, start_time, stop_time):
 
 
 def _convert_dscovr_to_npy(file_path):
-    """Worker functions for converting dscovr data files to numpy array format.
+    """Worker functions for converting dscovr mag data files to numpy array format.
 
     Parameters
     ----------
@@ -455,6 +454,9 @@ def _convert_dscovr_to_npy(file_path):
         path to data file
     """
     logger = logging.getLogger(__name__)
+
+    file_dir = os.path.dirname(file_path)
+    file_name = os.path.basename(file_path).split(".")[0]
 
     try:
         with gzip.open(file_path, "rb") as file_gz:
@@ -472,24 +474,24 @@ def _convert_dscovr_to_npy(file_path):
 
         nc.close()
 
-        np.save(file_path.split(".")[0] + ".npy", data.T)
+        np.save(os.path.join(file_dir, file_name) + ".npy", data.T)
         os.remove(file_path)
 
-        if os.path.exists(file_path.split(".")[0] + ".nc"):
-            os.remove(file_path.split(".")[0] + ".nc")
+        if os.path.exists(os.path.join(file_dir, file_name) + ".nc"):
+            os.remove(os.path.join(file_dir, file_name) + ".nc")
 
     except Exception as err:
         logger.error("failed to convert dscovr data file (\"{0}\")".format(err))
 
-        if os.path.exists(file_path.split(".")[0] + ".nc"):
-            os.remove(file_path.split(".")[0] + ".nc")
+        if os.path.exists(os.path.join(file_dir, file_name) + ".nc"):
+            os.remove(os.path.join(file_dir, file_name) + ".nc")
 
-        if os.path.exists(file_path.split(".")[0] + ".npy"):
-            os.remove(file_path.split(".")[0] + ".npy")
+        if os.path.exists(os.path.join(file_dir, file_name) + ".npy"):
+            os.remove(os.path.join(file_dir, file_name) + ".npy")
 
 
 def _convert_mes_to_npy(file_path):
-    """Worker functions for converting messenger data files to numpy array format.
+    """Worker functions for converting messenger mag data files to numpy array format.
 
     Parameters
     ----------
@@ -497,6 +499,9 @@ def _convert_mes_to_npy(file_path):
         path to data file
     """
     logger = logging.getLogger(__name__)
+
+    file_dir = os.path.dirname(file_path)
+    file_name = os.path.basename(file_path).split(".")[0]
 
     try:
         data = np.loadtxt(file_path)
@@ -508,18 +513,18 @@ def _convert_mes_to_npy(file_path):
             for entry in data
         ])
 
-        np.save(file_path.split(".")[0] + ".npy",
+        np.save(os.path.join(file_dir, file_name) + ".npy",
                 np.hstack((datetimes.reshape(len(datetimes), 1), data[:, 10:13])))
         os.remove(file_path)
     except Exception as err:
         logger.error("failed to convert messenger data file (\"{0}\")".format(err))
 
-        if os.path.exists(file_path.split(".")[0] + ".npy"):
-            os.remove(file_path.split(".")[0] + ".npy")
+        if os.path.exists(os.path.join(file_dir, file_name) + ".npy"):
+            os.remove(os.path.join(file_dir, file_name) + ".npy")
 
 
 def _convert_vex_to_npy(file_path):
-    """Worker functions for converting venus express data files to numpy array format.
+    """Worker functions for converting venus express mag data files to numpy array format.
 
     Parameters
     ----------
@@ -527,6 +532,9 @@ def _convert_vex_to_npy(file_path):
         path to data file
     """
     logger = logging.getLogger(__name__)
+
+    file_dir = os.path.dirname(file_path)
+    file_name = os.path.basename(file_path).split(".")[0]
 
     try:
         def datestr2num(s):
@@ -542,131 +550,10 @@ def _convert_vex_to_npy(file_path):
 
         data = np.loadtxt(file_path, skiprows=228, converters={0: datestr2num})
 
-        np.save(file_path.split(".")[0] + ".npy", data[:, :4])
+        np.save(os.path.join(file_dir, file_name) + ".npy", data[:, :4])
         os.remove(file_path)
     except Exception as err:
         logger.error("failed to convert venus express data file (\"{0}\")".format(err))
 
-        if os.path.exists(file_path.split(".")[0] + ".npy"):
-            os.remove(file_path.split(".")[0] + ".npy")
-
-
-def _get_day_of_year(dt):
-    """Get the day of year for datetime dt.
-
-    Parameters
-    ----------
-    dt : t : datetime.datetime
-        time
-
-    Returns
-    -------
-    int
-        day of the year
-    """
-    return (dt - datetime.datetime(dt.year, 1, 1)).days + 1
-
-
-def _get_time_combination(dt):
-    """Generate tuple containing information about the datetime dt.
-
-    Parameters
-    ----------
-    t : datetime.datetime
-        time
-
-    Returns
-    -------
-    np.ndarray
-        datetime information
-    """
-    dt_yyyy = dt.year
-    dt_mm = dt.month
-    dt_dd = dt.day
-    dt_doy = _get_day_of_year(dt)
-
-    # doy of first and last day of the month
-    if dt_mm < 12:
-        dt_mm_doys = (
-            _get_day_of_year(datetime.datetime(dt_yyyy, dt_mm, 1)),
-            _get_day_of_year(datetime.datetime(dt_yyyy, dt_mm + 1, 1)
-                             - datetime.timedelta(days=1)
-                             )
-        )
-    else:
-        dt_mm_doys = (
-            _get_day_of_year(datetime.datetime(dt_yyyy, dt_mm, 1)),
-            _get_day_of_year(datetime.datetime(dt_yyyy + 1, 1, 1)
-                             - datetime.timedelta(days=1)
-                             )
-        )
-
-    dt_yy = dt_yyyy - int(dt_yyyy - dt_yyyy % 1000)
-
-    return np.array([dt_yyyy, dt_mm, dt_dd, dt_doy, dt_mm_doys[0], dt_mm_doys[1], dt_yy])
-
-
-def _read_cdf_file(file_path, start_time, stop_time, keys, stride):
-    """Worker function for reading raw cdf mag data files.
-
-    Parameters
-    ----------
-    file_path : str
-        path to cdf file
-    start_time : datetime.datetime
-        starting time
-    stop_time : datetime.datetime
-        end time
-    keys: tuple
-        cdf keys
-    stride : int
-        data stride
-    """
-    cdf_file = pycdf.CDF(file_path, readonly=True)
-    (epoch_key, mag_data_key) = keys
-
-    epoch_all = np.array([t.timestamp() for t in np.squeeze(cdf_file[epoch_key][:])],
-                         dtype=np.float64)
-    mag_data_all = np.array(cdf_file[mag_data_key][:], dtype=np.float32)
-
-    mask = np.where((epoch_all > start_time.timestamp()) & (epoch_all < stop_time.timestamp()))[0]
-
-    if len(mask) > 0:
-        dt_ts = np.squeeze(epoch_all[slice(mask[0], mask[-1] + 1)][::stride])
-        mag_data = np.squeeze(mag_data_all[slice(mask[0], mask[-1] + 1)][:, :3][::stride])
-    else:
-        dt_ts = np.array([], dtype=np.float64)
-        mag_data = np.array([], dtype=np.float32)
-
-    return dt_ts, mag_data
-
-
-def _read_npy_file(file_path, start_time, stop_time, stride):
-    """Worker function for reading raw npy mag data files.
-
-    Parameters
-    ----------
-    file_path : str
-        path to npy file
-    start_time : datetime.datetime
-        starting time
-    stop_time : datetime.datetime
-        end time
-    stride : int
-        data stride
-    """
-    npy_file = np.load(file_path)
-
-    epoch_all = np.array(npy_file[:, 0], dtype=np.float64)
-    mag_data_all = np.array(npy_file[:, 1:], dtype=np.float32)
-
-    mask = np.where((epoch_all > start_time.timestamp()) & (epoch_all < stop_time.timestamp()))[0]
-
-    if len(mask) > 0:
-        dt_ts = np.squeeze(epoch_all[slice(mask[0], mask[-1] + 1)][::stride])
-        mag_data = np.squeeze(mag_data_all[slice(mask[0], mask[-1] + 1)][::stride])
-    else:
-        dt_ts = np.array([], dtype=np.float64)
-        mag_data = np.array([], dtype=np.float32)
-
-    return dt_ts, mag_data
+        if os.path.exists(os.path.join(file_dir, file_name) + ".npy"):
+            os.remove(os.path.join(file_dir, file_name) + ".npy")

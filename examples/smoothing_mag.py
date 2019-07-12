@@ -10,14 +10,14 @@ from matplotlib import pyplot as plt
 if __name__ == "__main__":
     heliosat.configure_logging()
 
-    wind = heliosat.DSCOVR()
+    wind = heliosat.WIND()
 
     start_time = datetime.datetime(2017, 5, 16) - datetime.timedelta(hours=6)
     stop_time = datetime.datetime(2017, 5, 19) + datetime.timedelta(hours=6)
 
     smooth_times = [start_time + datetime.timedelta(hours=6, minutes=i) for i in range(3 * 24 * 60)]
 
-    wind_raw_times, wind_raw_mag_data = wind.get_mag(start_time, stop_time, stride=8)
+    wind_raw_times, wind_raw_mag_data = wind.get_mag(start_time, stop_time)
     wind_times = [datetime.datetime.fromtimestamp(t) for t in wind_raw_times]
 
     fig, axes = plt.subplots(3, 3, figsize=(12, 8), sharex=True, sharey=True,

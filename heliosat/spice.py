@@ -37,8 +37,9 @@ class SpiceObject(object):
         """
         logger = logging.getLogger(__name__)
 
-        base_path = os.path.dirname(heliosat.__file__)
-        kernels_path = os.path.join(base_path, "kernels")
+        home_path = os.path.join(os.path.expanduser("~"), ".heliosat")
+        mod_path = os.path.dirname(heliosat.__file__)
+        kernels_path = os.path.join(home_path, "kernels")
 
         self.name = name
         self.bodyname = bodyname
@@ -47,19 +48,21 @@ class SpiceObject(object):
             # populate available spacecraft
             logger.info("loading available spacecraft")
 
-            with open(os.path.join(base_path, "json/spacecraft.json")) as json_file:
+            with open(os.path.join(mod_path, "json/spacecraft.json")) as json_file:
                 heliosat._spacecraft_available = json.load(json_file)
 
         if heliosat._kernels_available is None:
             # populate available kernels
             logger.info("loading available kernels")
 
-            json_path = os.path.join(base_path, "json/kernels.json")
+            json_path = os.path.join(mod_path, "json/kernels.json")
 
             with open(json_path) as json_file:
                 json_kernels = json.load(json_file)
 
-            if json_kernels.get("timestamp", 0) > time.time() - 24 * 3600:
+            timestamp = json_kernels.get("timestamp", 0)
+
+            if os.path.exists(kernels_path) and timestamp > time.time() - 24 * 3600:
                 logger.info("skipping the check for new kernels")
             else:
                 if not os.path.exists(kernels_path):
@@ -116,7 +119,7 @@ class SpiceObject(object):
                 kernel_group = getattr(self, "_kernel_group")
 
             # set and create data folder
-            setattr(self, "_data_folder", os.path.join(base_path, "data", self.name))
+            setattr(self, "_data_folder", os.path.join(home_path, "data", self.name))
 
             if not os.path.exists(getattr(self, "_data_folder")):
                 os.makedirs(getattr(self, "_data_folder"))
