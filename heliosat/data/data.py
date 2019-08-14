@@ -287,6 +287,10 @@ def _read_cdf_file(file_path, start_time, stop_time, keys):
     data_all = [np.array(cdf_file[data_key.split(":")[0]][:], dtype=np.float32)
                 for data_key in keys[1:]]
 
+    for i in range(len(data_all)):
+        if data_all[i].ndim == 1:
+            data_all[i] = data_all[i].reshape(-1, 1)
+
     for i in range(0, len(keys[1:])):
         if ":" in keys[i + 1]:
             data_all[i] = data_all[i][:, 0:int(keys[i + 1].split(":")[1])]
@@ -294,9 +298,14 @@ def _read_cdf_file(file_path, start_time, stop_time, keys):
     mask = np.where((epoch_all > start_time.timestamp()) & (epoch_all < stop_time.timestamp()))[0]
 
     if len(mask) > 0:
-        dt_ts = np.squeeze(epoch_all[slice(mask[0], mask[-1] + 1)])
-        data = np.stack([np.squeeze(data_all[i][slice(mask[0], mask[-1] + 1)])
-                        for i in range(0, len(data_all))], axis=1)
+        mask_slice = slice(mask[0], mask[-1] + 1)
+        dt_ts = np.squeeze(epoch_all[mask_slice])
+
+        for i in range(len(data_all)):
+            if i == 0:
+                data = data_all[0][mask_slice]
+            else:
+                data = np.hstack((data, data_all[i][mask_slice]))
     else:
         dt_ts = np.array([], dtype=np.float64)
         data = np.array([], dtype=np.float32)
@@ -324,6 +333,10 @@ def _read_netcdf_file(file_path, start_time, stop_time, keys):
     epoch_all = np.array([t / 1000 for t in nc.variables[epoch_key][...]])
     data_all = [np.array(nc[data_key][:], dtype=np.float32) for data_key in keys[1:]]
 
+    for i in range(len(data_all)):
+        if data_all[i].ndim == 1:
+            data_all[i] = data_all[i].reshape(-1, 1)
+
     for i in range(0, len(keys[1:])):
         if ":" in keys[i + 1]:
             data_all[i] = data_all[i][:, 0:int(keys[i + 1].split(":")[1])]
@@ -331,9 +344,14 @@ def _read_netcdf_file(file_path, start_time, stop_time, keys):
     mask = np.where((epoch_all > start_time.timestamp()) & (epoch_all < stop_time.timestamp()))[0]
 
     if len(mask) > 0:
-        dt_ts = np.squeeze(epoch_all[slice(mask[0], mask[-1] + 1)])
-        data = np.stack([np.squeeze(data_all[i][slice(mask[0], mask[-1] + 1)])
-                        for i in range(0, len(data_all))], axis=1)
+        mask_slice = slice(mask[0], mask[-1] + 1)
+        dt_ts = np.squeeze(epoch_all[mask_slice])
+
+        for i in range(len(data_all)):
+            if i == 0:
+                data = data_all[0][mask_slice]
+            else:
+                data = np.hstack((data, data_all[i][mask_slice]))
     else:
         dt_ts = np.array([], dtype=np.float64)
         data = np.array([], dtype=np.float32)

@@ -64,7 +64,7 @@
             "mag_beacon": {
                 "cdf_keys": ["Epoch_MAG", "MAGBField:3"],
                 "file_format": "cdf",
-                "reference_frame": "STBHGRTN",
+                "reference_frame": "STAHGRTN",
                 "remote_files": "https://stereo-ssc.nascom.nasa.gov/data/beacon/ahead/impact/{YYYY}/{MM}/STA_LB_IMPACT_{YYYY}{MM}{DD}_{V0}.cdf",
                 "versions": [
                     {
