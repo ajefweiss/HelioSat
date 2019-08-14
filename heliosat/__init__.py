@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from . import instruments  # noqa: F401
-from . import proc  # noqa: F401
-
-from .spacecraft import DSCOVR, MES, STA, STB, VEX, WIND  # noqa: F401
+from .data import smooth_gaussian_1d, transform_ref_frame  # noqa: F401
+from .satellites import DSCOVR, MES, STA, STB, VEX, WIND  # noqa: F401
 from .spice import SpiceObject
 from .util import configure_logging  # noqa: F401
 
@@ -11,15 +9,14 @@ from .util import configure_logging  # noqa: F401
 __author__ = "Andreas J. Weiss"
 __copyright__ = "Copyright (C) 2019 Andreas J. Weiss"
 __license__ = "MIT"
-__version__ = "0.0.1"
+__version__ = "0.1.0"
 
 _kernels_available = None
 _kernels_loaded = None
 
 _spacecraft_available = None
 
-
-# common objects
+# common solar system objects
 Sun = SpiceObject(None, "SUN")
 Mercury = SpiceObject(None, "MERCURY")
 Venus = SpiceObject(None, "VENUS")

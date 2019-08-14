@@ -18,7 +18,7 @@ from heliosat.util import download_files
 
 
 class SpiceObject(object):
-    """Implemenmts functionality for SPICE aware objects.
+    """Implements functionality for SPICE aware objects.
     """
     name = None
     bodyname = None
@@ -37,36 +37,39 @@ class SpiceObject(object):
         """
         logger = logging.getLogger(__name__)
 
-        home_path = os.path.join(os.path.expanduser("~"), ".heliosat")
-        mod_path = os.path.dirname(heliosat.__file__)
-        kernels_path = os.path.join(home_path, "kernels")
+        data_path = os.getenv('HELIOSAT_DATAPATH',
+                              os.path.join(os.path.expanduser("~"), ".heliosat", "data"))
+        home_path = os.getenv('HELIOSAT_DATAPATH',
+                              os.path.join(os.path.expanduser("~"), ".heliosat"))
+
+        kernel_path = os.path.join(home_path, "kernels")
+        module_path = os.path.dirname(heliosat.__file__)
 
         self.name = name
         self.bodyname = bodyname
 
         if heliosat._spacecraft_available is None:
-            # populate available spacecraft
             logger.info("loading available spacecraft")
 
-            with open(os.path.join(mod_path, "json/spacecraft.json")) as json_file:
+            with open(os.path.join(module_path, "json/spacecraft.json")) as json_file:
                 heliosat._spacecraft_available = json.load(json_file)
 
         if heliosat._kernels_available is None:
-            # populate available kernels
             logger.info("loading available kernels")
 
-            json_path = os.path.join(mod_path, "json/kernels.json")
+            json_path = os.path.join(module_path, "json/kernels.json")
 
             with open(json_path) as json_file:
                 json_kernels = json.load(json_file)
 
             timestamp = json_kernels.get("timestamp", 0)
 
-            if os.path.exists(kernels_path) and timestamp > time.time() - 24 * 3600:
-                logger.info("skipping the check for new kernels")
+            # update kernels if timestamp is older than a day
+            if os.path.exists(kernel_path) and timestamp > time.time() - 86400:
+                logger.info("skipping check for new kernels")
             else:
-                if not os.path.exists(kernels_path):
-                    os.makedirs(kernels_path)
+                if not os.path.exists(kernel_path):
+                    os.makedirs(kernel_path)
 
                 try:
                     logger.info("checking for new kernels")
@@ -82,44 +85,40 @@ class SpiceObject(object):
                     with open(json_path, "w") as json_file:
                         json.dump(json_kernels, json_file, indent=4)
                 except requests.HTTPError as http_error:
-                    logger.error("skipping the check for new kernels ({0})".format(http_error))
+                    logger.error("skipping check for new kernels ({0})".format(http_error))
 
                     if "groups_expanded" not in json_kernels:
                         raise RuntimeError("expanded kernel group definitions not found")
 
             # load generic kernels
-            download_files(json_kernels["generic"], kernels_path, logger=logger)
+            download_files(json_kernels["generic"], kernel_path, logger=logger)
 
             for kernel in json_kernels["generic"]:
-                kernel_path = os.path.join(kernels_path, kernel.split("/")[-1])
-
-                logger.info("loading kernel \"{0}\"".format(kernel_path))
-
-                spiceypy.furnsh(kernel_path)
+                spiceypy.furnsh(os.path.join(kernel_path, kernel.split("/")[-1]))
 
             heliosat._kernels_available = json_kernels["groups_expanded"]
             heliosat._kernels_loaded = []
 
         # load spacecraft
         if name and name in heliosat._spacecraft_available:
-            def iter_attr(child, varname):
-                if isinstance(child, dict):
-                    for key in child:
-                        iter_attr(child[key], varname="{0}_{1}".format(varname, key))
-                else:
-                    try:
-                        setattr(self, varname,
-                                datetime.datetime.strptime(child, "%Y-%m-%dT%H:%M:%S.%f"))
-                    except (TypeError, ValueError):
-                        setattr(self, varname, child)
+            # set object variables
+            def ct(tstr):
+                return datetime.datetime.strptime(tstr, "%Y-%m-%dT%H:%M:%S.%f")
 
-            iter_attr(heliosat._spacecraft_available[name], "")
+            setattr(self, "_kernel_group",
+                    heliosat._spacecraft_available[name].get("kernel_group", None))
+            setattr(self, "_data", heliosat._spacecraft_available[name]["data"])
+            setattr(self, "_start_time", ct(heliosat._spacecraft_available[name].get("start_time")))
+
+            if "stop_time" in heliosat._spacecraft_available[name]:
+                setattr(self,
+                        "_stop_time", ct(heliosat._spacecraft_available[name].get("stop_time")))
 
             if kernel_group is None and hasattr(self, "_kernel_group"):
                 kernel_group = getattr(self, "_kernel_group")
 
             # set and create data folder
-            setattr(self, "_data_folder", os.path.join(home_path, "data", self.name))
+            setattr(self, "_data_folder", os.path.join(data_path, self.name))
 
             if not os.path.exists(getattr(self, "_data_folder")):
                 os.makedirs(getattr(self, "_data_folder"))
@@ -137,16 +136,16 @@ class SpiceObject(object):
 
             logger.info("loading kernel group \"{}\"".format(kernel_group))
 
-            download_files(kernels_required, kernels_path, logger=logger)
+            download_files(kernels_required, kernel_path, logger=logger)
 
-            for kernel in kernels_required:
-                kernel_path = os.path.join(kernels_path, kernel.split("/")[-1])
+            for kernel_url in kernels_required:
+                kernel = os.path.join(kernel_path, kernel_url.split("/")[-1])
 
-                logger.info("loading kernel \"{0}\"".format(kernel_path))
+                logger.info("loading kernel \"{0}\"".format(kernel))
 
-                heliosat._kernels_loaded.append(kernel)
+                heliosat._kernels_loaded.append(kernel_url)
 
-                spiceypy.furnsh(kernel_path)
+                spiceypy.furnsh(kernel)
 
     def trajectory(self, t, reference_frame="J2000", observer="SUN", units="AU"):
         """Calculate body trajectory at observer time t.

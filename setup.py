@@ -5,12 +5,15 @@ from setuptools import setup
 
 setup(
     name="HelioSat",
-    packages=["heliosat", "heliosat.instruments", "heliosat.proc"],
+    packages=[
+        "heliosat",
+        "heliosat.data"
+        ],
     package_data={"heliosat": ["json/*.json"]},
-    version="0.0.1",
+    version="0.1.0",
     author="Andreas J. Weiss",
     author_email="andreas.weiss@oeaw.ac.at",
-    keywords=["astronomy", "space weather", "solar physics"],
+    keywords=["astrophysics", "heliophysics", "space weather"],
     long_description=open("README.md", "r").read(),
     long_description_content_type="text/markdown",
     url="https://github.com/ajefweiss/HelioSat",
@@ -26,7 +29,7 @@ setup(
         "spiceypy"
     ],
     classifiers=[
-        "Development Status :: 1 - Planning",
+        "Development Status :: 2 - Pre-Alpha",
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",

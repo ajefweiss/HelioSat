@@ -3,9 +3,8 @@
 import spiceypy
 
 
-def transform_reference_frame(t, arr, reference_frame_from, reference_frame_to):
+def transform_ref_frame(t, arr, reference_frame_from, reference_frame_to):
     """Transform vectors from one reference frame to another
-
     Parameters
     ----------
     t : Iterable[datetime.datetime]
@@ -16,7 +15,6 @@ def transform_reference_frame(t, arr, reference_frame_from, reference_frame_to):
         first reference frame
     reference_frame_to : str
         second reference frame
-
     Returns
     -------
     np.ndarray

@@ -18,6 +18,7 @@
         "stereo": [
             "https://sohowww.nascom.nasa.gov/solarsoft/stereo/gen/data/spice/gen/stereo_rtn.tf",
             "$https://sohowww.nascom.nasa.gov/solarsoft/stereo/gen/data/spice/depm/ahead/ahead_20[\\d]{2}_[\\d]{3}_01.depm.bsp",
+            "https://sohowww.nascom.nasa.gov/solarsoft/stereo/gen/data/spice/epm/ahead/ahead_2017_061_5295day_predict.epm.bsp",
             "$https://sohowww.nascom.nasa.gov/solarsoft/stereo/gen/data/spice/depm/behind/behind_20[\\d]{2}_[\\d]{3}_01.depm.bsp"
         ],
         "venus_express": [

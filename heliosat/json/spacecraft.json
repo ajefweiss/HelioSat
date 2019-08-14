@@ -1,87 +1,260 @@
 {
     "dscovr": {
-        "mag": {
-            "file_format": "npy",
-            "reference_frame": "GSE",
-            "remote_files": "{0}/{1:02d}/oe_m1m_dscovr_s{0}{1:02d}{2:02d}000000_e{0}{1:02d}{2:02d}235959_p[0-9]{{14}}_pub.nc.gz",
-            "remote_folder": "https://www.ngdc.noaa.gov/dscovr/data/",
-            "valid_range": [-1000, 1000]
-        },
-        "fc": {
-            "file_format": "npy",
-            "remote_files": "{0}/{1:02d}/oe_f1m_dscovr_s{0}{1:02d}{2:02d}000000_e{0}{1:02d}{2:02d}235959_p[0-9]{{14}}_pub.nc.gz",
-            "remote_folder": "https://www.ngdc.noaa.gov/dscovr/data/",
-            "valid_range": [0, 1000000]
+        "data": {
+            "mag": {
+                "cdf_keys": ["time", "bx_gse", "by_gse", "bz_gse"],
+                "file_format": "netcdf",
+                "reference_frame": "GSE",
+                "remote_files": "https://www.ngdc.noaa.gov/dscovr/data/{YYYY}/{MM}/oe_m1m_dscovr_s{YYYY}{MM}{DD}000000_e{YYYY}{MM}{DD}235959_p[0-9]{14}_pub.nc.gz",
+                "use_regex": true,
+                "valid_range": [-1000, 1000]
+            },
+            "proton": {
+                "cdf_keys": ["time", "proton_density", "proton_speed", "proton_temperature"],
+                "file_format": "netcdf",
+                "remote_files": "https://www.ngdc.noaa.gov/dscovr/data/{YYYY}/{MM}/oe_f1m_dscovr_s{YYYY}{MM}{DD}000000_e{YYYY}{MM}{DD}235959_p[0-9]{14}_pub.nc.gz",
+                "use_regex": true,
+                "valid_range": [0, 1000000]
+            }
         },
         "start_time": "2016-09-02T01:00:00.000"
     },
     "messenger": {
         "kernel_group": "messenger",
-        "mag": {
-            "file_format": "npy",
-            "reference_frame": "MSGR_RTN",
-            "remote_files": "{0}/{2:03d}_{3:03d}_{4}/MAGRTNSCIAVG{5:02d}{1:03d}_60_V08.TAB",
-            "remote_folder": "https://pds-ppi.igpp.ucla.edu/ditdos/download?id=pds://PPI/MESS-E_V_H_SW-MAG-4-SUMM-CALIBRATED-V1.0/DATA/RTN/",
-            "valid_range": [-500, 500]
+        "data": {
+            "mag": {
+                "columns": [5, 10, 11, 12],
+                "file_format": "pds3",
+                "reference_frame": "MSGR_RTN",
+                "remote_files": "https://pds-ppi.igpp.ucla.edu/ditdos/download?id=pds://PPI/MESS-E_V_H_SW-MAG-4-SUMM-CALIBRATED-V1.0/DATA/RTN/{YYYY}/{DOYM1}_{DOYM2}_{MONTH}/MAGRTNSCIAVG{YY}{DOY}_60_V08.TAB",
+                "time_format": "timestamp",
+                "time_format_data": 1091505556,
+                "valid_range": [-500, 500]
+            }
         },
         "start_time": "2004-09-01T01:00:00.000",
         "stop_time": "2015-04-30T15:08:00.000"
     },
     "stereo_ahead": {
         "kernel_group": "stereo",
-        "mag": {
-            "cdf_keys": ["Epoch", "BFIELD"],
-            "file_format": "cdf",
-            "reference_frame": "STAHGRTN",
-            "remote_files": "{0}/{1:02d}/STA_L1_MAG_RTN_{0}{1:02d}{2:02d}_V06.cdf",
-            "remote_folder": "https://stereo-ssc.nascom.nasa.gov/data/ins_data/impact/level1/ahead/mag/RTN/"
-        },
-        "fc": {
-            "cdf_keys": ["epoch", "proton_number_density", "proton_bulk_speed", "proton_temperature"],
-            "file_format": "cdf",
-            "remote_files": "{0}/STA_L2_PLA_1DMax_1min_{0}{1:02d}{2:02d}_{3}.cdf",
-            "remote_folder": "https://stereo-ssc.nascom.nasa.gov/data/ins_data/plastic/level2/Protons/Derived_from_1D_Maxwellian/ahead/1min/"
+        "data": {
+            "mag": {
+                "cdf_keys": ["Epoch", "BFIELD:3"],
+                "file_format": "cdf",
+                "reference_frame": "STAHGRTN",
+                "remote_files": "https://stereo-ssc.nascom.nasa.gov/data/ins_data/impact/level1/ahead/mag/RTN/{YYYY}/{MM}/STA_L1_MAG_RTN_{YYYY}{MM}{DD}_V06.cdf"
+            },
+            "proton": {
+                "cdf_keys": ["epoch", "proton_number_density", "proton_bulk_speed", "proton_temperature"],
+                "file_format": "cdf",
+                "remote_files": "https://stereo-ssc.nascom.nasa.gov/data/ins_data/plastic/level2/Protons/Derived_from_1D_Maxwellian/ahead/1min/{YYYY}/STA_L2_PLA_1DMax_1min_{YYYY}{MM}{DD}_{V0}.cdf",
+                "versions": [
+                    {
+                        "start_time": "2006-11-09T00:00:00.000",
+                        "stop_time": "2014-12-18T00:00:00.000",
+                        "strings": ["V09"]
+                    },
+                    {
+                        "start_time": "2015-07-20T00:00:00.000",
+                        "stop_time": "2100-01-01T00:00:00.000",
+                        "strings": ["V11"]
+                    }
+                ]
+            },
+            "mag_beacon": {
+                "cdf_keys": ["Epoch_MAG", "MAGBField:3"],
+                "file_format": "cdf",
+                "reference_frame": "STBHGRTN",
+                "remote_files": "https://stereo-ssc.nascom.nasa.gov/data/beacon/ahead/impact/{YYYY}/{MM}/STA_LB_IMPACT_{YYYY}{MM}{DD}_{V0}.cdf",
+                "versions": [
+                    {
+                        "start_time": "2006-11-09T00:00:00.000",
+                        "stop_time": "2007-06-27T00:00:00.000",
+                        "strings": ["V01"]
+                    },
+                    {
+                        "start_time": "2007-06-27T00:00:00.000",
+                        "stop_time": "2014-09-26T00:00:00.000",
+                        "strings": ["V02"]
+                    }
+                ]
+            },
+            "proton_beacon": {
+                "cdf_keys": ["Epoch1", "Density", "Temperature_Inst"],
+                "file_format": "cdf",
+                "remote_files": "https://stereo-ssc.nascom.nasa.gov/data/beacon/ahead/plastic/{YYYY}/{MM}/STA_LB_PLASTIC_{YYYY}{MM}{DD}_{V0}.cdf",
+                "versions": [
+                    {
+                        "start_time": "2006-11-09T00:00:00.000",
+                        "stop_time": "2007-05-21T00:00:00.000",
+                        "strings": ["V06"]
+                    },
+                    {
+                        "start_time": "2007-05-21T00:00:00.000",
+                        "stop_time": "2007-09-19T00:00:00.000",
+                        "strings": ["V07"]
+                    },
+                    {
+                        "start_time": "2007-09-19T00:00:00.000",
+                        "stop_time": "2009-09-17T00:00:00.000",
+                        "strings": ["V08"]
+                    },
+                    {
+                        "start_time": "2009-09-17T00:00:00.000",
+                        "stop_time": "2011-01-01T00:00:00.000",
+                        "strings": ["V09"]
+                    },
+                    {
+                        "start_time": "2011-01-01T00:00:00.000",
+                        "stop_time": "2014-05-01T00:00:00.000",
+                        "strings": ["V10"]
+                    },
+                    {
+                        "start_time": "2014-05-01T00:00:00.000",
+                        "stop_time": "2017-09-03T00:00:00.000",
+                        "strings": ["V11"]
+                    },
+                    {
+                        "start_time": "2017-09-03T00:00:00.000",
+                        "stop_time": "2100-01-01T00:00:00.000",
+                        "strings": ["V12"]
+                    }
+                ]
+            }
         },
         "start_time": "2006-11-09T00:00:00.000"
     },
     "stereo_behind": {
         "kernel_group": "stereo",
-        "mag": {
-            "cdf_keys": ["Epoch", "BFIELD"],
-            "file_format": "cdf",
-            "reference_frame": "STBHGRTN",
-            "remote_files": "{0}/{1:02d}/STB_L1_MAG_RTN_{0}{1:02d}{2:02d}_V06.cdf",
-            "remote_folder": "https://stereo-ssc.nascom.nasa.gov/data/ins_data/impact/level1/behind/mag/RTN/"
-        },
-        "fc": {
-            "cdf_keys": ["epoch", "proton_number_density", "proton_bulk_speed", "proton_temperature"],
-            "file_format": "cdf",
-            "remote_files": "{0}/STB_L2_PLA_1DMax_1min_{0}{1:02d}{2:02d}_{3}.cdf",
-            "remote_folder": "https://stereo-ssc.nascom.nasa.gov/data/ins_data/plastic/level2/Protons/Derived_from_1D_Maxwellian/ahead/1min/"
+        "data": {
+            "mag": {
+                "cdf_keys": ["Epoch", "BFIELD:3"],
+                "file_format": "cdf",
+                "reference_frame": "STBHGRTN",
+                "remote_files": "https://stereo-ssc.nascom.nasa.gov/data/ins_data/impact/level1/behind/mag/RTN/{YYYY}/{MM}/STB_L1_MAG_RTN_{YYYY}{MM}{DD}_V06.cdf"
+            },
+            "proton": {
+                "cdf_keys": ["epoch", "proton_number_density", "proton_bulk_speed", "proton_temperature"],
+                "file_format": "cdf",
+                "remote_files": "https://stereo-ssc.nascom.nasa.gov/data/ins_data/plastic/level2/Protons/Derived_from_1D_Maxwellian/behind/1min/{YYYY}/STB_L2_PLA_1DMax_1min_{YYYY}{MM}{DD}_V09.cdf"
+            },
+            "mag_beacon": {
+                "cdf_keys": ["Epoch_MAG", "MAGBField:3"],
+                "file_format": "cdf",
+                "reference_frame": "STBHGRTN",
+                "remote_files": "https://stereo-ssc.nascom.nasa.gov/data/beacon/behind/impact/{YYYY}/{MM}/STB_LB_IMPACT_{YYYY}{MM}{DD}_{V0}.cdf",
+                "versions": [
+                    {
+                        "start_time": "2006-11-09T00:00:00.000",
+                        "stop_time": "2007-06-27T00:00:00.000",
+                        "strings": ["V01"]
+                    },
+                    {
+                        "start_time": "2007-06-27T00:00:00.000",
+                        "stop_time": "2014-09-26T00:00:00.000",
+                        "strings": ["V02"]
+                    }
+                ]
+            },
+            "proton_beacon": {
+                "cdf_keys": ["Epoch1", "Density", "Temperature_Inst"],
+                "file_format": "cdf",
+                "remote_files": "https://stereo-ssc.nascom.nasa.gov/data/beacon/behind/plastic/{YYYY}/{MM}/STB_LB_PLASTIC_{YYYY}{MM}{DD}_{V0}.cdf",
+                "versions": [
+                    {
+                        "start_time": "2006-11-09T00:00:00.000",
+                        "stop_time": "2007-05-21T00:00:00.000",
+                        "strings": ["V06"]
+                    },
+                    {
+                        "start_time": "2007-05-21T00:00:00.000",
+                        "stop_time": "2007-09-19T00:00:00.000",
+                        "strings": ["V07"]
+                    },
+                    {
+                        "start_time": "2007-09-19T00:00:00.000",
+                        "stop_time": "2009-09-17T00:00:00.000",
+                        "strings": ["V08"]
+                    },
+                    {
+                        "start_time": "2009-09-17T00:00:00.000",
+                        "stop_time": "2011-01-01T00:00:00.000",
+                        "strings": ["V09"]
+                    },
+                    {
+                        "start_time": "2011-01-01T00:00:00.000",
+                        "stop_time": "2014-05-01T00:00:00.000",
+                        "strings": ["V10"]
+                    },
+                    {
+                        "start_time": "2014-05-01T00:00:00.000",
+                        "stop_time": "2017-09-03T00:00:00.000",
+                        "strings": ["V11"]
+                    },
+                    {
+                        "start_time": "2017-09-03T00:00:00.000",
+                        "stop_time": "2100-01-01T00:00:00.000",
+                        "strings": ["V12"]
+                    }
+                ]
+            }
         },
         "start_time": "2006-11-09T00:00:00.000",
         "stop_time": "2014-09-26T00:00:00.000"
     },
     "venus_express": {
         "kernel_group": "venus_express",
-        "mag": {
-            "file_format": "npy",
-            "reference_frame": "VEX_SPACECRAFT",
-            "remote_files": "ORB{0}{1:02d}_S004/MAG_{0}{1:02d}{2:02d}_DOY{3:03d}_S004_V1.TAB",
-            "remote_folder": "ftp://psa.esac.esa.int/pub/mirror/VENUS-EXPRESS/MAG/VEX-V-Y-MAG-4-{0}V1.0/DATA/",
-            "valid_range": [-1000, 1000]
+            "data": {
+            "mag": {
+                "columns": [0, 1, 2, 3],
+                "file_format": "pds3",
+                "reference_frame": "VEX_SPACECRAFT",
+                "remote_files": "ftp://psa.esac.esa.int/pub/mirror/VENUS-EXPRESS/MAG/VEX-V-Y-MAG-4-{V0}V1.0/DATA/ORB{YYYY}{MM}_S004/MAG_{YYYY}{MM}{DD}_DOY{DOY}_S004_V1.TAB",
+                "skip_rows": 228,
+                "time_format": "string",
+                "time_format_data": "%Y-%m-%dT%H:%M:%S.%f",
+                "versions": [
+                    {
+                        "start_time": "2006-05-15T00:00:00.000",
+                        "stop_time": "2007-10-04T00:00:00.000",
+                        "strings": [""]
+                    },
+                    {
+                        "start_time": "2007-10-04T00:00:00.000",
+                        "stop_time": "2009-06-01T00:00:00.000",
+                        "strings": ["EXT1-"]
+                    },
+                    {
+                        "start_time": "2009-06-01T00:00:00.000",
+                        "stop_time": "2010-08-22T00:00:00.000",
+                        "strings": ["EXT2-"]
+                    },
+                    {
+                        "start_time": "2010-08-22T00:00:00.000",
+                        "stop_time": "2012-12-29:00:00.000",
+                        "strings": ["EXT3-"]
+                    },
+                    {
+                        "start_time": "2012-12-29:00:00.000",
+                        "stop_time": "2014-11-26T00:00:00.000",
+                        "strings": ["EXT4-"]
+                    }
+                ],
+                "valid_range": [-1000, 1000]
+            }
         },
         "start_time": "2006-05-15T00:00:00.000",
         "stop_time": "2014-11-26T00:00:00.000"        
     },
     "wind": {
-        "mag": {
-            "cdf_keys": ["Epoch3", "B3GSE"],
-            "file_format": "cdf",
-            "reference_frame": "GSE",
-            "remote_files": "{0}/wi_h0_mfi_{0}{1:02d}{2:02d}_v05.cdf",
-            "remote_folder": "https://spdf.gsfc.nasa.gov/pub/data/wind/mfi/mfi_h0/",
-            "valid_range": [-1000, 1000]
+        "data": {
+            "mag": {
+                "cdf_keys": ["Epoch3", "B3GSE"],
+                "file_format": "cdf",
+                "reference_frame": "GSE",
+                "remote_files": "https://spdf.gsfc.nasa.gov/pub/data/wind/mfi/mfi_h0/{YYYY}/wi_h0_mfi_{YYYY}{MM}{DD}_v05.cdf",
+                "valid_range": [-1000, 1000]
+            }
         },
         "start_time": "1995-01-01T00:00:00.000"
     }
