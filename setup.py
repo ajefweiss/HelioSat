@@ -10,7 +10,7 @@ setup(
         "heliosat.data"
         ],
     package_data={"heliosat": ["json/*.json"]},
-    version="0.1.0",
+    version="0.2.0",
     author="Andreas J. Weiss",
     author_email="andreas.weiss@oeaw.ac.at",
     keywords=["astrophysics", "heliophysics", "space weather"],

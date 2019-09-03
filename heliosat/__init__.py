@@ -1,29 +1,26 @@
 # -*- coding: utf-8 -*-
 
-from .data import smooth_gaussian_1d, transform_ref_frame  # noqa: F401
-from .satellites import DSCOVR, MES, STA, STB, VEX, WIND  # noqa: F401
-from .spice import SpiceObject
-from .util import configure_logging  # noqa: F401
+from .spacecraft import DSCOVR, MES, STA, STB, VEX, WIND  # noqa: F401
+from .spice import SpiceObject as _SpiceObject
+from .util import get_paths
 
 
 __author__ = "Andreas J. Weiss"
 __copyright__ = "Copyright (C) 2019 Andreas J. Weiss"
 __license__ = "MIT"
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
-_kernels_available = None
-_kernels_loaded = None
-
-_spacecraft_available = None
+_paths = get_paths()
+_spice = None
 
 # common solar system objects
-Sun = SpiceObject(None, "SUN")
-Mercury = SpiceObject(None, "MERCURY")
-Venus = SpiceObject(None, "VENUS")
-Earth = SpiceObject(None, "EARTH")
-Moon = SpiceObject(None, "MOON")
-Mars = SpiceObject(None, "MARS BARYCENTER")
-Jupiter = SpiceObject(None, "JUPITER BARYCENTER")
-Saturn = SpiceObject(None, "SATURN BARYCENTER")
-Uranus = SpiceObject(None, "URANUS BARYCENTER")
-Neptune = SpiceObject(None, "NEPTUNE BARYCENTER")
+Sun = lambda: _SpiceObject(None, "SUN")  # noqa: E731
+Mercury = lambda: _SpiceObject(None, "MERCURY")  # noqa: E731
+Venus = lambda: _SpiceObject(None, "VENUS")  # noqa: E731
+Earth = lambda: _SpiceObject(None, "EARTH")  # noqa: E731
+Moon = lambda: _SpiceObject(None, "MOON")  # noqa: E731
+Mars = lambda: _SpiceObject(None, "MARS BARYCENTER")  # noqa: E731
+Jupiter = lambda: _SpiceObject(None, "JUPITER BARYCENTER")  # noqa: E731
+Saturn = lambda: _SpiceObject(None, "SATURN BARYCENTER")  # noqa: E731
+Uranus = lambda: _SpiceObject(None, "URANUS BARYCENTER")  # noqa: E731
+Neptune = lambda: _SpiceObject(None, "NEPTUNE BARYCENTER")  # noqa: E731

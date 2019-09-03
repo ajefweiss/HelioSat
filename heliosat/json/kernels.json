@@ -25,6 +25,7 @@
             "ftp://psa.esac.esa.int/pub/mirror/VENUS-EXPRESS/SPICE/VEX-E-V-SPICE-6-V1.0/DATA/CK/ATNV_P051109051109_00464.BC",
             "ftp://psa.esac.esa.int/pub/mirror/VENUS-EXPRESS/SPICE/VEX-E-V-SPICE-6-V1.0/DATA/CK/VEX_BOOM_V01.BC",
             "ftp://psa.esac.esa.int/pub/mirror/VENUS-EXPRESS/SPICE/VEX-E-V-SPICE-6-V1.0/DATA/FK/VEX_V10.TF",
+            "ftp://psa.esac.esa.int/pub/mirror/VENUS-EXPRESS/SPICE/VEX-E-V-SPICE-6-V1.0/DATA/FK/RSSD0002.TF",
             "$ftp://psa.esac.esa.int/pub/mirror/VENUS-EXPRESS/SPICE/VEX-E-V-SPICE-6-V1.0/DATA/SCLK/VEX_[\\d]{6}_STEP.TSC",
             "$ftp://psa.esac.esa.int/pub/mirror/VENUS-EXPRESS/SPICE/VEX-E-V-SPICE-6-V1.0/DATA/SPK/ORVV__[\\d]{12}_[\\d]{5}.BSP"
         ]
