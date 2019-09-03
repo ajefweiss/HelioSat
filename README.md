@@ -21,30 +21,32 @@ Simply import the module `heliosat` and create a satellite instance:
 
     wind_sat = heliosat.WIND()
 
-This will automatically download and load any required SPICE kernels (using `spiceypy`).
+This will automatically download and load any required SPICE kernels (using `spiceypy`). Note that
+kernel or data files will be stored in `~/.heliosat` by default. As this may use up alot of disk
+space you can alternatively change the default path by setting the environment variable `HELIOSAT_DATAPATH`.
 
-One can then query raw magnetic field data using:
+Querying the raw magnetic field data can then be done using:
 
     import datetime
 
     t_start = datetime.datetime(2010, 1, 1)
     t_end = datetime.datetime(2010, 1, 3)
 
-    raw_data = wind_sat.get_data_raw(t_start, t_end, data="mag")
+    t_raw, data_raw = wind_sat.get_data_raw(t_start, t_end, "mag")
 
-or alternatively smoothed data:
+or alternatively processed data at specific times in a specific reference frame:
 
-    t = [t_start + datetime.timedelta(minutes=12 * i) for i in range(0, 360)]
+    obs = [t_start + datetime.timedelta(minutes=12 * i) for i in range(0, 360)]
 
-    # smoothing using a gaussian kernel and a scale of 20 minutes
-    smooth_data = heliosat.smooth_gaussian_1d(t, raw_data[0], raw_data[1], smoothing_scale=1200)
+    # smoothing using a gaussian kernel and a smoothing scale of 20 minutes
+    time_sm, data_sm = heliosat.get_data(obs, "mag", frame="J2000", smoothing="kernel", cache=True)
 
 Features
 --------
 
 SPICE:
 
- - Get object trajectory using `wind_sat.trajectory(t, reference_frame="GSE")`
+ - Get object trajectory using `wind_sat.trajectory(t, frame="J2000")`
 
 Available data: 
 
