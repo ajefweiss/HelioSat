@@ -36,10 +36,11 @@ Querying the raw magnetic field data can then be done using:
 
 or alternatively processed data at specific times in a specific reference frame:
 
-    obs = [t_start + datetime.timedelta(minutes=12 * i) for i in range(0, 360)]
+    # observer datetimes for an entire week
+    obs = [t_start + datetime.timedelta(minutes=12 * i) for i in range(0, 7 * 24 * 5)]
 
-    # smoothing using a gaussian kernel and a smoothing scale of 20 minutes
-    time_sm, data_sm = heliosat.get_data(obs, "mag", frame="J2000", smoothing="kernel", cache=True)
+    # smoothing using a gaussian kernel and a smoothing scale of 5 minutes, the data is also cached
+    t_sm, data_sm = heliosat.get_data(obs, "mag", frame="J2000", smoothing="kernel", cache=True)
 
 Features
 --------
@@ -59,7 +60,7 @@ Available satellites & data:
 | ---------- |:----------:|:--------------:|:-------:|
 | DSCOVR     | No*        | Yes            | Yes     |
 | MESSENGER  | Yes        | Yes            | No      |
-| PSP        | Yes        | Yes            | No      |
+| PSP        | Yes        | No             | No      |
 | STEREO A   | Yes        | Yes            | Yes     |
 | STEREO B   | Yes        | Yes            | Yes     |
 | VEX        | Yes        | Yes            | No      |
