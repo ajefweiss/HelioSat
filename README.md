@@ -63,6 +63,6 @@ Available satellites & data:
 | STEREO A   | Yes        | Yes            | Yes     |
 | STEREO B   | Yes        | Yes            | Yes     |
 | VEX        | Yes        | Yes            | No      |
-| WIND       | No*        | Yes            | No      |
+| WIND       | No*        | Yes            | Yes     |
 
 **DSCOVR and WIND trajectory currently return the Earth trajectory.*

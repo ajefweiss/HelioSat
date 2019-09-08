@@ -262,6 +262,12 @@
                 "frame": "GSE",
                 "urls": "https://spdf.gsfc.nasa.gov/pub/data/wind/mfi/mfi_h0/{YYYY}/wi_h0_mfi_{YYYY}{MM}{DD}_v05.cdf",
                 "values": [-1e3, 1e3]
+            },
+            "proton": {
+                "columns": ["Epoch", "Proton_Np_moment", "Proton_V_moment", "Proton_W_moment"],
+                "format": "cdf",
+                "urls": "https://spdf.gsfc.nasa.gov/pub/data/wind/swe/swe_h1/{YYYY}/wi_h1_swe_{YYYY}{MM}{DD}_v01.cdf",
+                "values": [-1e1, 1e3]
             }
         },
         "mission_start": "1995-01-01T00:00:00.000"

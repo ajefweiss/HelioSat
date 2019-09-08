@@ -430,8 +430,8 @@ def urls_build(fmt, range_start, range_end, versions):
 
     Returns
     -------
-    [type]
-        [description]
+    list
+        built urls
 
     Raises
     ------
@@ -452,7 +452,11 @@ def urls_build(fmt, range_start, range_end, versions):
         url = url.replace("{DOY}", "{:03d}".format(day.timetuple().tm_yday))
 
         doym1 = datetime.datetime(day.year, day.month, 1)
-        doym2 = datetime.datetime(day.year, day.month + 1, 1) - datetime.timedelta(days=1)
+
+        if day.month == 12:
+            doym2 = datetime.datetime(day.year + 1, 1, 1) - datetime.timedelta(days=1)
+        else:
+            doym2 = datetime.datetime(day.year, day.month + 1, 1) - datetime.timedelta(days=1)
 
         url = url.replace("{DOYM1}", "{:03d}".format(doym1.timetuple().tm_yday))
         url = url.replace("{DOYM2}", "{:03d}".format(doym2.timetuple().tm_yday))

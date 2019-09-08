@@ -35,7 +35,7 @@ def smooth_data(t, time_raw, data_raw, **kwargs):
     data_smooth = np.zeros((len(t), data_raw.shape[1]), dtype=np.float32)
 
     if kwargs.get("smoothing") == "kernel":
-        smoothing_scale = kwargs.get("smoothing-scale", 300)
+        smoothing_scale = kwargs.get("smoothing_scale", 300)
 
         kernel_smoothing(time_smooth, time_raw, data_raw, data_smooth, smoothing_scale)
     else:
