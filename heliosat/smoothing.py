@@ -5,12 +5,13 @@
 Implements smoothing functions.
 """
 
+import logging
 import numba
 import numpy as np
 
 
 def smooth_data(t, time_raw, data_raw, **kwargs):
-    """Smooth raw data and evaluate at times t.
+    """Smooth raw data and evaluate at timesteps t.
 
     Parameters
     ----------
@@ -31,6 +32,8 @@ def smooth_data(t, time_raw, data_raw, **kwargs):
     NotImplementedError
         if smoothing method is not implemented
     """
+    logger = logging.getLogger(__name__)
+
     time_smooth = np.array([_t.timestamp() for _t in t])
     data_smooth = np.zeros((len(t), data_raw.shape[1]), dtype=np.float32)
 
@@ -39,6 +42,7 @@ def smooth_data(t, time_raw, data_raw, **kwargs):
 
         kernel_smoothing(time_smooth, time_raw, data_raw, data_smooth, smoothing_scale)
     else:
+        logger.exception("smoothing method \"%s\" is not implemented", kwargs.get("smoothing"))
         raise NotImplementedError("smoothing method \"%s\" is not implemented",
                                   kwargs.get("smoothing"))
 

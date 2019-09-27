@@ -237,3 +237,48 @@ def strftime(dt):
         string in ISO 8601 format
     """
     return dt.strftime("%Y-%m-%dT%H:%M:%S.%f")
+
+
+def urls_resolve(urls):
+    """Resolve urls in list with regex expressions.
+
+    Parameters
+    ----------
+    urls : list
+        url list
+
+    Returns
+    -------
+    list
+        resolved url list
+    """
+    url_parents = {"/".join(url.split("/")[:-1]): [] for url in urls}
+
+    for url in urls:
+        url_parents["/".join(url.split("/")[:-1])].append(url.split("/")[-1])
+
+    urls = []
+
+    for url_parent in url_parents:
+        response = requests.get(url_parent)
+
+        if response.ok:
+            response_text = response.text
+        else:
+            return response.raise_for_status()
+
+        # match all urls with regex pattern
+        soup = BeautifulSoup(response_text, "html.parser")
+        hrefs = [_.get("href") for _ in soup.find_all("a")]
+
+        for url_regex in url_parents[url_parent]:
+            last_file = None
+
+            for url_child in hrefs:
+                if url_child and re.match(url_regex, url_child):
+                    last_file = "/".join([url_parent, url_child])
+
+            if last_file:
+                urls.append(last_file)
+
+    return urls

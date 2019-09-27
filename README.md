@@ -1,7 +1,7 @@
 HelioSat
 ========
 
-A python package for handling and processing heliospheric satellite data.
+A simple python package for handling and processing heliospheric satellite data.
 
 Installation
 ------------

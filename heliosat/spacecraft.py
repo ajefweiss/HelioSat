@@ -2,9 +2,10 @@
 
 """spacecraft.py
 
-Implements the spacecraft base class and any specific spacecraft.
+Implements the spacecraft base class and any specific spacecrafts.
 """
 
+import cdflib
 import datetime
 import gzip
 import heliosat
@@ -13,18 +14,16 @@ import logging
 import multiprocessing
 import numpy as np
 import os
-import re
-import requests
 import shutil
+import spiceypy
 
-from bs4 import BeautifulSoup
 from netCDF4 import Dataset
-from spacepy import pycdf
 
-from heliosat.caching import gen_key, get_cache, has_cache, set_cache
+from heliosat.caching import generate_cache_key, get_cache_entry, cache_entry_exists, \
+    set_cache_entry
 from heliosat.smoothing import smooth_data
 from heliosat.spice import SpiceObject, spice_load, transform_frame
-from heliosat.util import download_files, strptime
+from heliosat.util import download_files, strptime, urls_resolve
 
 
 class Spacecraft(SpiceObject):
@@ -49,21 +48,22 @@ class Spacecraft(SpiceObject):
         elif name in heliosat._spice["spacecraft"]:
             self.spacecraft = heliosat._spice["spacecraft"][name]
         else:
+            logger.exception("spacecraft \"%s\" is not implemented", name)
             raise NotImplementedError("spacecraft \"%s\" is not implemented", name)
 
         if kwargs.get("kernel_group", None) is None and \
            self.spacecraft.get("kernel_group", None):
             spice_load(self.spacecraft["kernel_group"])
 
-    def get_data(self, t, data_type, **kwargs):
-        """Get processed data for type "data_type" at specified times t.
+    def get_data(self, t, data_key, **kwargs):
+        """Get processed data for type "data_key" at specified times t.
 
         Parameters
         ----------
         t : list[datetime.datetime]
             times
-        data_type : str
-            data type
+        data_key : str
+            data key
 
         Returns
         -------
@@ -75,47 +75,54 @@ class Spacecraft(SpiceObject):
         KeyError
             if no reference frame for the data is specified
         """
-        cache_dict = {
-                "data_type": data_type,
+        logger = logging.getLogger(__name__)
+
+        identifier = {
+                "data_key": data_key,
                 "spacecraft": self.name,
                 "times": [_t.timestamp() for _t in t]
                 }
 
-        cache_dict.update(kwargs)
+        identifier.update(kwargs)
 
         cache = kwargs.pop("cache", False)
-        frame = kwargs.get("frame", None)
+        frame = kwargs.pop("frame", None)
         smoothing = kwargs.get("smoothing", None)
 
         smoothing_dict = {"smoothing": smoothing}
 
+        # move all arguments with "smoothing" in them to the smoothing dict
         for key in dict(kwargs):
             if "smoothing" in key:
                 smoothing_dict[key] = kwargs.pop(key)
 
+        # fetch cache entry if selected and available
         if cache:
-            cache_key = gen_key(cache_dict)
+            cache_key = generate_cache_key(identifier)
 
-            if has_cache(cache_key):
-                return get_cache(cache_key)
+            if cache_entry_exists(cache_key):
+                return get_cache_entry(cache_key)
 
-        time, data = self.get_data_raw(t[0], t[-1], data_type, **kwargs)
+        time, data = self.get_data_raw(t[0], t[-1], data_key, **kwargs)
 
         if smoothing:
             time, data = smooth_data(t, time, data, **smoothing_dict)
 
-        if frame and "frame" in self.spacecraft["data"][data_type]:
-            data = transform_frame(time, data, self.spacecraft["data"][data_type]["frame"], frame)
-        elif frame and not self.spacecraft["data"][data_type].get("frame"):
-            raise KeyError("no reference frame defined for data_type \"%s\"", data_type)
+        if frame and "frame" in self.spacecraft["data"][data_key]:
+            data = transform_frame(time, data, self.spacecraft["data"][data_key]["frame"], frame,
+                                   frame_static=kwargs.get("frame_static"))
+        elif frame and not self.spacecraft["data"][data_key].get("frame"):
+            logger.exception("no reference frame defined for data \"%s\"", data)
+            raise KeyError("no reference frame defined for data \"%s\"", data)
 
-        if cache and not has_cache(cache_key):
-            set_cache(cache_key, (time, data))
+        if cache and not cache_entry_exists(cache_key):
+            logger.info("generating cache entry \"%s\"", cache_key)
+            set_cache_entry(cache_key, (time, data))
 
         return time, data
 
-    def get_data_raw(self, range_start, range_end, data_type, **kwargs):
-        """Get raw data for type "data_type" within specified time range.
+    def get_data_raw(self, range_start, range_end, data_key, **kwargs):
+        """Get raw data for type "data" within specified time range.
 
         Parameters
         ----------
@@ -123,8 +130,8 @@ class Spacecraft(SpiceObject):
             time range start
         range_end : datetime.datetime
             time range end
-        data_type : str
-            data type
+        data_key : str
+            data key
 
         Returns
         -------
@@ -133,14 +140,14 @@ class Spacecraft(SpiceObject):
         """
         logger = logging.getLogger(__name__)
 
-        raw_files = self.get_data_files(range_start, range_end, data_type)
+        raw_files = self.get_data_files(range_start, range_end, data_key)
 
         logger.info("using %s files to generate "
                     "data in between %s - %s", len(raw_files), range_start, range_end)
 
         pool = multiprocessing.Pool(processes=min(multiprocessing.cpu_count() * 2, len(raw_files)))
 
-        kwargs_read = dict(self.spacecraft["data"][data_type])
+        kwargs_read = dict(self.spacecraft["data"][data_key])
 
         if "extra_columns" in kwargs:
             kwargs_read["columns"].extend(kwargs["extra_columns"])
@@ -161,10 +168,15 @@ class Spacecraft(SpiceObject):
                 time[sum(lengths[:i]):sum(lengths[:i + 1])] = results[i][0]
                 data[sum(lengths[:i]):sum(lengths[:i + 1])] = results[i][1]
 
+        # delete raw data files if required (must be explicitly set)
+        if not kwargs.get("cache_raw", True):
+            for file in raw_files:
+                os.remove(file)
+
         return time, data
 
-    def get_data_files(self, range_start, range_end, data_type):
-        """Get raw data file paths for type "data_type" within specified time range.
+    def get_data_files(self, range_start, range_end, data_key):
+        """Get raw data file paths for type "data" within specified time range.
 
         Parameters
         ----------
@@ -172,8 +184,8 @@ class Spacecraft(SpiceObject):
             time range start
         range_end : datetime.datetime
             time range end
-        data_type : str
-            data type
+        data_key : str
+            data key
 
         Returns
         -------
@@ -188,17 +200,20 @@ class Spacecraft(SpiceObject):
         logger = logging.getLogger(__name__)
 
         if range_start < self.mission_start or range_end > self.mission_end:
+            logger.exception("invalid time range (must be within %s - %s)",
+                             strptime(self.mission_start),
+                             strptime(self.mission_end))
             raise ValueError("invalid time range (must be within %s - %s)",
                              strptime(self.mission_start),
                              strptime(self.mission_end))
 
-        data_path = os.path.join(heliosat._paths["data"], data_type)
+        data_path = os.path.join(heliosat._paths["data"], data_key)
 
-        urls = urls_build(self.spacecraft["data"][data_type]["urls"], range_start, range_end,
-                          versions=self.spacecraft["data"][data_type].get("versions", None))
+        urls = urls_build(self.spacecraft["data"][data_key]["urls"], range_start, range_end,
+                          versions=self.spacecraft["data"][data_key].get("versions", None))
 
         # resolve regex urls if required
-        if self.spacecraft["data"][data_type].get("use_regex", False):
+        if self.spacecraft["data"][data_key].get("use_regex", False):
             urls = urls_resolve(urls)
 
         # some files are archives, skip the download if the extracted versions exist
@@ -238,7 +253,7 @@ class Spacecraft(SpiceObject):
         return files
 
     @property
-    def data_types(self):
+    def data_keys(self):
         return list(self.spacecraft["data"].keys())
 
     @property
@@ -265,16 +280,15 @@ class MES(Spacecraft):
 
 class PSP(Spacecraft):
     def __init__(self):
-        from spiceypy import boddef, bodn2c
         from spiceypy.utils.support_types import SpiceyError
 
         super(PSP, self).__init__("psp", body_name="SPP")
 
         try:
-            bodn2c("SPP_SPACECRAFT")
+            spiceypy.bodn2c("SPP_SPACECRAFT")
         except SpiceyError:
             # kernel fix
-            boddef("SPP_SPACECRAFT", bodn2c("SPP"))
+            spiceypy.boddef("SPP_SPACECRAFT", spiceypy.bodn2c("SPP"))
 
 
 class STA(Spacecraft):
@@ -323,15 +337,17 @@ def read_file(file_path, range_start, range_end, kwargs):
     NotImplementedError
         if time format is not supported (pds3 only)
     """
+    logger = logging.getLogger(__name__)
+
     columns = kwargs.get("columns")
     format = kwargs.get("format")
     values = kwargs.get("values", None)
 
     if format == "cdf":
-        file = pycdf.CDF(file_path, readonly=True)
+        file = cdflib.CDF(file_path)
 
-        time = np.array([t.timestamp() for t in np.squeeze(file[columns[0]][:])], dtype=np.float64)
-        data = [np.array(file[key.split(":")[0]][:], dtype=np.float32) for key in columns[1:]]
+        time = np.array((file.varget(columns[0]) - 62167222800000) / 1000)
+        data = [np.array(file.varget(key.split(":")[0]), dtype=np.float32) for key in columns[1:]]
     elif format == "netcdf":
         file = Dataset(file_path, "r")
 
@@ -346,7 +362,7 @@ def read_file(file_path, range_start, range_end, kwargs):
         def decode_string(string, format):
             string = string.decode("utf-8")
 
-            # fix datetimes with 60 seconds
+            # fix datetimes with "60" as seconds
             if string.endswith("60.000"):
                 # TODO: fix :17 (only works for one specific format)
                 string = "{0}59.000".format(string[:17])
@@ -365,11 +381,13 @@ def read_file(file_path, range_start, range_end, kwargs):
 
             time = file[:, columns[0]] + time_offset
         else:
+            logger.exception("time_format_type \"%s\" is not implemented", time_format_type)
             raise NotImplementedError("time_format_type \"%s\" is not implemented",
                                       time_format_type)
 
         data = [np.array(file[:, key], dtype=np.float32) for key in columns[1:]]
     else:
+        logger.exception("format \"%s\" is not implemented", format)
         raise NotImplementedError("format \"%s\" is not implemented", format)
 
     # fix some odd shapes
@@ -438,6 +456,8 @@ def urls_build(fmt, range_start, range_end, versions):
     RuntimeError
         if no version information for a specific date is found in spacecraft.json
     """
+    logger = logging.getLogger(__name__)
+
     urls = []
 
     # build url for each day in range
@@ -474,53 +494,9 @@ def urls_build(fmt, range_start, range_end, versions):
                     break
 
             if not version_found:
+                logger.exception("no version found for %s", day)
                 raise RuntimeError("no version found for %s", day)
 
         urls.append(url)
-
-    return urls
-
-
-def urls_resolve(urls):
-    """Resolve urls in list with regex expressions.
-
-    Parameters
-    ----------
-    urls : list
-        url list
-
-    Returns
-    -------
-    list
-        resolved url list
-    """
-    url_parents = {"/".join(url.split("/")[:-1]): [] for url in urls}
-
-    for url in urls:
-        url_parents["/".join(url.split("/")[:-1])].append(url.split("/")[-1])
-
-    urls = []
-
-    for url_parent in url_parents:
-        response = requests.get(url_parent)
-
-        if response.ok:
-            response_text = response.text
-        else:
-            return response.raise_for_status()
-
-        # match all urls with regex pattern
-        soup = BeautifulSoup(response_text, "html.parser")
-        hrefs = [_.get("href") for _ in soup.find_all("a")]
-
-        for url_regex in url_parents[url_parent]:
-            last_file = None
-
-            for url_child in hrefs:
-                if url_child and re.match(url_regex, url_child):
-                    last_file = "/".join([url_parent, url_child])
-
-            if last_file:
-                urls.append(last_file)
 
     return urls

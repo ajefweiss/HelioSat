@@ -7,19 +7,20 @@ Implements simple caching functionality.
 
 import hashlib
 import json
+import logging
 import os
 import pickle
 
 import heliosat
 
 
-def gen_key(dictionary):
+def generate_cache_key(identifiers):
     """Generate SHA256 digest from dictionary json dump which acts as key for cached data.
 
     Parameters
     ----------
-    dictionary : dict
-         dictionary containing data identifiers
+    identifiers : dict
+        dictionary containing cache identifiers
 
     Returns
     -------
@@ -27,12 +28,13 @@ def gen_key(dictionary):
         cache key (SHA256 digest)
     """
     hashobj = hashlib.sha256()
-    hashobj.update(json.dumps(dictionary, sort_keys=True).encode("utf-8"))
+    hashobj.update(json.dumps(identifiers, sort_keys=True).encode("utf-8"))
+
     return hashobj.hexdigest()
 
 
-def del_cache(key):
-    """Delete cached data belonging to specified key.
+def delete_cache_entry(key):
+    """Delete cached entry belonging to specified key.
 
     Parameters
     ----------
@@ -44,16 +46,19 @@ def del_cache(key):
     KeyError
         if no entry for the given key is found
     """
+    logger = logging.getLogger(__name__)
+
     cache_path = heliosat._paths["cache"]
 
-    if not has_cache(key):
+    if not cache_entry_exists(key):
+        logger.exception("cache key \"%s\" does not exist", key)
         raise KeyError("cache key \"%s\" does not exist", key)
 
     os.remove(os.path.join(cache_path, "{0}.cache".format(key)))
 
 
-def get_cache(key):
-    """Retrieve stored data specified by key.
+def get_cache_entry(key):
+    """Retrieve cache entry specified by key.
 
     Parameters
     ----------
@@ -70,9 +75,12 @@ def get_cache(key):
     KeyError
         if no entry for the given key is found
     """
+    logger = logging.getLogger(__name__)
+
     cache_path = heliosat._paths["cache"]
 
-    if not has_cache(key):
+    if not cache_entry_exists(key):
+        logger.exception("cache key \"%s\" does not exist", key)
         raise KeyError("cache key \"%s\" does not exist", key)
 
     with open(os.path.join(cache_path, "{0}.cache".format(key)), "rb") as pickle_file:
@@ -81,7 +89,7 @@ def get_cache(key):
     return cache_data
 
 
-def has_cache(key):
+def cache_entry_exists(key):
     """Check if an entry for the given cache key exists.
 
     Parameters
@@ -99,7 +107,7 @@ def has_cache(key):
     return os.path.exists(os.path.join(cache_path, "{}.cache".format(key)))
 
 
-def set_cache(key, obj):
+def set_cache_entry(key, obj):
     """Store data in cache using specified key.
 
     Parameters

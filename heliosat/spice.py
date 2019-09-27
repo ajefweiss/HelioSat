@@ -72,6 +72,8 @@ class SpiceObject(object):
         NotImplementedError
             if invalid units are given
         """
+        logger = logging.getLogger(__name__)
+
         trajectory = np.array(
             spiceypy.spkpos(
                 self.body_name,
@@ -90,6 +92,7 @@ class SpiceObject(object):
         elif units == "km":
             pass
         else:
+            logger.exception("unit \"%s\" is not supported", units)
             raise NotImplementedError("unit \"%s\" is not supported", units)
 
         return trajectory
@@ -138,6 +141,8 @@ def spice_init():
             logger.error("skipping check for new kernels (%s)", requests_error)
 
             if "_groups" not in json_kernels:
+                logger.exception("expanded kernel group \"_groups\" could not be generated"
+                                 "and previous version cannot be found")
                 raise RuntimeError("expanded kernel group \"_groups\" could not be generated"
                                    "and previous version cannot be found")
 
@@ -190,19 +195,21 @@ def spice_load(kernel_group):
                 logger.exception("failed to load kernel \"%s\"", kernel_url)
 
 
-def transform_frame(t, data, frame_from, frame_to):
+def transform_frame(t, data, frame_from, frame_to, frame_static=False):
     """Transform 3d vector array in between two reference frames.
 
     Parameters
     ----------
     t : list[datetime.datetime]
-        obserer times
+        observer times
     data : np.ndarray
         vectory array
     frame_from : str
         source frame
     frame_to : str
         target frame
+    frame_static: bool
+        use frame from first observer time
 
     Returns
     -------
@@ -210,10 +217,16 @@ def transform_frame(t, data, frame_from, frame_to):
         vector array in target frame
     """
     if frame_to and frame_from != frame_to:
-        for i in range(0, len(t)):
-            data[i] = spiceypy.mxv(spiceypy.pxform(frame_from, frame_to,
-                                   spiceypy.datetime2et(datetime.datetime.fromtimestamp(t[i]))),
-                                   data[i])
+        if frame_static:
+            pxform = spiceypy.pxform(frame_from, frame_to,
+                                     spiceypy.datetime2et(datetime.datetime.fromtimestamp(t[0])))
+            for i in range(0, len(t)):
+                data[i] = spiceypy.mxv(pxform, data[i])
+        else:
+            for i in range(0, len(t)):
+                data[i] = spiceypy.mxv(spiceypy.pxform(frame_from, frame_to,
+                                       spiceypy.datetime2et(datetime.datetime.fromtimestamp(t[i]))),
+                                       data[i])
         return data
     else:
         return data
