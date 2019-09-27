@@ -6,8 +6,7 @@ from setuptools import setup
 setup(
     name="HelioSat",
     packages=[
-        "heliosat",
-        "heliosat.data"
+        "heliosat"
         ],
     package_data={"heliosat": ["json/*.json"]},
     version="0.2.1",
