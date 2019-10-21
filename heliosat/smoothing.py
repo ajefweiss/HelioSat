@@ -6,8 +6,11 @@ Implements smoothing functions.
 """
 
 import logging
+import multiprocessing
 import numba
 import numpy as np
+
+from scipy.optimize import least_squares
 
 
 def smooth_data(t, time_raw, data_raw, **kwargs):
@@ -41,6 +44,8 @@ def smooth_data(t, time_raw, data_raw, **kwargs):
         smoothing_scale = kwargs.get("smoothing_scale", 300)
 
         kernel_smoothing(time_smooth, time_raw, data_raw, data_smooth, smoothing_scale)
+    elif kwargs.get("smoothing") == "spline":
+        raise NotImplementedError
     else:
         logger.exception("smoothing method \"%s\" is not implemented", kwargs.get("smoothing"))
         raise NotImplementedError("smoothing method \"%s\" is not implemented",
@@ -49,38 +54,31 @@ def smooth_data(t, time_raw, data_raw, **kwargs):
     return time_smooth, data_smooth
 
 
-@numba.njit("f8(f8, f8, f8)", cache=True)
-def kernel_smoothing_gaussian_kernel(x_0, x_i, r):
-    """Gaussian kernel.
-    """
-    return np.exp(-(x_0 - x_i) ** 2 / 2 / r ** 2)
-
-
 @numba.njit("void(f8[:], f8[:], f4[:, :], f4[:, :], f8)", cache=True, parallel=True)
 def kernel_smoothing(t, time_raw, data_raw, data_smooth, smoothing_scale):
     """Smooth data using a gaussian kernel.
 
     Parameters
     ----------
-    t : list[datetime.datetime]
-        evaluation times
+    t : list[float]
+        evaluation times (timestamp)
     time_raw : np.ndarray
         raw time array
     data_raw : np.ndarray
         raw data array
     data_smooth : np.ndarray
         smoothed data array (output)
-    smoothing_scale : np.ndarray
+    smoothing_scale : float
         smoothing scale (in seconds)
     """
-    for i in numba.prange(0, len(t)):
+    for i in numba.prange(len(t)):
         total = 0
         dims = data_raw.shape[1]
         vector = np.zeros((dims,))
 
         for j in range(0, len(data_raw)):
             if np.abs(time_raw[j] - t[i]) < 2 * smoothing_scale:
-                kernel = kernel_smoothing_gaussian_kernel(time_raw[j], t[i], smoothing_scale)
+                kernel = np.exp(-(time_raw[j] - t[i]) ** 2 / 2 / smoothing_scale ** 2)
 
                 total += kernel
 

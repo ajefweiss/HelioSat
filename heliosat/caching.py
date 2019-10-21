@@ -2,7 +2,7 @@
 
 """smoothing.py
 
-Implements simple caching functionality.
+Implements simple file caching functionality.
 """
 
 import hashlib

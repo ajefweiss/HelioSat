@@ -2,7 +2,7 @@
 
 """util.py
 
-Utility functions for the HelioSat package. For internal use only.
+General utility functions for the HelioSat package. For internal use only.
 """
 
 import datetime
@@ -13,125 +13,126 @@ import requests
 import requests_ftp
 
 from bs4 import BeautifulSoup
-from threading import Thread
-from queue import Queue
 
 
-def download_files(file_urls, file_paths, **kwargs):
-    """Download files from given urls and store them locally.
+def datetime_to_string(time_datetime):
+    """Convert python datetime to string.
 
     Parameters
     ----------
-    file_urls : list
-        target urls
-    file_paths : Union[list, str]
-        destination file paths (or optionally destination folder)
+    dt : datetime.datetime
+        datetime object
 
-    Raises
-    ------
-    ValueError
-        if file_paths is not a folder and the number of given file_paths does not match the number
-        of given urls
+    Returns
+    -------
+    str
+        datetime string
     """
-    force = kwargs.get("force",  kwargs.get("overwrite", False))
-    logger = kwargs.get("logger", logging.getLogger(__name__))
-    threads = min(len(file_urls), kwargs.get("threads", 20))
-
-    if isinstance(file_paths, str):
-        if not os.path.exists(file_paths):
-            os.makedirs(file_paths)
-
-        file_paths = [os.path.join(file_paths, file_url.split("/")[-1]) for file_url in file_urls]
-
-    if len(file_urls) != len(file_paths):
-        logger.exception("invalid file path list (size mismatch)")
-        raise ValueError("invalid file path list (size mismatch)")
-
-    queue = Queue(maxsize=0)
-
-    for i in range(len(file_urls)):
-        queue.put((file_urls[i], file_paths[i]))
-
-    logger.debug("attempting to download %i files", queue.qsize())
-
-    workers = []
-
-    for _ in range(threads):
-        worker = Thread(target=download_files_worker, args=(queue, force, logger))
-        worker.setDaemon(True)
-        worker.start()
-
-        workers.append(worker)
-
-    # wait until all threads are completed
-    queue.join()
+    return time_datetime.strftime("%Y-%m-%dT%H:%M:%S.%f")
 
 
-def download_files_worker(q, force, logger):
-    """Worker function for downloading files from given urls and storing them locally.
+def get_heliosat_paths():
+    """Get heliosat file paths.
+    """
+    root_path = os.getenv('HELIOSAT_DATAPATH', os.path.join(os.path.expanduser("~"), ".heliosat"))
+
+    return {
+        "cache": os.path.join(root_path, "cache"),
+        "data": os.path.join(root_path, "data"),
+        "kernels": os.path.join(root_path, "kernels"),
+        "root": root_path
+    }
+
+
+def string_to_datetime(time_string):
+    """Convert string to python datetime.
 
     Parameters
     ----------
-    q : queue.Queue
-        worker queue
-    force : bool
-        force overwrite
-    logger : logging.Logger
-        logger handle
+    time_string : str
+        datetime string
+
+    Returns
+    -------
+    datetime.datetime
+        datetime object
+    """
+    return datetime.datetime.strptime(time_string, "%Y-%m-%dT%H:%M:%S.%f")
+
+
+def urls_build(fmt, range_start, range_end, versions):
+    """Build url list from format string and range.
+
+    Parameters
+    ----------
+    fmt : str
+        format string
+    range_start : datetime.datetime
+        time range start
+    range_end : datetime.datetime
+        time range end
+    versions : list
+        version information
+
+    Returns
+    -------
+    list
+        built urls
 
     Raises
     ------
-    requests.HTTPError
-        if download fails or file is smaller than 1000 bytes (occurs when the website returns 200
-        despite the file not existing for some sites)
-    NotImplementedError
-        if url is not in http(s) or ftp format
+    RuntimeError
+        if no version information for a specific date is found in spacecraft.json
     """
-    while not q.empty():
-        try:
-            (file_url, file_path) = q.get(True, 86400)
-            logger.debug("downloading \"%s\"", file_url)
+    logger = logging.getLogger(__name__)
 
-            if not force and os.path.isfile(file_path):
-                if file_url.startswith("http"):
-                    size = int(requests.get(file_url, stream=True).headers['Content-length'])
+    urls = []
 
-                    # skip download if file appears to be the same (by size)
-                    if os.path.getsize(file_path) == size:
-                        continue
+    # build url for each day in range
+    for day in [range_start + datetime.timedelta(days=i)
+                for i in range((range_end - range_start).days + 2)]:
+        url = fmt
+        url = url.replace("{YYYY}", str(day.year))
+        url = url.replace("{YY}", "{0:02d}".format(day.year % 100))
+        url = url.replace("{MM}", "{:02d}".format(day.month))
+        url = url.replace("{MONTH}", day.strftime("%B")[:3].upper())
+        url = url.replace("{DD}", "{:02d}".format(day.day))
+        url = url.replace("{DOY}", "{:03d}".format(day.timetuple().tm_yday))
 
-            with open(file_path, "wb") as file:
-                if file_url.startswith("http"):
-                    response = requests.get(file_url)
+        doym1 = datetime.datetime(day.year, day.month, 1)
 
-                    # fix for urls that return 200 instead of a 404
-                    if int(response.headers["Content-Length"]) < 1000:
-                        raise requests.HTTPError("Content-Length is very small"
-                                                 "(url most likely is not a valid file)")
-                elif file_url.startswith("ftp"):
-                    ftp_session = requests_ftp.ftp.FTPSession()
-                    response = ftp_session.retr(file_url)
-                    ftp_session.close()
-                else:
-                    logger.exception("invalid url: \"%s\"", file_url)
-                    raise NotImplementedError("invalid url: \"%s\"", file_url)
+        if day.month == 12:
+            doym2 = datetime.datetime(day.year + 1, 1, 1) - datetime.timedelta(days=1)
+        else:
+            doym2 = datetime.datetime(day.year, day.month + 1, 1) - datetime.timedelta(days=1)
 
-                if response.ok:
-                    file.write(response.content)
-                else:
-                    return response.raise_for_status()
-        except requests.HTTPError as error:
-            logger.error("failed to download \"%s\" (%s)", file_url, error)
+        url = url.replace("{DOYM1}", "{:03d}".format(doym1.timetuple().tm_yday))
+        url = url.replace("{DOYM2}", "{:03d}".format(doym2.timetuple().tm_yday))
 
-            # remove file (empty only)
-            if os.path.isfile(file_path) and os.path.getsize(file_path) == 0:
-                os.remove(file_path)
-        finally:
-            q.task_done()
+        if versions:
+            version_found = False
+
+            for version in versions:
+                if string_to_datetime(version["version_start"]) <= \
+                   day < string_to_datetime(version["version_end"]):
+                    version_found = True
+
+                    for i in range(len(version["identifiers"])):
+                        url = url.replace("{{V{0}}}".format(i), version["identifiers"][i])
+
+                    break
+
+            if not version_found:
+                logger.exception("no version found for %s", day)
+                raise RuntimeError("no version found for %s", day)
+
+        urls.append(url)
+
+    return urls
 
 
-def expand_urls(urls):
-    """"Expand list of url's using regex. Both HTTP and FTP url's are supported.
+def urls_expand(urls):
+    """"Expand list of url's using regular expressions. Both HTTP and FTP url's are supported.
     Only url's with a "$" prefix are expanded.
 
     Parameters
@@ -147,10 +148,11 @@ def expand_urls(urls):
     Raises
     ------
     NotImplementedError
-        if url is not in http(s) or ftp format
+        if url is not http(s) or ftp
     """
     logger = logging.getLogger(__name__)
 
+    # copy url's that do not need expansion
     urls_expanded = [_ for _ in urls if not _.startswith("$")]
 
     for url in [_ for _ in urls if _.startswith("$")]:
@@ -195,52 +197,8 @@ def expand_urls(urls):
     return urls_expanded
 
 
-def get_paths():
-    """Get heliosat file paths.
-    """
-    root_path = os.getenv('HELIOSAT_DATAPATH', os.path.join(os.path.expanduser("~"), ".heliosat"))
-
-    return {
-        "cache": os.path.join(root_path, "cache"),
-        "data": os.path.join(root_path, "data"),
-        "kernels": os.path.join(root_path, "kernels"),
-        "root": root_path
-    }
-
-
-def strptime(tstr):
-    """Convert string to datetime (UTC).
-
-    Parameters
-    ----------
-    tstr : [type]
-        string in ISO 8601 format
-
-    Returns
-    -------
-    datetime.datetime
-        datetime object
-    """
-    return datetime.datetime.strptime(tstr, "%Y-%m-%dT%H:%M:%S.%f")
-
-
-def strftime(dt):
-    """Convert datetime to string (UTC).
-
-    Parameters
-    ----------
-    dt : datetime.datetime
-        datetime object
-    Returns
-    -------
-    str
-        string in ISO 8601 format
-    """
-    return dt.strftime("%Y-%m-%dT%H:%M:%S.%f")
-
-
 def urls_resolve(urls):
-    """Resolve urls in list with regex expressions.
+    """Resolve list of url's using regular expressions.
 
     Parameters
     ----------
@@ -252,12 +210,13 @@ def urls_resolve(urls):
     list
         resolved url list
     """
+    # organize url's so that any page is only called once
     url_parents = {"/".join(url.split("/")[:-1]): [] for url in urls}
 
     for url in urls:
         url_parents["/".join(url.split("/")[:-1])].append(url.split("/")[-1])
 
-    urls = []
+    urls_resolved = []
 
     for url_parent in url_parents:
         response = requests.get(url_parent)
@@ -267,18 +226,19 @@ def urls_resolve(urls):
         else:
             return response.raise_for_status()
 
-        # match all urls with regex pattern
+        # match all url's with regex pattern
         soup = BeautifulSoup(response_text, "html.parser")
         hrefs = [_.get("href") for _ in soup.find_all("a")]
 
         for url_regex in url_parents[url_parent]:
-            last_file = None
+            # incase of multiple matches, choose the last one
+            last_match = None
 
             for url_child in hrefs:
                 if url_child and re.match(url_regex, url_child):
-                    last_file = "/".join([url_parent, url_child])
+                    last_match = "/".join([url_parent, url_child])
 
-            if last_file:
-                urls.append(last_file)
+            if last_match:
+                urls_resolved.append(last_match)
 
-    return urls
+    return urls_resolved

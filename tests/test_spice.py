@@ -39,6 +39,15 @@ class TestSpice(unittest.TestCase):
         self.assertIsInstance(earth_trajectory, np.ndarray)
         self.assertEqual(earth_trajectory.shape, (24, 3))
 
+    def test_transform_frame(self):
+        data = np.random.rand(10, 3)
+        ts = [datetime.datetime(2000, 6, 5 + i) for i in range(10)]
+
+        self.assertEqual(heliosat.spice.transform_frame(ts, data, "J2000", "HEEQ").shape, (10, 3))
+        self.assertEqual(
+            heliosat.spice.transform_frame_lonlat(ts, data[:, :2], "J2000", "HEEQ").shape, (10, 2)
+            )
+
     @classmethod
     def tearDownClass(cls):
         kernels_path = os.path.join(os.getenv('HELIOSAT_DATAPATH',

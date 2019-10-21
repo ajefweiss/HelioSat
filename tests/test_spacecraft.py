@@ -30,7 +30,7 @@ class TestSpacecraft(unittest.TestCase):
 
         obs_dt = [range_start + datetime.timedelta(minutes=15 * i) for i in range(4 * 24 * 2)]
 
-        obs_t, obs_d = wind_sp.get_data(obs_dt, "mag", frame="J2000", smoothing="kernel")
+        obs_t, obs_d = wind_sp.get_data(obs_dt, "mag", frame="HEEQ", smoothing="kernel")
 
         self.assertGreater(obs_t[0], 0)
         self.assertEqual(obs_t.shape[0], len(obs_dt))

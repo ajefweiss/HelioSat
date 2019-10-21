@@ -21,9 +21,10 @@ from netCDF4 import Dataset
 
 from heliosat.caching import generate_cache_key, get_cache_entry, cache_entry_exists, \
     set_cache_entry
+from heliosat.download import download_files
 from heliosat.smoothing import smooth_data
 from heliosat.spice import SpiceObject, spice_load, transform_frame
-from heliosat.util import download_files, strptime, urls_resolve
+from heliosat.util import string_to_datetime, urls_build, urls_resolve
 
 
 class Spacecraft(SpiceObject):
@@ -87,11 +88,12 @@ class Spacecraft(SpiceObject):
 
         cache = kwargs.pop("cache", False)
         frame = kwargs.pop("frame", None)
+        frame_static = kwargs.pop("frame_static", False)
         smoothing = kwargs.get("smoothing", None)
 
         smoothing_dict = {"smoothing": smoothing}
 
-        # move all arguments with "smoothing" in them to the smoothing dict
+        # move all "smoothing_*" arguments  to the smoothing dict
         for key in dict(kwargs):
             if "smoothing" in key:
                 smoothing_dict[key] = kwargs.pop(key)
@@ -110,7 +112,7 @@ class Spacecraft(SpiceObject):
 
         if frame and "frame" in self.spacecraft["data"][data_key]:
             data = transform_frame(time, data, self.spacecraft["data"][data_key]["frame"], frame,
-                                   frame_static=kwargs.get("frame_static"))
+                                   frame_static=frame_static)
         elif frame and not self.spacecraft["data"][data_key].get("frame"):
             logger.exception("no reference frame defined for data \"%s\"", data)
             raise KeyError("no reference frame defined for data \"%s\"", data)
@@ -201,11 +203,11 @@ class Spacecraft(SpiceObject):
 
         if range_start < self.mission_start or range_end > self.mission_end:
             logger.exception("invalid time range (must be within %s - %s)",
-                             strptime(self.mission_start),
-                             strptime(self.mission_end))
+                             string_to_datetime(self.mission_start),
+                             string_to_datetime(self.mission_end))
             raise ValueError("invalid time range (must be within %s - %s)",
-                             strptime(self.mission_start),
-                             strptime(self.mission_end))
+                             string_to_datetime(self.mission_start),
+                             string_to_datetime(self.mission_end))
 
         data_path = os.path.join(heliosat._paths["data"], data_key)
 
@@ -258,12 +260,12 @@ class Spacecraft(SpiceObject):
 
     @property
     def mission_start(self):
-        return strptime(self.spacecraft["mission_start"])
+        return string_to_datetime(self.spacecraft["mission_start"])
 
     @property
     def mission_end(self):
         if "mission_end" in self.spacecraft:
-            return strptime(self.spacecraft.get("mission_end"))
+            return string_to_datetime(self.spacecraft.get("mission_end"))
         else:
             return datetime.datetime.now()
 
@@ -335,7 +337,7 @@ def read_file(file_path, range_start, range_end, kwargs):
     NotImplementedError
         if data format is not supported
     NotImplementedError
-        if time format is not supported (pds3 only)
+        if time format is not supported (for pds3 format only)
     """
     logger = logging.getLogger(__name__)
 
@@ -396,7 +398,6 @@ def read_file(file_path, range_start, range_end, kwargs):
             data[i] = data[i].reshape(-1, 1)
 
     # discard unneeded dimensions
-    # TODO: add extra commands
     if isinstance(columns[0], str):
         for i in range(0, len(columns[1:])):
             if ":" in columns[i + 1]:
@@ -430,73 +431,3 @@ def read_file(file_path, range_start, range_end, kwargs):
         data_part = np.array([], dtype=np.float32)
 
     return time_part, data_part
-
-
-def urls_build(fmt, range_start, range_end, versions):
-    """Build url list from format string and range.
-
-    Parameters
-    ----------
-    fmt : str
-        format string
-    range_start : datetime.datetime
-        time range start
-    range_end : datetime.datetime
-        time range end
-    versions : list
-        version information
-
-    Returns
-    -------
-    list
-        built urls
-
-    Raises
-    ------
-    RuntimeError
-        if no version information for a specific date is found in spacecraft.json
-    """
-    logger = logging.getLogger(__name__)
-
-    urls = []
-
-    # build url for each day in range
-    for day in [range_start + datetime.timedelta(days=i)
-                for i in range((range_end - range_start).days + 1)]:
-        url = fmt
-        url = url.replace("{YYYY}", str(day.year))
-        url = url.replace("{YY}", "{0:02d}".format(day.year % 100))
-        url = url.replace("{MM}", "{:02d}".format(day.month))
-        url = url.replace("{MONTH}", day.strftime("%B")[:3].upper())
-        url = url.replace("{DD}", "{:02d}".format(day.day))
-        url = url.replace("{DOY}", "{:03d}".format(day.timetuple().tm_yday))
-
-        doym1 = datetime.datetime(day.year, day.month, 1)
-
-        if day.month == 12:
-            doym2 = datetime.datetime(day.year + 1, 1, 1) - datetime.timedelta(days=1)
-        else:
-            doym2 = datetime.datetime(day.year, day.month + 1, 1) - datetime.timedelta(days=1)
-
-        url = url.replace("{DOYM1}", "{:03d}".format(doym1.timetuple().tm_yday))
-        url = url.replace("{DOYM2}", "{:03d}".format(doym2.timetuple().tm_yday))
-
-        if versions:
-            version_found = False
-
-            for version in versions:
-                if strptime(version["version_start"]) <= day < strptime(version["version_end"]):
-                    version_found = True
-
-                    for i in range(len(version["identifiers"])):
-                        url = url.replace("{{V{0}}}".format(i), version["identifiers"][i])
-
-                    break
-
-            if not version_found:
-                logger.exception("no version found for %s", day)
-                raise RuntimeError("no version found for %s", day)
-
-        urls.append(url)
-
-    return urls

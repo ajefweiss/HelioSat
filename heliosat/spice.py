@@ -15,7 +15,8 @@ import requests
 import spiceypy
 import time
 
-from heliosat.util import download_files, expand_urls
+from heliosat.download import download_files
+from heliosat.util import urls_expand
 
 
 class SpiceObject(object):
@@ -131,7 +132,7 @@ def spice_init():
 
             for group in json_kernels["_groups"]:
                 json_kernels["_groups"][group] = \
-                    expand_urls(json_kernels["_groups"][group])
+                    urls_expand(json_kernels["_groups"][group])
 
             json_kernels["timestamp"] = time.time()
 
@@ -218,15 +219,65 @@ def transform_frame(t, data, frame_from, frame_to, frame_static=False):
     """
     if frame_to and frame_from != frame_to:
         if frame_static:
-            pxform = spiceypy.pxform(frame_from, frame_to,
-                                     spiceypy.datetime2et(datetime.datetime.fromtimestamp(t[0])))
+            t0 = t[0]
+
+            # convert timestamp to python datetime if required
+            if not isinstance(t0, datetime.datetime):
+                t0 = datetime.datetime.fromtimestamp(t0)
+
+            pxform = spiceypy.pxform(frame_from, frame_to, spiceypy.datetime2et(t0))
             for i in range(0, len(t)):
                 data[i] = spiceypy.mxv(pxform, data[i])
         else:
+            # convert timestamps to python datetimes if required
+            if not isinstance(t[0], datetime.datetime):
+                t = [datetime.datetime.fromtimestamp(_t) for _t in t]
+
             for i in range(0, len(t)):
                 data[i] = spiceypy.mxv(spiceypy.pxform(frame_from, frame_to,
-                                       spiceypy.datetime2et(datetime.datetime.fromtimestamp(t[i]))),
+                                       spiceypy.datetime2et(t[i])),
                                        data[i])
         return data
     else:
         return data
+
+
+def transform_frame_lonlat(t, lonlat, frame_from, frame_to):
+    """Transform longitude/latitude pairs in between two reference frames. Notice that this
+    transformation only makes sense in between two reference frames that share the same central
+    body.
+
+    Parameters
+    ----------
+    t : Union[datetime.datetime, list[datetime.datetime]]
+        observer times
+    lonlat : np.ndarray
+        lonlat pairs
+    frame_from : str
+        source frame
+    frame_to : str
+        target frame
+
+    Returns
+    -------
+    np.ndarray
+        lonlat pairs in target frame
+    """
+    lonlat_trans = []
+
+    if lonlat.ndim == 1:
+        lonlat = np.array([lonlat])
+
+    if isinstance(t, datetime.datetime):
+        t = [t] * len(lonlat)
+
+    if frame_to and frame_from != frame_to:
+        for i in range(0, len(t)):
+            pxform = spiceypy.pxform(frame_from, frame_to, spiceypy.datetime2et(t[i]))
+            rec = spiceypy.latrec(1.0, np.pi * lonlat[i][0] / 180, np.pi * lonlat[i][1] / 180)
+            lonlat_trans.append(180 * np.array(spiceypy.reclat(spiceypy.mxv(pxform, rec))[1:])
+                                / np.pi)
+
+        return np.array(lonlat_trans)
+    else:
+        return lonlat
