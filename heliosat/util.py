@@ -88,6 +88,10 @@ def urls_build(fmt, range_start, range_end, versions):
 
     urls = []
 
+    # if range_end is the start of a new day, move it slightly back
+    if range_end.hour == 0 and range_end.minute == 0 and range_end.second == 0:
+        range_end -= datetime.timedelta(seconds=1)
+
     # build url for each day in range
     for day in [range_start + datetime.timedelta(days=i)
                 for i in range((range_end - range_start).days + 2)]:

@@ -6,11 +6,8 @@ Implements smoothing functions.
 """
 
 import logging
-import multiprocessing
 import numba
 import numpy as np
-
-from scipy.optimize import least_squares
 
 
 def smooth_data(t, time_raw, data_raw, **kwargs):
@@ -40,10 +37,10 @@ def smooth_data(t, time_raw, data_raw, **kwargs):
     time_smooth = np.array([_t.timestamp() for _t in t])
     data_smooth = np.zeros((len(t), data_raw.shape[1]), dtype=np.float32)
 
-    if kwargs.get("smoothing") == "kernel":
+    if kwargs.get("smoothing") == "kernel" or kwargs.get("smoothing") == "kernel_gaussian":
         smoothing_scale = kwargs.get("smoothing_scale", 300)
 
-        kernel_smoothing(time_smooth, time_raw, data_raw, data_smooth, smoothing_scale)
+        kernel_smoothing_gaussian(time_smooth, time_raw, data_raw, data_smooth, smoothing_scale)
     elif kwargs.get("smoothing") == "spline":
         raise NotImplementedError
     else:
@@ -51,11 +48,16 @@ def smooth_data(t, time_raw, data_raw, **kwargs):
         raise NotImplementedError("smoothing method \"%s\" is not implemented",
                                   kwargs.get("smoothing"))
 
+    # remove NaN's
+    nan_mask = np.invert(np.isnan(data_smooth[:, 0]))
+    time_smooth = time_smooth[nan_mask]
+    data_smooth = data_smooth[nan_mask]
+
     return time_smooth, data_smooth
 
 
-@numba.njit("void(f8[:], f8[:], f4[:, :], f4[:, :], f8)", cache=True, parallel=True)
-def kernel_smoothing(t, time_raw, data_raw, data_smooth, smoothing_scale):
+@numba.njit("void(f8[:], f8[:], f4[:, :], f4[:, :], f8)", parallel=True)
+def kernel_smoothing_gaussian(t, time_raw, data_raw, data_smooth, smoothing_scale):
     """Smooth data using a gaussian kernel.
 
     Parameters
