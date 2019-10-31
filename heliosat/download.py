@@ -2,7 +2,7 @@
 
 """download.py
 
-Utility functions for downloading data files. For internal use only.
+Utility functions for downloading data files. Intended for internal use only.
 """
 
 import logging
@@ -20,17 +20,26 @@ def download_files(file_urls, file_paths, **kwargs):
     Parameters
     ----------
     file_urls : list
-        target url's
+        Target url's.
     file_paths : Union[list, str]
-        destination file paths (or optionally destination folder)
+        Destination file paths (or optionally destination folder).
+
+    Other Parameters
+    ----------------
+    force: bool
+        Force overwrite (default is False)
+    logger : logging.Logger
+        Logger handle (default is None)
+    threads: int
+        Number of parallel threads (default is 20).
 
     Raises
     ------
     ValueError
-        if file_paths is not a folder and the number of given file_paths does not match the number
-        of given url's
+        If file_paths is not a folder and the number of given file_paths does not match the number
+        of given url's.
     """
-    force = kwargs.get("force",  kwargs.get("overwrite", False))
+    force = kwargs.get("force", kwargs.get("overwrite", False))
     logger = kwargs.get("logger", logging.getLogger(__name__))
     threads = min(len(file_urls), kwargs.get("threads", 20))
 
@@ -70,19 +79,19 @@ def download_files_worker(q, force, logger):
     Parameters
     ----------
     q : queue.Queue
-        worker queue
+        Worker queue.
     force : bool
-        force overwrite
+        Force overwrite.
     logger : logging.Logger
-        logger handle
+        Logger handle.
 
     Raises
     ------
     requests.HTTPError
-        if download fails or file is smaller than 1000 bytes (occurs  in some caseswhen the website
-        returns 200 despite the file not existing for some sites)
+        If download fails or file is smaller than 1000 bytes (occurs  in some caseswhen the website
+        returns 200 despite the file not existing for some sites).
     NotImplementedError
-        if url is not http(s) or ftp
+        If url is not http(s) or ftp.
     """
     while not q.empty():
         try:

@@ -3,6 +3,9 @@
 """smoothing.py
 
 Implements simple file caching functionality.
+
+All cached files are stored in the a single cache folder located at either ~/.heliosat/cache or
+$HELIOSAT_DATAPATH/cache if the environment variable is set.
 """
 
 import hashlib
@@ -20,12 +23,12 @@ def generate_cache_key(identifiers):
     Parameters
     ----------
     identifiers : dict
-        dictionary containing cache identifiers
+        Dictionary containing cache identifiers.
 
     Returns
     -------
     str
-        cache key (SHA256 digest)
+        Cache key (SHA256 digest).
     """
     hashobj = hashlib.sha256()
     hashobj.update(json.dumps(identifiers, sort_keys=True).encode("utf-8"))
@@ -39,12 +42,12 @@ def delete_cache_entry(key):
     Parameters
     ----------
     key : str
-        cache key
+        Cache key.
 
     Raises
     ------
     KeyError
-        if no entry for the given key is found
+        If no entry for the given key is found.
     """
     logger = logging.getLogger(__name__)
 
@@ -63,17 +66,17 @@ def get_cache_entry(key):
     Parameters
     ----------
     key : str
-        cache key
+        Cache key.
 
     Returns
     -------
     str
-        data object
+        Data object.
 
     Raises
     ------
     KeyError
-        if no entry for the given key is found
+        If no entry for the given key is found.
     """
     logger = logging.getLogger(__name__)
 
@@ -95,12 +98,12 @@ def cache_entry_exists(key):
     Parameters
     ----------
     key : str
-        cache key
+        Cache key.
 
     Returns
     -------
     bool
-        if key exists
+        If key exists.
     """
     cache_path = heliosat._paths["cache"]
 
@@ -113,9 +116,9 @@ def set_cache_entry(key, obj):
     Parameters
     ----------
     key : str
-        cache key
+        Cache key.
     obj : object
-        data object
+        Data object.
     """
     cache_path = heliosat._paths["cache"]
 

@@ -16,42 +16,45 @@ def smooth_data(t, time_raw, data_raw, **kwargs):
     Parameters
     ----------
     t : list[datetime.datetime]
-        evaluation times
+        Evaluation datetimes.
     time_raw : np.ndarray
-        raw time array
+        Raw time array.
     data_raw : np.ndarray
-        raw data array
+        Raw data array.
+
+    Other Parameters
+    ----------------
+    smoothing: str
+        Smoothing method, by default "kernel".
+    smoothing_scale: float
+        Smoothing scale in seconds, by default 300.
 
     Returns
     -------
     (np.ndarray, np.ndarray)
-        smoothed time and data array
+        Smoothed time and data array.
 
     Raises
     ------
     NotImplementedError
-        if smoothing method is not implemented
+        If smoothing method is not implemented.
     """
     logger = logging.getLogger(__name__)
 
     time_smooth = np.array([_t.timestamp() for _t in t])
     data_smooth = np.zeros((len(t), data_raw.shape[1]), dtype=np.float32)
 
-    if kwargs.get("smoothing") == "kernel" or kwargs.get("smoothing") == "kernel_gaussian":
-        smoothing_scale = kwargs.get("smoothing_scale", 300)
+    smoothing = kwargs.get("smoothing", "kernel")
+    smoothing_scale = kwargs.get("smoothing_scale", 300)
 
+    if smoothing == "kernel" or smoothing == "kernel_gaussian":
         kernel_smoothing_gaussian(time_smooth, time_raw, data_raw, data_smooth, smoothing_scale)
-    elif kwargs.get("smoothing") == "spline":
+    elif smoothing == "spline":
         raise NotImplementedError
     else:
         logger.exception("smoothing method \"%s\" is not implemented", kwargs.get("smoothing"))
         raise NotImplementedError("smoothing method \"%s\" is not implemented",
                                   kwargs.get("smoothing"))
-
-    # remove NaN's
-    nan_mask = np.invert(np.isnan(data_smooth[:, 0]))
-    time_smooth = time_smooth[nan_mask]
-    data_smooth = data_smooth[nan_mask]
 
     return time_smooth, data_smooth
 
@@ -63,15 +66,15 @@ def kernel_smoothing_gaussian(t, time_raw, data_raw, data_smooth, smoothing_scal
     Parameters
     ----------
     t : list[float]
-        evaluation times (timestamp)
+        Evaluation times as timestamps.
     time_raw : np.ndarray
-        raw time array
+        Raw time array.
     data_raw : np.ndarray
-        raw data array
+        Raw data array.
     data_smooth : np.ndarray
-        smoothed data array (output)
+        Smoothed data array.
     smoothing_scale : float
-        smoothing scale (in seconds)
+        Smoothing scale in seconds.
     """
     for i in numba.prange(len(t)):
         total = 0
@@ -87,7 +90,7 @@ def kernel_smoothing_gaussian(t, time_raw, data_raw, data_smooth, smoothing_scal
                 for k in range(0, len(vector)):
                     vector[k] += kernel * data_raw[j, k]
 
-        for k in range(0,  len(vector)):
+        for k in range(0, len(vector)):
             if total == 0:
                 data_smooth[i, k] = np.nan
             else:

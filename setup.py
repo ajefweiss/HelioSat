@@ -7,12 +7,12 @@ setup(
     name="HelioSat",
     packages=[
         "heliosat"
-        ],
+    ],
     package_data={"heliosat": ["json/*.json"]},
-    version="0.2.3",
+    version="0.2.4",
     author="Andreas J. Weiss",
     author_email="andreas.weiss@oeaw.ac.at",
-    keywords=["astrophysics", "heliophysics", "solar physics", "space weather"],
+    keywords=["astrophysics", "solar physics", "space weather"],
     long_description=open("README.md", "r").read(),
     long_description_content_type="text/markdown",
     url="https://github.com/ajefweiss/HelioSat",

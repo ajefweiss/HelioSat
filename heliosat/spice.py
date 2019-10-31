@@ -2,7 +2,7 @@
 
 """spice.py
 
-Implements SPICE related classes and functions.
+Implements the SPICE base class and SPICE related functions.
 """
 
 import datetime
@@ -20,22 +20,22 @@ from heliosat.util import urls_expand
 
 
 class SpiceObject(object):
-    """Base class for SPICE aware objects (bodies, spacecraft etc.).
+    """Base SPICE class for SPICE aware objects (bodies, spacecraft etc.).
     """
     name = None
     body_name = None
 
     def __init__(self, name, body_name, kernel_group=None):
-        """Initialize SPICE aware object and load required kernels.
+        """Initialize SPICE aware object and load required kernels if given.
 
         Parameters
         ----------
         name : str
-            object name
+            Object name (for spacecrafts as defined in the spacecraft.json file).
         body_name : str
-            SPICE object name[description]
+            SPICE object name.
         kernel_group : str, optional
-            SPICE kernel group name, by default None
+            SPICE kernel group name, by default None.
         """
         logger = logging.getLogger(__name__)
 
@@ -50,28 +50,28 @@ class SpiceObject(object):
             spice_load(kernel_group)
 
     def trajectory(self, t, frame="J2000", observer="SUN", units="AU"):
-        """Calculate body trajectory.
+        """Evaluate body trajectory at given datetimes.
 
         Parameters
         ----------
         t : Union[list[datetime.datetime], datetime.datetime]
-            observer time(s)
+            Evaluate datetime(s).
         frame : str, optional
-            observer frame, by default "J2000"
+            Trajectory reference frame, by default "J2000".
         observer : str, optional
-            observer body, by default "SUN"
+            Observer body name, by default "SUN".
         units : str, optional
-            output units, by default "AU"
+            Output units, by default "AU".
 
         Returns
         -------
         np.ndarray
-            body trajectory
+            Body trajectory.
 
         Raises
         ------
         NotImplementedError
-            if invalid units are given
+            If units are invalid.
         """
         logger = logging.getLogger(__name__)
 
@@ -82,9 +82,9 @@ class SpiceObject(object):
                 frame,
                 "NONE",
                 observer
-                )[0],
+            )[0],
             dtype=np.float32
-            )
+        )
 
         if units == "AU":
             trajectory *= 6.68459e-9
@@ -164,7 +164,7 @@ def spice_load(kernel_group):
     Parameters
     ----------
     kernel_group : str
-        SPICE kernel group name
+        SPICE kernel group name as defined in the spacecraft.json file.
     """
     logger = logging.getLogger(__name__)
 
@@ -196,38 +196,31 @@ def spice_load(kernel_group):
                 logger.exception("failed to load kernel \"%s\"", kernel_url)
 
 
-def transform_frame(t, data, frame_from, frame_to, frame_static=False):
-    """Transform 3d vector array in between two reference frames.
+def transform_frame(t, data, frame_from, frame_to, frame_interval=None):
+    """Transform 3D vector array from one reference frame to another.
 
     Parameters
     ----------
     t : list[datetime.datetime]
-        observer times
+        Evaluation datetimes.
     data : np.ndarray
-        vectory array
+        3D vector array.
     frame_from : str
-        source frame
+        Source refernce frame.
     frame_to : str
-        target frame
-    frame_static: bool
-        use frame from first observer time
+        Target reference frame.
+    frame_interval: float
+        For large data arrays, evaluate reference frame every "frame_interval" seconds,
+            by defautl None.
 
     Returns
     -------
     np.ndarray
-        vector array in target frame
+        Transformed vector array in target reference frame.
     """
     if frame_to and frame_from != frame_to:
-        if frame_static:
-            t0 = t[0]
-
-            # convert timestamp to python datetime if required
-            if not isinstance(t0, datetime.datetime):
-                t0 = datetime.datetime.fromtimestamp(t0)
-
-            pxform = spiceypy.pxform(frame_from, frame_to, spiceypy.datetime2et(t0))
-            for i in range(0, len(t)):
-                data[i] = spiceypy.mxv(pxform, data[i])
+        if frame_interval:
+            raise NotImplementedError
         else:
             # convert timestamps to python datetimes if required
             if not isinstance(t[0], datetime.datetime):
@@ -243,27 +236,27 @@ def transform_frame(t, data, frame_from, frame_to, frame_static=False):
 
 
 def transform_frame_lonlat(t, lonlat, frame_from, frame_to):
-    """Transform longitude/latitude pairs in between two reference frames. Notice that this
+    """Transform longitude/latitude pairs rom one reference frame to another. Notice that this
     transformation only makes sense in between two reference frames that share the same central
     body.
 
     Parameters
     ----------
-    t : Union[datetime.datetime, list[datetime.datetime]]
-        observer times
+    t : list[datetime.datetime]
+        Evaluation datetimes.
     lonlat : np.ndarray
-        lonlat pairs
+        Longitude / latitude pairs.
     frame_from : str
-        source frame
+        Source refernce frame.
     frame_to : str
-        target frame
+        Target reference frame.
 
     Returns
     -------
     np.ndarray
-        lonlat pairs in target frame
+        Longitude / latitude pairs pairs in target reference frame.
     """
-    lonlat_trans = []
+    ll_t = []
 
     if lonlat.ndim == 1:
         lonlat = np.array([lonlat])
@@ -275,9 +268,8 @@ def transform_frame_lonlat(t, lonlat, frame_from, frame_to):
         for i in range(0, len(t)):
             pxform = spiceypy.pxform(frame_from, frame_to, spiceypy.datetime2et(t[i]))
             rec = spiceypy.latrec(1.0, np.pi * lonlat[i][0] / 180, np.pi * lonlat[i][1] / 180)
-            lonlat_trans.append(180 * np.array(spiceypy.reclat(spiceypy.mxv(pxform, rec))[1:])
-                                / np.pi)
+            ll_t.append(180 * np.array(spiceypy.reclat(spiceypy.mxv(pxform, rec))[1:]) / np.pi)
 
-        return np.array(lonlat_trans)
+        return np.array(ll_t)
     else:
         return lonlat

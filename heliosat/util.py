@@ -20,13 +20,13 @@ def datetime_to_string(time_datetime):
 
     Parameters
     ----------
-    dt : datetime.datetime
-        datetime object
+    time_datetime : datetime.datetime
+        Datetime object.
 
     Returns
     -------
     str
-        datetime string
+        Datetime string.
     """
     return time_datetime.strftime("%Y-%m-%dT%H:%M:%S.%f")
 
@@ -50,12 +50,12 @@ def string_to_datetime(time_string):
     Parameters
     ----------
     time_string : str
-        datetime string
+        Datetime string.
 
     Returns
     -------
     datetime.datetime
-        datetime object
+        Datetime object.
     """
     return datetime.datetime.strptime(time_string, "%Y-%m-%dT%H:%M:%S.%f")
 
@@ -66,23 +66,23 @@ def urls_build(fmt, range_start, range_end, versions):
     Parameters
     ----------
     fmt : str
-        format string
+        Format string.
     range_start : datetime.datetime
-        time range start
+        Time range start datetime.
     range_end : datetime.datetime
-        time range end
+        Time range end datetime.
     versions : list
-        version information
+        Version list.
 
     Returns
     -------
     list
-        built urls
+        Url list.
 
     Raises
     ------
     RuntimeError
-        if no version information for a specific date is found in spacecraft.json
+        If no version information for a specific date is found in spacecraft.json.
     """
     logger = logging.getLogger(__name__)
 
@@ -142,17 +142,17 @@ def urls_expand(urls):
     Parameters
     ----------
     urls : list
-        url list (including expandables and non-expandables)
+        Url list (including expandables and non-expandables).
 
     Returns
     -------
     list
-        expanded url list (including non-expandables)
+        Expanded url list (including non-expandables).
 
     Raises
     ------
     NotImplementedError
-        if url is not http(s) or ftp
+        If url is not http(s) or ftp.
     """
     logger = logging.getLogger(__name__)
 
@@ -207,12 +207,12 @@ def urls_resolve(urls):
     Parameters
     ----------
     urls : list
-        url list
+        Url list.
 
     Returns
     -------
     list
-        resolved url list
+        Resolved url list.
     """
     # organize url's so that any page is only called once
     url_parents = {"/".join(url.split("/")[:-1]): [] for url in urls}

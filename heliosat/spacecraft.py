@@ -2,7 +2,7 @@
 
 """spacecraft.py
 
-Implements the spacecraft base class and any specific spacecrafts.
+Implements the Spacecraft base class and all spacecraft classes.
 """
 
 import cdflib
@@ -28,14 +28,33 @@ from heliosat.util import string_to_datetime, urls_build, urls_resolve
 
 
 class Spacecraft(SpiceObject):
-    """Base class for spacecraft.
+    """Base Spacecraft class.
     """
     spacecraft = None
 
-    def __init__(self, name, **kwargs):
+    def __init__(self, name, body_name, **kwargs):
+        """Summary
+
+        Parameters
+        ----------
+        name : str
+            Spacecraft name as defined in the spacecraft.json file.
+        body_name : str
+            SPICE body name assosicated with the given spacecraft.
+
+        Other Parameters
+        ----------------
+        kernel_group: str
+            Spacecraft kernel group as defined in the spacecraft.json file, by default None.
+
+        Raises
+        ------
+        NotImplementedError
+            If spacecraft is not implemented (not defined in the spacecraft.json file).
+        """
         logger = logging.getLogger(__name__)
 
-        super(Spacecraft, self).__init__(name, **kwargs)
+        super(Spacecraft, self).__init__(name, body_name, **kwargs)
 
         if heliosat._spice.get("spacecraft", None) is None:
             logger.info("loading available spacecraft")
@@ -52,55 +71,73 @@ class Spacecraft(SpiceObject):
             logger.exception("spacecraft \"%s\" is not implemented", name)
             raise NotImplementedError("spacecraft \"%s\" is not implemented", name)
 
-        if kwargs.get("kernel_group", None) is None and \
-           self.spacecraft.get("kernel_group", None):
+        if kwargs.get("kernel_group", None) is None and self.spacecraft.get("kernel_group", None):
             spice_load(self.spacecraft["kernel_group"])
 
     def get_data(self, t, data_key, **kwargs):
-        """Get processed data for type "data_key" at specified times t.
+        """Get processed data for type "data_key" at specified datetimes t.
 
         Parameters
         ----------
         t : list[datetime.datetime]
-            times
+            Evaluation datetimes.
         data_key : str
-            data key
+            Data key.
+
+        Other Parameters
+        ----------------
+        cache: bool
+            Cache data, by default False.
+        cache_raw: bool
+            Store raw data files, by default False.
+        extra_columns: str
+            Read extra columns from data files, by default None.
+        frame: str
+            Data reference frame, by default None.
+        frame_interval: float
+            For large data arrays, evaluate reference frame every "frame_interval" seconds,
+            by defautl None.
+        remove_nans: bool
+            Remove NaN values from data array, by default False.
+        smoothing: str
+            Smoothing method, by default None.
+        smoothing_scale: float
+            Smoothing scale in seconds, by default 300.
 
         Returns
         -------
-        np.ndarray
-            processed data array
+        (list[float], np.ndarray)
+            Evaluation datetimes as timestamps & processed data array.
 
         Raises
         ------
         KeyError
-            if no reference frame for the data is specified
+            If frame is specified but data has no associated frame.
         """
         logger = logging.getLogger(__name__)
 
-        identifier = {
-                "data_key": data_key,
-                "spacecraft": self.name,
-                "times": [_t.timestamp() for _t in t]
-                }
+        identifiers = {
+            "data_key": data_key,
+            "spacecraft": self.name,
+            "times": [_t.timestamp() for _t in t]
+        }
 
-        identifier.update(kwargs)
+        identifiers.update(kwargs)
 
         cache = kwargs.pop("cache", False)
         frame = kwargs.pop("frame", None)
-        frame_static = kwargs.pop("frame_static", False)
+        frame_interval = kwargs.pop("frame_interval", None)
+        remove_nans = kwargs.pop("remove_nans", False)
         smoothing = kwargs.get("smoothing", None)
 
         smoothing_dict = {"smoothing": smoothing}
-
-        # move all "smoothing_*" arguments  to the smoothing dict
         for key in dict(kwargs):
             if "smoothing" in key:
                 smoothing_dict[key] = kwargs.pop(key)
 
-        # fetch cache entry if selected and available
+        # fetch cached entry if selected and available
         if cache:
-            cache_key = generate_cache_key(identifier)
+            cache_key = generate_cache_key(identifiers)
 
             if cache_entry_exists(cache_key):
                 return get_cache_entry(cache_key)
@@ -110,12 +147,18 @@ class Spacecraft(SpiceObject):
         if smoothing:
             time, data = smooth_data(t, time, data, **smoothing_dict)
 
+        # remove NaN's which may persist after smoothing
+        if remove_nans:
+            nan_mask = np.invert(np.isnan(data[:, 0]))
+            time = time[nan_mask]
+            data = data[nan_mask]
+
         if frame and "frame" in self.spacecraft["data"][data_key]:
             data = transform_frame(time, data, self.spacecraft["data"][data_key]["frame"], frame,
-                                   frame_static=frame_static)
+                                   frame_interval=frame_interval)
         elif frame and not self.spacecraft["data"][data_key].get("frame"):
-            logger.exception("no reference frame defined for data \"%s\"", data)
-            raise KeyError("no reference frame defined for data \"%s\"", data)
+            logger.exception("no reference frame defined for data_key \"%s\"", data_key)
+            raise KeyError("no reference frame defined for data_key \"%s\"", data_key)
 
         if cache and not cache_entry_exists(cache_key):
             logger.info("generating cache entry \"%s\"", cache_key)
@@ -124,21 +167,28 @@ class Spacecraft(SpiceObject):
         return time, data
 
     def get_data_raw(self, range_start, range_end, data_key, **kwargs):
-        """Get raw data for type "data" within specified time range.
+        """Get raw data for type "data_key" within specified time range.
 
         Parameters
         ----------
         range_start : datetime.datetime
-            time range start
+            Time range start datetime.
         range_end : datetime.datetime
-            time range end
+            Time range end datetime.
         data_key : str
-            data key
+            Data key.
+
+        Other Parameters
+        ----------------
+        cache_raw: bool
+            Store raw data files, by default False.
+        extra_columns: str
+            Read extra columns from data files, by default None.
 
         Returns
         -------
-        np.ndarray
-            raw data array
+        (np.ndarray, np.ndarray)
+            Evaluation datetimes as timestamps & raw data array.
         """
         logger = logging.getLogger(__name__)
 
@@ -178,26 +228,26 @@ class Spacecraft(SpiceObject):
         return time, data
 
     def get_data_files(self, range_start, range_end, data_key):
-        """Get raw data file paths for type "data" within specified time range.
+        """Get raw data file paths for type "data_key" within specified time range.
 
         Parameters
         ----------
         range_start : datetime.datetime
-            time range start
+            Time range start datetime.
         range_end : datetime.datetime
-            time range end
+            Time range end datetime.
         data_key : str
-            data key
+            Data key.
 
         Returns
         -------
         list
-            raw data file paths
+            Raw data file paths.
 
         Raises
         ------
         ValueError
-            if invalid time range is given
+            If invalid time range is given.
         """
         logger = logging.getLogger(__name__)
 
@@ -319,25 +369,25 @@ def read_file(file_path, range_start, range_end, kwargs):
     Parameters
     ----------
     file_path : str
-        file path
+        File path.
     range_start : datetime.datetime
-        time range start
+        Time range start datetime.
     range_end : datetime.datetime
-        time range end
+        Time range end datetime.
     kwargs : dict
-        additional parameters
+        Additional parameters (dict as defined in spacecraft.json)
 
     Returns
     -------
     (np.ndarray, np.ndarray)
-        time and data array
+        Datetimes as timestamps and raw data array
 
     Raises
     ------
     NotImplementedError
-        if data format is not supported
+        If data format is not supported.
     NotImplementedError
-        if time format is not supported (for pds3 format only)
+        If time format is not supported (pds3 format only).
     """
     logger = logging.getLogger(__name__)
 
@@ -348,6 +398,7 @@ def read_file(file_path, range_start, range_end, kwargs):
     if format == "cdf":
         file = cdflib.CDF(file_path)
 
+        # offset between python datetimes and cdf datetimes
         time = np.array((file.varget(columns[0]) - 62167222800000) / 1000)
         data = [np.array(file.varget(key.split(":")[0]), dtype=np.float32) for key in columns[1:]]
     elif format == "netcdf":
@@ -362,8 +413,6 @@ def read_file(file_path, range_start, range_end, kwargs):
         time_offset = kwargs.get("time_offset", 0)
 
         def decode_string(string, format):
-            string = string.decode("utf-8")
-
             # fix datetimes with "60" as seconds
             if string.endswith("60.000"):
                 # TODO: fix :17 (only works for one specific format)
@@ -374,7 +423,7 @@ def read_file(file_path, range_start, range_end, kwargs):
                 return datetime.datetime.strptime(string, format).timestamp()
 
         if time_format_type == "string":
-            file = np.loadtxt(file_path, skiprows=skip_rows,
+            file = np.loadtxt(file_path, skiprows=skip_rows, encoding="latin1",
                               converters={0: lambda s: decode_string(s, time_format)})
 
             time = file[:, columns[0]]
@@ -417,12 +466,11 @@ def read_file(file_path, range_start, range_end, kwargs):
 
         data_part = np.squeeze(data_part)
 
-        # remove invalid values
+        # remove values outside valid range
         if values:
             valid_indices = np.where(
-                np.array(data_part[:, 0] > values[0]) &
-                np.array(data_part[:, 0] < values[1])
-                )
+                np.array(data_part[:, 0] > values[0]) & np.array(data_part[:, 0] < values[1])
+            )
 
             time_part = time_part[valid_indices]
             data_part = data_part[valid_indices]

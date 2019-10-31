@@ -46,7 +46,7 @@ class TestSpice(unittest.TestCase):
         self.assertEqual(heliosat.spice.transform_frame(ts, data, "J2000", "HEEQ").shape, (10, 3))
         self.assertEqual(
             heliosat.spice.transform_frame_lonlat(ts, data[:, :2], "J2000", "HEEQ").shape, (10, 2)
-            )
+        )
 
     @classmethod
     def tearDownClass(cls):
