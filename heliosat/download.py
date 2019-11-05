@@ -27,9 +27,9 @@ def download_files(file_urls, file_paths, **kwargs):
     Other Parameters
     ----------------
     force: bool
-        Force overwrite (default is False)
+        Force overwrite (default is False).
     logger : logging.Logger
-        Logger handle (default is None)
+        Logger handle (default is None).
     threads: int
         Number of parallel threads (default is 20).
 

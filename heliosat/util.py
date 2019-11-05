@@ -88,13 +88,16 @@ def urls_build(fmt, range_start, range_end, versions):
 
     urls = []
 
+    range_start -= datetime.timedelta(hours=range_start.hour, minutes=range_start.minute,
+                                      seconds=range_start.second)
+
     # if range_end is the start of a new day, move it slightly back
     if range_end.hour == 0 and range_end.minute == 0 and range_end.second == 0:
         range_end -= datetime.timedelta(seconds=1)
 
     # build url for each day in range
     for day in [range_start + datetime.timedelta(days=i)
-                for i in range((range_end - range_start).days + 2)]:
+                for i in range((range_end - range_start).days + 1)]:
         url = fmt
         url = url.replace("{YYYY}", str(day.year))
         url = url.replace("{YY}", "{0:02d}".format(day.year % 100))

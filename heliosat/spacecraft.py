@@ -455,14 +455,13 @@ def read_file(file_path, range_start, range_end, kwargs):
     mask = np.where((time > range_start.timestamp()) & (time < range_end.timestamp()))[0]
 
     if len(mask) > 0:
-        mask_slice = slice(mask[0], mask[-1] + 1)
-        time_part = np.squeeze(time[mask_slice])
+        time_part = np.squeeze(time[mask])
 
         for i in range(len(data)):
             if i == 0:
-                data_part = data[0][mask_slice]
+                data_part = data[0][mask]
             else:
-                data_part = np.hstack((data_part, data[i][mask_slice]))
+                data_part = np.hstack((data_part, data[i][mask]))
 
         data_part = np.squeeze(data_part)
 
@@ -477,5 +476,10 @@ def read_file(file_path, range_start, range_end, kwargs):
     else:
         time_part = np.array([], dtype=np.float64)
         data_part = np.array([], dtype=np.float32)
+
+    # sort time array
+    sort_mask = np.argsort(time_part)
+    time_part = time_part[sort_mask]
+    data_part = data_part[sort_mask]
 
     return time_part, data_part
