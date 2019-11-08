@@ -88,7 +88,7 @@ def download_files_worker(q, force, logger):
     Raises
     ------
     requests.HTTPError
-        If download fails or file is smaller than 1000 bytes (occurs  in some caseswhen the website
+        If download fails or file is smaller than 1000 bytes (occurs  in some cases when the website
         returns 200 despite the file not existing for some sites).
     NotImplementedError
         If url is not http(s) or ftp.
@@ -98,12 +98,14 @@ def download_files_worker(q, force, logger):
             (file_url, file_path) = q.get(True, 86400)
             logger.debug("downloading \"%s\"", file_url)
 
-            if not force and os.path.isfile(file_path):
+            file_exists = os.path.isfile(file_path)
+
+            if not force and file_exists:
                 if file_url.startswith("http"):
-                    size = int(requests.get(file_url, stream=True).headers['Content-length'])
+                    size = requests.get(file_url, stream=True).headers.get('Content-Length', -1)
 
                     # skip download if file appears to be the same (by size)
-                    if os.path.getsize(file_path) == size:
+                    if os.path.getsize(file_path) == int(size):
                         continue
 
             with open(file_path, "wb") as file:
@@ -111,9 +113,10 @@ def download_files_worker(q, force, logger):
                     response = requests.get(file_url)
 
                     # fix for url's that return 200 instead of a 404
-                    if int(response.headers["Content-Length"]) < 1000:
+                    if "Content-Length" in response.headers and \
+                            int(response.headers.get("Content-Length")) < 1000:
                         raise requests.HTTPError("Content-Length is very small"
-                                                 "(url most likely is not a valid file)")
+                                                 "(url is most likely is not a valid file)")
                 elif file_url.startswith("ftp"):
                     ftp_session = requests_ftp.ftp.FTPSession()
                     response = ftp_session.retr(file_url)
@@ -129,8 +132,8 @@ def download_files_worker(q, force, logger):
         except requests.HTTPError as error:
             logger.error("failed to download \"%s\" (%s)", file_url, error)
 
-            # remove file (empty only)
-            if os.path.isfile(file_path) and os.path.getsize(file_path) == 0:
+            # remove file (only if it was created by failed download)
+            if not file_exists:
                 os.remove(file_path)
         finally:
             q.task_done()

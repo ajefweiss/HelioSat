@@ -301,6 +301,8 @@ class Spacecraft(SpiceObject):
                 os.remove(file)
                 files.remove(file)
                 files.append(".".join(file.split(".")[:-1]))
+            if not os.path.isfile(file):
+                files.remove(file)
 
         return files
 
