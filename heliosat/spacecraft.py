@@ -400,8 +400,8 @@ def read_file(file_path, range_start, range_end, kwargs):
     if format == "cdf":
         file = cdflib.CDF(file_path)
 
-        # offset between python datetimes and cdf datetimes
-        time = np.array((file.varget(columns[0]) - 62167222800000) / 1000)
+        # offset between python datetimes and cdf epochs
+        time = cdflib.epochs.CDFepoch.unixtime(file.varget(columns[0]), to_np=True)
         data = [np.array(file.varget(key.split(":")[0]), dtype=np.float32) for key in columns[1:]]
     elif format == "netcdf":
         file = Dataset(file_path, "r")
@@ -456,7 +456,7 @@ def read_file(file_path, range_start, range_end, kwargs):
 
     mask = np.where((time > range_start.timestamp()) & (time < range_end.timestamp()))[0]
 
-    if len(mask) > 0:
+    if len(mask) > 1:
         time_part = np.squeeze(time[mask])
 
         for i in range(len(data)):
@@ -475,13 +475,13 @@ def read_file(file_path, range_start, range_end, kwargs):
 
             time_part = time_part[valid_indices]
             data_part = data_part[valid_indices]
+
+        # sort time array
+        sort_mask = np.argsort(time_part)
+        time_part = time_part[sort_mask]
+        data_part = data_part[sort_mask]
     else:
         time_part = np.array([], dtype=np.float64)
         data_part = np.array([], dtype=np.float32)
-
-    # sort time array
-    sort_mask = np.argsort(time_part)
-    time_part = time_part[sort_mask]
-    data_part = data_part[sort_mask]
 
     return time_part, data_part

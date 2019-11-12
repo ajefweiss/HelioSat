@@ -111,12 +111,6 @@ def download_files_worker(q, force, logger):
             with open(file_path, "wb") as file:
                 if file_url.startswith("http"):
                     response = requests.get(file_url)
-
-                    # fix for url's that return 200 instead of a 404
-                    if "Content-Length" in response.headers and \
-                            int(response.headers.get("Content-Length")) < 1000:
-                        raise requests.HTTPError("Content-Length is very small"
-                                                 "(url is most likely is not a valid file)")
                 elif file_url.startswith("ftp"):
                     ftp_session = requests_ftp.ftp.FTPSession()
                     response = ftp_session.retr(file_url)
@@ -126,7 +120,13 @@ def download_files_worker(q, force, logger):
                     raise NotImplementedError("invalid url: \"%s\"", file_url)
 
                 if response.ok:
-                    file.write(response.content)
+                    # fix for url's that return 200 instead of a 404
+                    if "Content-Length" in response.headers and \
+                            int(response.headers.get("Content-Length")) < 1000:
+                        raise requests.HTTPError("Content-Length is very small"
+                                                 "(url is most likely is not a valid file)")
+                    else:
+                        file.write(response.content)
                 else:
                     return response.raise_for_status()
         except requests.HTTPError as error:
