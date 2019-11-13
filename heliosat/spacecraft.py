@@ -208,6 +208,18 @@ class Spacecraft(SpiceObject):
                                             kwargs_read)
                                            for i in range(len(raw_files))])
 
+        i = 0
+
+        while True:
+            if results[i][0] is None:
+                results.pop(i)
+                i = i - 1
+
+            i += 1
+
+            if i >= len(results):
+                break
+
         # concatenate data
         lengths = [len(result[0]) for result in results]
         columns = len(results[0][1][0])
@@ -469,19 +481,20 @@ def read_file(file_path, range_start, range_end, kwargs):
 
         # remove values outside valid range
         if values:
-            valid_indices = np.where(
-                np.array(data_part[:, 0] > values[0]) & np.array(data_part[:, 0] < values[1])
-            )
+            for k in range(data_part.shape[1]):
+                valid_indices = np.where(
+                    np.array(data_part[:, k] > values[0]) & np.array(data_part[:, k] < values[1])
+                )
 
-            time_part = time_part[valid_indices]
-            data_part = data_part[valid_indices]
+                time_part = time_part[valid_indices]
+                data_part = data_part[valid_indices]
 
         # sort time array
         sort_mask = np.argsort(time_part)
         time_part = time_part[sort_mask]
         data_part = data_part[sort_mask]
     else:
-        time_part = np.array([], dtype=np.float64)
-        data_part = np.array([], dtype=np.float32)
+        time_part = None
+        data_part = None
 
     return time_part, data_part

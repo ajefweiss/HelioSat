@@ -36,13 +36,20 @@
         "mission_end": "2015-04-30T15:08:00.000"
     },
     "psp": {
+        "kernel_group": "psp",
         "data": {
             "mag": {
                 "columns": ["epoch_mag_RTN_1min", "psp_fld_l2_mag_RTN_1min"],
                 "format": "cdf",
-                "frame": "PSP_RTN",
+                "frame": "SPP_RTN",
                 "urls": "https://spdf.gsfc.nasa.gov/pub/data/psp/fields/l2/mag_rtn_1min/{YYYY}/psp_fld_l2_mag_rtn_1min_{YYYY}{MM}{DD}_v01.cdf",
                 "values": [-1e3, 1e3]
+            },
+            "spc_l3i": {
+                "columns": ["Epoch", "np_moment", "wp_moment", "vp_moment_RTN"],
+                "format": "cdf",
+                "urls": "https://spdf.gsfc.nasa.gov/pub/data/psp/sweap/spc/l3/l3i/{YYYY}/psp_swp_spc_l3i_{YYYY}{MM}{DD}_v01.cdf",
+                "values": [-1e6, 1e6]
             }
         },
         "mission_start": "2018-10-06T00:00:00.000"
