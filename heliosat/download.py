@@ -22,7 +22,7 @@ def download_files(file_urls, file_paths, **kwargs):
     file_urls : list
         Target url's.
     file_paths : Union[list, str]
-        Destination file paths (or optionally destination folder).
+        Destination file paths (optionally destination folder).
 
     Other Parameters
     ----------------
@@ -74,7 +74,7 @@ def download_files(file_urls, file_paths, **kwargs):
 
 
 def download_files_worker(q, force, logger):
-    """Worker function for downloading files from given url's and storing them locally.
+    """Worker function for downloading files.
 
     Parameters
     ----------
@@ -88,7 +88,7 @@ def download_files_worker(q, force, logger):
     Raises
     ------
     requests.HTTPError
-        If download fails or file is smaller than 1000 bytes (occurs  in some cases when the website
+        If download fails or file is smaller than 1000 bytes (occurs in some cases when the website
         returns 200 despite the file not existing for some sites).
     NotImplementedError
         If url is not http(s) or ftp.
@@ -102,7 +102,8 @@ def download_files_worker(q, force, logger):
 
             if not force and file_exists:
                 if file_url.startswith("http"):
-                    size = requests.get(file_url, stream=True).headers.get('Content-Length', -1)
+                    response = requests.get(file_url, stream=True, timeout=60)
+                    size = response.headers.get('Content-Length', -1)
 
                     # skip download if file appears to be the same (by size)
                     if os.path.getsize(file_path) == int(size):
@@ -130,7 +131,7 @@ def download_files_worker(q, force, logger):
                 else:
                     return response.raise_for_status()
         except requests.HTTPError as error:
-            logger.error("failed to download \"%s\" (%s)", file_url, error)
+            logger.warning("failed to download \"%s\" (%s)", file_url, error)
 
             # remove file (only if it was created by failed download)
             if not file_exists:

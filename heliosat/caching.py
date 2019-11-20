@@ -18,7 +18,7 @@ import heliosat
 
 
 def generate_cache_key(identifiers):
-    """Generate SHA256 digest from dictionary json dump which acts as key for cached data.
+    """Generate SHA256 digest from identifiers dictionary which acts as key for cached data.
 
     Parameters
     ----------

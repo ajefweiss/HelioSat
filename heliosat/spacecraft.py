@@ -99,6 +99,8 @@ class Spacecraft(SpiceObject):
             by defautl None.
         remove_nans: bool
             Remove NaN values from data array, by default False.
+        return_datetimes: bool
+            Return datetimes instead of timestamps , by default False.
         smoothing: str
             Smoothing method, by default None.
         smoothing_scale: float
@@ -116,6 +118,8 @@ class Spacecraft(SpiceObject):
         """
         logger = logging.getLogger(__name__)
 
+        data_key = self.resolve_data_key(data_key)
+
         identifiers = {
             "data_key": data_key,
             "spacecraft": self.name,
@@ -128,6 +132,7 @@ class Spacecraft(SpiceObject):
         frame = kwargs.pop("frame", None)
         frame_interval = kwargs.pop("frame_interval", None)
         remove_nans = kwargs.pop("remove_nans", False)
+        return_datetimes = kwargs.pop("return_datetimes", False)
         smoothing = kwargs.get("smoothing", None)
 
         smoothing_dict = {"smoothing": smoothing}
@@ -164,6 +169,9 @@ class Spacecraft(SpiceObject):
             logger.info("generating cache entry \"%s\"", cache_key)
             set_cache_entry(cache_key, (time, data))
 
+        if return_datetimes:
+            time = [datetime.datetime.fromtimestamp(_ts) for _ts in time]
+
         return time, data
 
     def get_data_raw(self, range_start, range_end, data_key, **kwargs):
@@ -189,8 +197,15 @@ class Spacecraft(SpiceObject):
         -------
         (np.ndarray, np.ndarray)
             Evaluation datetimes as timestamps & raw data array.
+
+        Raises
+        ------
+        KeyError
+            If data_key does not exist.
         """
         logger = logging.getLogger(__name__)
+
+        data_key = self.resolve_data_key(data_key)
 
         raw_files = self.get_data_files(range_start, range_end, data_key)
 
@@ -255,11 +270,6 @@ class Spacecraft(SpiceObject):
         -------
         list
             Raw data file paths.
-
-        Raises
-        ------
-        ValueError
-            If invalid time range is given.
         """
         logger = logging.getLogger(__name__)
 
@@ -332,6 +342,41 @@ class Spacecraft(SpiceObject):
             return string_to_datetime(self.spacecraft.get("mission_end"))
         else:
             return datetime.datetime.now()
+
+    def resolve_data_key(self, data_key):
+        """Replace data_key with actual key in case it is an alternative name.
+
+        Parameters
+        ----------
+        data_key : str
+            Data key (alternative).
+
+        Returns
+        -------
+        str
+            Actual data key.
+
+        Raises
+        ------
+        ValueError
+            If invalid time range is given.
+        """
+        # check if data_key exists, or check for general name
+        if data_key not in self.spacecraft["data"]:
+            key_resolved = False
+
+            for key in self.spacecraft["data"]:
+                alt_names = self.spacecraft["data"][key].get("alt_names", [])
+
+                if data_key in alt_names:
+                    data_key = key
+                    key_resolved = True
+                    break
+
+            if not key_resolved:
+                raise KeyError("data_key \"%s\" is not defined", data_key)
+
+        return data_key
 
 
 class DSCOVR(Spacecraft):

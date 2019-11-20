@@ -38,14 +38,16 @@
     "psp": {
         "kernel_group": "psp",
         "data": {
-            "mag": {
+            "fields_l2": {
+                "alt_names": ["mag"],
                 "columns": ["epoch_mag_RTN_1min", "psp_fld_l2_mag_RTN_1min"],
                 "format": "cdf",
                 "frame": "SPP_RTN",
                 "urls": "https://spdf.gsfc.nasa.gov/pub/data/psp/fields/l2/mag_rtn_1min/{YYYY}/psp_fld_l2_mag_rtn_1min_{YYYY}{MM}{DD}_v01.cdf",
                 "values": [-1e3, 1e3]
             },
-            "spc_l3i": {
+            "spc_l3": {
+                "alt_names": ["proton", "spc_l3i"],
                 "columns": ["Epoch", "np_moment", "wp_moment", "vp_moment_RTN"],
                 "format": "cdf",
                 "urls": "https://spdf.gsfc.nasa.gov/pub/data/psp/sweap/spc/l3/l3i/{YYYY}/psp_swp_spc_l3i_{YYYY}{MM}{DD}_v01.cdf",
@@ -57,14 +59,16 @@
     "stereo_ahead": {
         "kernel_group": "stereo",
         "data": {
-            "mag": {
+            "impact_l1": {
+                "alt_names": ["mag"],
                 "columns": ["Epoch", "BFIELD:3"],
                 "format": "cdf",
                 "frame": "STAHGRTN",
                 "urls": "https://stereo-ssc.nascom.nasa.gov/data/ins_data/impact/level1/ahead/mag/RTN/{YYYY}/{MM}/STA_L1_MAG_RTN_{YYYY}{MM}{DD}_V06.cdf",
                 "values": [-1e3, 1e3]
             },
-            "proton": {
+            "plastic_l2": {
+                "alt_names": ["proton"],
                 "columns": ["epoch", "proton_number_density", "proton_bulk_speed", "proton_temperature"],
                 "format": "cdf",
                 "urls": "https://stereo-ssc.nascom.nasa.gov/data/ins_data/plastic/level2/Protons/Derived_from_1D_Maxwellian/ahead/1min/{YYYY}/STA_L2_PLA_1DMax_1min_{YYYY}{MM}{DD}_{V0}.cdf",
@@ -82,7 +86,8 @@
                 ],
                 "values": [-1e1, 1e3]
             },
-            "mag_beacon": {
+            "impact_beacon": {
+                "alt_names": ["mag_beacon"],
                 "columns": ["Epoch_MAG", "MAGBField:3"],
                 "format": "cdf",
                 "frame": "STAHGRTN",
@@ -101,7 +106,8 @@
                 ],
                 "values": [-1e3, 1e3]
             },
-            "proton_beacon": {
+            "plastic_beacon": {
+                "alt_names": ["proton_beacon"],
                 "columns": ["Epoch1", "Density", "Temperature_Inst"],
                 "format": "cdf",
                 "urls": "https://stereo-ssc.nascom.nasa.gov/data/beacon/ahead/plastic/{YYYY}/{MM}/STA_LB_PLASTIC_{YYYY}{MM}{DD}_{V0}.cdf",
@@ -150,20 +156,23 @@
     "stereo_behind": {
         "kernel_group": "stereo",
         "data": {
-            "mag": {
+            "impact_l1": {
+                "alt_names": ["mag"],
                 "columns": ["Epoch", "BFIELD:3"],
                 "format": "cdf",
                 "frame": "STBHGRTN",
                 "urls": "https://stereo-ssc.nascom.nasa.gov/data/ins_data/impact/level1/behind/mag/RTN/{YYYY}/{MM}/STB_L1_MAG_RTN_{YYYY}{MM}{DD}_V06.cdf",
                 "values": [-1e3, 1e3]
             },
-            "proton": {
+            "plastic_l2": {
+                "alt_names": ["proton"],
                 "columns": ["epoch", "proton_number_density", "proton_bulk_speed", "proton_temperature"],
                 "format": "cdf",
                 "urls": "https://stereo-ssc.nascom.nasa.gov/data/ins_data/plastic/level2/Protons/Derived_from_1D_Maxwellian/behind/1min/{YYYY}/STB_L2_PLA_1DMax_1min_{YYYY}{MM}{DD}_V09.cdf",
                 "values": [-1e1, 1e3]
             },
-            "mag_beacon": {
+            "impact_beacon": {
+                "alt_names": ["mag_beacon"],
                 "columns": ["Epoch_MAG", "MAGBField:3"],
                 "format": "cdf",
                 "frame": "STBHGRTN",
@@ -182,7 +191,8 @@
                 ],
                 "values": [-1e3, 1e3]
             },
-            "proton_beacon": {
+            "plastic_beacon": {
+                "alt_names": ["proton_beacon"],
                 "columns": ["Epoch1", "Density", "Temperature_Inst"],
                 "format": "cdf",
                 "urls": "https://stereo-ssc.nascom.nasa.gov/data/beacon/behind/plastic/{YYYY}/{MM}/STB_LB_PLASTIC_{YYYY}{MM}{DD}_{V0}.cdf",
@@ -275,14 +285,16 @@
     },
     "wind": {
         "data": {
-            "mag": {
+            "mfi_h0": {
+                "alt_names": ["mag"],
                 "columns": ["Epoch3", "B3GSE"],
                 "format": "cdf",
                 "frame": "GSE",
                 "urls": "https://spdf.gsfc.nasa.gov/pub/data/wind/mfi/mfi_h0/{YYYY}/wi_h0_mfi_{YYYY}{MM}{DD}_v05.cdf",
                 "values": [-1e3, 1e3]
             },
-            "proton": {
+            "swe_h1": {
+                "alt_names": ["proton"],
                 "columns": ["Epoch", "Proton_Np_moment", "Proton_V_moment", "Proton_W_moment"],
                 "format": "cdf",
                 "urls": "https://spdf.gsfc.nasa.gov/pub/data/wind/swe/swe_h1/{YYYY}/wi_h1_swe_{YYYY}{MM}{DD}_v01.cdf",

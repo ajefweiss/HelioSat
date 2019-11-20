@@ -9,7 +9,7 @@ setup(
         "heliosat"
     ],
     package_data={"heliosat": ["json/*.json"]},
-    version="0.2.5",
+    version="0.3.0",
     author="Andreas J. Weiss",
     author_email="andreas.weiss@oeaw.ac.at",
     keywords=["astrophysics", "solar physics", "space weather"],
@@ -18,6 +18,7 @@ setup(
     url="https://github.com/ajefweiss/HelioSat",
     install_requires=[
         "bs4",
+        "cdflib",
         "netcdf4",
         "numba",
         "numpy",

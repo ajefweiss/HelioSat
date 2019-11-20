@@ -211,7 +211,7 @@ def transform_frame(t, data, frame_from, frame_to, frame_interval=None):
         Target reference frame.
     frame_interval: float
         For large data arrays, evaluate reference frame every "frame_interval" seconds,
-            by defautl None.
+            by default None.
 
     Returns
     -------

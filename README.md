@@ -1,16 +1,18 @@
 HelioSat
 ========
 
-A simple python package for handling and processing heliospheric satellite data.
+A small simple python package for handling and processing heliospheric satellite data.
 
 Installation
 ------------
 
-Install the latest version manually using `git` and `pip`:
+Install the latest version manually using `git`:
 
     git clone https://github.com/ajefweiss/HelioSat
     cd HelioSat
     pip install .
+
+or from PyPi.
 
 Basic Usage
 -----------
@@ -25,34 +27,34 @@ This will automatically download and load any required SPICE kernels (using `spi
 kernel or data files will be stored in `~/.heliosat` by default. As this may use up alot of disk
 space you can alternatively change the default path by setting the environment variable `HELIOSAT_DATAPATH`.
 
-Querying the raw magnetic field data can then be done using:
+Querying raw data in a certain time window can then be done using:
 
     import datetime
 
     t_start = datetime.datetime(2010, 1, 1)
     t_end = datetime.datetime(2010, 1, 3)
 
-    t_raw, data_raw = wind_sat.get_data_raw(t_start, t_end, "mag")
+    t_raw, data_raw = wind_sat.get_data_raw(t_start, t_end, "mfi_h0")
 
-or alternatively processed data at specific times in a specific reference frame:
+Alternatively processed data at specific times in a specific reference frame can be queried using:
 
     # observer datetimes for an entire week
     obs = [t_start + datetime.timedelta(minutes=12 * i) for i in range(0, 7 * 24 * 5)]
 
     # smoothing using a gaussian kernel and a smoothing scale of 5 minutes, the data is also cached
-    t_sm, data_sm = heliosat.get_data(obs, "mag", frame="J2000", smoothing="kernel", cache=True)
+    t_sm, data_sm = heliosat.get_data(obs, "mfi_h0", frame="J2000", smoothing="kernel", cache=True,
+                                      return_datetimes=True, remove_nans=True)
+
+If particular data columns are not being read out but are present within the data files, they can be added by setting the `extra_columns` parameter.
 
 Features
 --------
 
+By default most satellites will have "mag" and "proton" data available. For a full list of all available data and definitions see the heliosat/json/spacecraft.json file.
+
 SPICE:
 
- - Get object trajectory using `wind_sat.trajectory(t, frame="J2000")`
-
-Available data: 
-
- - Magnetic field data in chosen reference frame (`data="mag"`)
- - Proton data as density, speed & temperature (`data="proton"`)
+ - Get object trajectory using `wind_sat.trajectory(obs, frame="J2000")`
 
 Available satellites & data:
 
@@ -60,7 +62,7 @@ Available satellites & data:
 | ---------- |:----------:|:--------------:|:-------:|
 | DSCOVR     | No*        | Yes            | Yes     |
 | MESSENGER  | Yes        | Yes            | No      |
-| PSP        | Yes        | No             | No      |
+| PSP        | Yes        | Yes            | Yes     |
 | STEREO A   | Yes        | Yes            | Yes     |
 | STEREO B   | Yes        | Yes            | Yes     |
 | VEX        | Yes        | Yes            | No      |
