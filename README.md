@@ -1,7 +1,7 @@
 HelioSat
 ========
 
-A small simple python package for handling and processing heliospheric satellite data.
+A simple and small python package for handling and processing heliospheric satellite data.
 
 Installation
 ------------
@@ -12,12 +12,12 @@ Install the latest version manually using `git`:
     cd HelioSat
     pip install .
 
-or from PyPi.
+or from PyPi with `pip install HelioSat`.
 
 Basic Usage
 -----------
 
-Simply import the module `heliosat` and create a satellite instance:
+Import the `heliosat` module and create a satellite instance:
 
     import heliosat
 

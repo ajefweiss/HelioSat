@@ -98,11 +98,14 @@ def download_files_worker(q, force, logger):
             (file_url, file_path) = q.get(True, 86400)
             logger.debug("downloading \"%s\"", file_url)
 
-            file_exists = os.path.isfile(file_path)
+            file_already_exists = os.path.isfile(file_path)
 
-            if not force and file_exists:
+            if file_already_exists and os.path.getsize(file_path) == 0:
+                file_already_exists = False
+
+            if not force and file_already_exists:
                 if file_url.startswith("http"):
-                    response = requests.get(file_url, stream=True, timeout=60)
+                    response = requests.get(file_url, stream=True, timeout=20)
                     size = response.headers.get('Content-Length', -1)
 
                     # skip download if file appears to be the same (by size)
@@ -130,11 +133,12 @@ def download_files_worker(q, force, logger):
                         file.write(response.content)
                 else:
                     return response.raise_for_status()
-        except requests.HTTPError as error:
-            logger.warning("failed to download \"%s\" (%s)", file_url, error)
-
-            # remove file (only if it was created by failed download)
-            if not file_exists:
+        except requests.RequestException as error:
+            if file_already_exists:
+                logger.error("failed to check \"%s\" (%s)", file_url, error)
+            else:
+                logger.error("failed to download \"%s\" (%s)", file_url, error)
                 os.remove(file_path)
+
         finally:
             q.task_done()

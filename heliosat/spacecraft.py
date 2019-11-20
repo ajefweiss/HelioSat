@@ -224,7 +224,6 @@ class Spacecraft(SpiceObject):
                                            for i in range(len(raw_files))])
 
         i = 0
-
         while True:
             if results[i][0] is None:
                 results.pop(i)
@@ -526,13 +525,12 @@ def read_file(file_path, range_start, range_end, kwargs):
 
         # remove values outside valid range
         if values:
-            for k in range(data_part.shape[1]):
-                valid_indices = np.where(
-                    np.array(data_part[:, k] > values[0]) & np.array(data_part[:, k] < values[1])
-                )
+            valid_indices = np.where(
+                np.array(data_part[:, 0] > values[0]) & np.array(data_part[:, 0] < values[1])
+            )
 
-                time_part = time_part[valid_indices]
-                data_part = data_part[valid_indices]
+            time_part = time_part[valid_indices]
+            data_part = data_part[valid_indices]
 
         # sort time array
         sort_mask = np.argsort(time_part)

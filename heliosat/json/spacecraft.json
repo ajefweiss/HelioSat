@@ -1,7 +1,8 @@
 {
     "dscovr": {
         "data": {
-            "mag": {
+            "dscovr_mag": {
+                "alt_names": ["mag"],
                 "columns": ["time", "bx_gse", "by_gse", "bz_gse"],
                 "format": "netcdf",
                 "frame": "GSE",
@@ -9,7 +10,8 @@
                 "use_regex": true,
                 "values": [-1e3, 1e3]
             },
-            "proton": {
+            "dscovr_plas": {
+                "alt_names": ["dscovr_pla", "proton"],
                 "columns": ["time", "proton_density", "proton_speed", "proton_temperature"],
                 "format": "netcdf",
                 "urls": "https://www.ngdc.noaa.gov/dscovr/data/{YYYY}/{MM}/oe_f1m_dscovr_s{YYYY}{MM}{DD}000000_e{YYYY}{MM}{DD}235959_p[0-9]{14}_pub.nc.gz",
@@ -22,7 +24,8 @@
     "messenger": {
         "kernel_group": "messenger",
         "data": {
-            "mag": {
+            "mes_mag": {
+                "alt_names": ["mag"],
                 "columns": [5, 10, 11, 12],
                 "format": "pds3",
                 "frame": "MSGR_RTN",
@@ -38,16 +41,16 @@
     "psp": {
         "kernel_group": "psp",
         "data": {
-            "fields_l2": {
-                "alt_names": ["mag"],
+            "psp_fields_l2": {
+                "alt_names": ["fields_l2", "mag"],
                 "columns": ["epoch_mag_RTN_1min", "psp_fld_l2_mag_RTN_1min"],
                 "format": "cdf",
                 "frame": "SPP_RTN",
                 "urls": "https://spdf.gsfc.nasa.gov/pub/data/psp/fields/l2/mag_rtn_1min/{YYYY}/psp_fld_l2_mag_rtn_1min_{YYYY}{MM}{DD}_v01.cdf",
                 "values": [-1e3, 1e3]
             },
-            "spc_l3": {
-                "alt_names": ["proton", "spc_l3i"],
+            "psp_spc_l3": {
+                "alt_names": ["spc_l3", "spc_l3i", "proton"],
                 "columns": ["Epoch", "np_moment", "wp_moment", "vp_moment_RTN"],
                 "format": "cdf",
                 "urls": "https://spdf.gsfc.nasa.gov/pub/data/psp/sweap/spc/l3/l3i/{YYYY}/psp_swp_spc_l3i_{YYYY}{MM}{DD}_v01.cdf",
@@ -59,7 +62,7 @@
     "stereo_ahead": {
         "kernel_group": "stereo",
         "data": {
-            "impact_l1": {
+            "sta_impact_l1": {
                 "alt_names": ["mag"],
                 "columns": ["Epoch", "BFIELD:3"],
                 "format": "cdf",
@@ -67,7 +70,7 @@
                 "urls": "https://stereo-ssc.nascom.nasa.gov/data/ins_data/impact/level1/ahead/mag/RTN/{YYYY}/{MM}/STA_L1_MAG_RTN_{YYYY}{MM}{DD}_V06.cdf",
                 "values": [-1e3, 1e3]
             },
-            "plastic_l2": {
+            "sta_plastic_l2": {
                 "alt_names": ["proton"],
                 "columns": ["epoch", "proton_number_density", "proton_bulk_speed", "proton_temperature"],
                 "format": "cdf",
@@ -86,7 +89,7 @@
                 ],
                 "values": [-1e1, 1e3]
             },
-            "impact_beacon": {
+            "sta_impact_beacon": {
                 "alt_names": ["mag_beacon"],
                 "columns": ["Epoch_MAG", "MAGBField:3"],
                 "format": "cdf",
@@ -106,7 +109,7 @@
                 ],
                 "values": [-1e3, 1e3]
             },
-            "plastic_beacon": {
+            "sta_plastic_beacon": {
                 "alt_names": ["proton_beacon"],
                 "columns": ["Epoch1", "Density", "Temperature_Inst"],
                 "format": "cdf",
@@ -156,7 +159,7 @@
     "stereo_behind": {
         "kernel_group": "stereo",
         "data": {
-            "impact_l1": {
+            "stb_impact_l1": {
                 "alt_names": ["mag"],
                 "columns": ["Epoch", "BFIELD:3"],
                 "format": "cdf",
@@ -164,14 +167,14 @@
                 "urls": "https://stereo-ssc.nascom.nasa.gov/data/ins_data/impact/level1/behind/mag/RTN/{YYYY}/{MM}/STB_L1_MAG_RTN_{YYYY}{MM}{DD}_V06.cdf",
                 "values": [-1e3, 1e3]
             },
-            "plastic_l2": {
+            "stb_plastic_l2": {
                 "alt_names": ["proton"],
                 "columns": ["epoch", "proton_number_density", "proton_bulk_speed", "proton_temperature"],
                 "format": "cdf",
                 "urls": "https://stereo-ssc.nascom.nasa.gov/data/ins_data/plastic/level2/Protons/Derived_from_1D_Maxwellian/behind/1min/{YYYY}/STB_L2_PLA_1DMax_1min_{YYYY}{MM}{DD}_V09.cdf",
                 "values": [-1e1, 1e3]
             },
-            "impact_beacon": {
+            "stb_impact_beacon": {
                 "alt_names": ["mag_beacon"],
                 "columns": ["Epoch_MAG", "MAGBField:3"],
                 "format": "cdf",
@@ -191,7 +194,7 @@
                 ],
                 "values": [-1e3, 1e3]
             },
-            "plastic_beacon": {
+            "stb_plastic_beacon": {
                 "alt_names": ["proton_beacon"],
                 "columns": ["Epoch1", "Density", "Temperature_Inst"],
                 "format": "cdf",
@@ -242,7 +245,8 @@
     "venus_express": {
         "kernel_group": "venus_express",
         "data": {
-            "mag": {
+            "vex_mag": {
+                "alt_names": ["mag"],
                 "columns": [0, 1, 2, 3],
                 "format": "pds3",
                 "frame": "VSO",
@@ -285,16 +289,16 @@
     },
     "wind": {
         "data": {
-            "mfi_h0": {
-                "alt_names": ["mag"],
+            "wind_mfi_h0": {
+                "alt_names": ["mfi_h0", "mag"],
                 "columns": ["Epoch3", "B3GSE"],
                 "format": "cdf",
                 "frame": "GSE",
                 "urls": "https://spdf.gsfc.nasa.gov/pub/data/wind/mfi/mfi_h0/{YYYY}/wi_h0_mfi_{YYYY}{MM}{DD}_v05.cdf",
                 "values": [-1e3, 1e3]
             },
-            "swe_h1": {
-                "alt_names": ["proton"],
+            "wind_swe_h1": {
+                "alt_names": ["swe_h1", "proton"],
                 "columns": ["Epoch", "Proton_Np_moment", "Proton_V_moment", "Proton_W_moment"],
                 "format": "cdf",
                 "urls": "https://spdf.gsfc.nasa.gov/pub/data/wind/swe/swe_h1/{YYYY}/wi_h1_swe_{YYYY}{MM}{DD}_v01.cdf",
