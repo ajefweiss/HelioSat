@@ -294,7 +294,19 @@
                 "columns": ["Epoch3", "B3GSE"],
                 "format": "cdf",
                 "frame": "GSE",
-                "urls": "https://spdf.gsfc.nasa.gov/pub/data/wind/mfi/mfi_h0/{YYYY}/wi_h0_mfi_{YYYY}{MM}{DD}_v05.cdf",
+                "urls": "https://spdf.gsfc.nasa.gov/pub/data/wind/mfi/mfi_h0/{YYYY}/wi_h0_mfi_{YYYY}{MM}{DD}_{V0}.cdf",
+                "versions": [
+                    {
+                        "version_start": "1995-01-01T00:00:00.000",
+                        "version_end": "2019-01-001T00:00:00.000",
+                        "identifiers": ["v05"]
+                    },
+                    {
+                        "version_start": "2019-01-001T00:00:00.000",
+                        "version_end": "2020-01-001T00:00:00.000",
+                        "identifiers": ["v04"]
+                    }
+                ],
                 "values": [-1e3, 1e3]
             },
             "wind_swe_h1": {
