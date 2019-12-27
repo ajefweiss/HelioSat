@@ -6,12 +6,12 @@ Utility functions for downloading data files. Intended for internal use only.
 """
 
 import logging
+import numpy as np
 import os
 import requests
 import requests_ftp
 
-from threading import Thread
-from queue import Queue
+from concurrent.futures import ThreadPoolExecutor
 
 
 def download_files(file_urls, file_paths, **kwargs):
@@ -19,19 +19,24 @@ def download_files(file_urls, file_paths, **kwargs):
 
     Parameters
     ----------
-    file_urls : list
+    file_urls : list[str]
         Target url's.
-    file_paths : Union[list, str]
-        Destination file paths (optionally destination folder).
+    file_paths : Union[list[str], str]
+        Destination file paths (or optionally the destination folder).
 
     Other Parameters
     ----------------
     force: bool
-        Force overwrite (default is False).
+        Force overwrite, by default False.
     logger : logging.Logger
-        Logger handle (default is None).
+        Logger handle, by default None.
     threads: int
-        Number of parallel threads (default is 20).
+        Number of parallel threads, by default 32.
+
+    Returns
+    -------
+    list[bool]
+        Flags if files were downloaded succesfully, or they already existed.
 
     Raises
     ------
@@ -41,7 +46,7 @@ def download_files(file_urls, file_paths, **kwargs):
     """
     force = kwargs.get("force", kwargs.get("overwrite", False))
     logger = kwargs.get("logger", logging.getLogger(__name__))
-    threads = min(len(file_urls), kwargs.get("threads", 20))
+    threads = min(len(file_urls), kwargs.get("threads", 32))
 
     if isinstance(file_paths, str):
         if not os.path.exists(file_paths):
@@ -53,92 +58,85 @@ def download_files(file_urls, file_paths, **kwargs):
         logger.exception("invalid file path list (size mismatch)")
         raise ValueError("invalid file path list (size mismatch)")
 
-    queue = Queue(maxsize=0)
+    with ThreadPoolExecutor(max_workers=threads) as executor:
+        futures = executor.map(download_files_worker, [(file_urls[i], file_paths[i], force, logger)
+                                                       for i in range(len(file_urls))])
 
-    for i in range(len(file_urls)):
-        queue.put((file_urls[i], file_paths[i]))
+    results = [_ for _ in futures]
 
-    logger.debug("attempting to download %i files", queue.qsize())
+    if np.any(np.invert(results)):
+        logger.warning("checked/downloaded %i/%i files", np.sum(results), len(results))
+    else:
+        logger.info("checked/downloaded %i files", len(results))
 
-    workers = []
-
-    for _ in range(threads):
-        worker = Thread(target=download_files_worker, args=(queue, force, logger))
-        worker.setDaemon(True)
-        worker.start()
-
-        workers.append(worker)
-
-    # wait until all threads are completed
-    queue.join()
+    return results
 
 
-def download_files_worker(q, force, logger):
+def download_files_worker(args):
     """Worker function for downloading files.
 
     Parameters
     ----------
-    q : queue.Queue
-        Worker queue.
-    force : bool
-        Force overwrite.
-    logger : logging.Logger
-        Logger handle.
+    args: (str, str, bool, logging.Logger)
+        Function arguments as tuple.
+
+    Returns
+    -------
+    bool
+        Flag if file was downloaded, or already existed.
 
     Raises
     ------
-    requests.HTTPError
-        If download fails or file is smaller than 1000 bytes (occurs in some cases when the website
-        returns 200 despite the file not existing for some sites).
     NotImplementedError
         If url is not http(s) or ftp.
     """
-    while not q.empty():
-        try:
-            (file_url, file_path) = q.get(True, 86400)
-            logger.debug("downloading \"%s\"", file_url)
+    try:
+        (file_url, file_path, force, logger) = args
 
-            file_already_exists = os.path.isfile(file_path)
+        logger.debug("downloading \"%s\"", file_url)
 
-            if file_already_exists and os.path.getsize(file_path) == 0:
-                file_already_exists = False
+        file_already_exists = os.path.isfile(file_path)
 
-            if not force and file_already_exists:
-                if file_url.startswith("http"):
-                    response = requests.get(file_url, stream=True, timeout=20)
-                    size = response.headers.get('Content-Length', -1)
+        if file_already_exists and os.path.getsize(file_path) == 0:
+            file_already_exists = False
 
-                    # skip download if file appears to be the same (by size)
-                    if os.path.getsize(file_path) == int(size):
-                        continue
+        if not force and file_already_exists:
+            if file_url.startswith("http"):
+                response = requests.get(file_url, stream=True, timeout=20)
+                size = response.headers.get('Content-Length', -1)
 
-            with open(file_path, "wb") as file:
-                if file_url.startswith("http"):
-                    response = requests.get(file_url)
-                elif file_url.startswith("ftp"):
-                    ftp_session = requests_ftp.ftp.FTPSession()
-                    response = ftp_session.retr(file_url)
-                    ftp_session.close()
-                else:
-                    logger.exception("invalid url: \"%s\"", file_url)
-                    raise NotImplementedError("invalid url: \"%s\"", file_url)
+                # skip download if file appears to be the same (checking size only)
+                if os.path.getsize(file_path) == int(size):
+                    return True
 
-                if response.ok:
-                    # fix for url's that return 200 instead of a 404
-                    if "Content-Length" in response.headers and \
-                            int(response.headers.get("Content-Length")) < 1000:
-                        raise requests.HTTPError("Content-Length is very small"
-                                                 "(url is most likely is not a valid file)")
-                    else:
-                        file.write(response.content)
-                else:
-                    return response.raise_for_status()
-        except requests.RequestException as error:
-            if file_already_exists:
-                logger.error("failed to check \"%s\" (%s)", file_url, error)
+        with open(file_path, "wb") as file:
+            if file_url.startswith("http"):
+                response = requests.get(file_url)
+            elif file_url.startswith("ftp"):
+                ftp_session = requests_ftp.ftp.FTPSession()
+                response = ftp_session.retr(file_url)
+                ftp_session.close()
             else:
-                logger.error("failed to download \"%s\" (%s)", file_url, error)
-                os.remove(file_path)
+                logger.exception("invalid url: \"%s\"", file_url)
+                raise NotImplementedError("invalid url: \"%s\"", file_url)
 
-        finally:
-            q.task_done()
+            if response.ok:
+                # fix for url's that return 200 instead of a 404
+                if "Content-Length" in response.headers and \
+                        int(response.headers.get("Content-Length")) < 1000:
+                    raise requests.HTTPError("Content-Length is very small"
+                                             "(url is most likely not a valid file)")
+                else:
+                    file.write(response.content)
+            else:
+                return response.raise_for_status()
+
+        return True
+    except requests.RequestException as error:
+        if file_already_exists:
+            logger.error("failed to check existing file \"%s\" (%s)", file_url, error)
+        else:
+            logger.error("failed to download \"%s\" (%s)", file_url, error)
+            os.remove(file_path)
+
+        return False

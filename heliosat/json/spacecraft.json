@@ -1,322 +1,487 @@
 {
     "dscovr": {
-        "data": {
+        "data_keys": {
             "dscovr_mag": {
-                "alt_names": ["mag"],
-                "columns": ["time", "bx_gse", "by_gse", "bz_gse"],
-                "format": "netcdf",
-                "frame": "GSE",
+                "alt_keys": ["mag"],
                 "urls": "https://www.ngdc.noaa.gov/dscovr/data/{YYYY}/{MM}/oe_m1m_dscovr_s{YYYY}{MM}{DD}000000_e{YYYY}{MM}{DD}235959_p[0-9]{14}_pub.nc.gz",
                 "use_regex": true,
-                "values": [-1e3, 1e3]
+                "version_default": {
+                    "columns": [
+                        {
+                            "alt_names": ["B_GSE", "BFIELD"],
+                            "default": true,
+                            "frame": "GSE",
+                            "key": ["bx_gse", "by_gse", "bz_gse"],
+                            "name": "BGSE",
+                            "valid_range": [-1e3, 1e3]
+                        }
+                    ],
+                    "format": "net_cdf4",
+                    "time": {
+                        "key": "time"
+                    }
+                },
+                "versions": [
+                    {
+                        "version_start": "2016-09-02T01:00:00.000",
+                        "version_end": "2100-01-01T00:00:00.000"
+                    }
+                ]
             },
             "dscovr_plas": {
-                "alt_names": ["dscovr_pla", "proton"],
-                "columns": ["time", "proton_density", "proton_speed", "proton_temperature"],
-                "format": "netcdf",
+                "alt_keys": ["dscovr_pla", "proton"],
                 "urls": "https://www.ngdc.noaa.gov/dscovr/data/{YYYY}/{MM}/oe_f1m_dscovr_s{YYYY}{MM}{DD}000000_e{YYYY}{MM}{DD}235959_p[0-9]{14}_pub.nc.gz",
                 "use_regex": true,
-                "values": [-1e1, 1e3]
+                "version_default": {
+                    "columns": [
+                        {
+                            "alt_names": ["proton_density", "hplus_density"],
+                            "default": true,
+                            "key": "proton_density",
+                            "name": "density",
+                            "valid_range": [1, 1e6]
+                        },
+                        {
+                            "alt_names": ["proton_speed", "hplus_speed"],
+                            "default": true,
+                            "key": "proton_speed",
+                            "name": "speed",
+                            "valid_range": [1, 1e6]
+                        },
+                        {
+                            "alt_names": ["proton_temp", "proton_temperature", "hplus_temp", "hplus_temperature"],
+                            "default": true,
+                            "key": "proton_temperature",
+                            "name": "temperature",
+                            "valid_range": [1, 1e6]
+                        }
+                    ],
+                    "format": "net_cdf4",
+                    "time": {
+                        "key": "time"
+                    }
+                },
+                "versions": [
+                    {
+                        "version_start": "2016-09-02T01:00:00.000",
+                        "version_end": "2100-01-01T00:00:00.000"
+                    }
+                ]
             }
-        },
-        "mission_start": "2016-09-02T01:00:00.000"
+        }
     },
     "messenger": {
         "kernel_group": "messenger",
-        "data": {
-            "mes_mag": {
-                "alt_names": ["mag"],
-                "columns": [5, 10, 11, 12],
-                "format": "pds3",
-                "frame": "MSGR_RTN",
+        "data_keys": {
+            "vex_mag": {
+                "alt_keys": ["mag"],
                 "urls": "https://pds-ppi.igpp.ucla.edu/ditdos/download?id=pds://PPI/MESS-E_V_H_SW-MAG-4-SUMM-CALIBRATED-V1.0/DATA/RTN/{YYYY}/{DOYM1}_{DOYM2}_{MONTH}/MAGRTNSCIAVG{YY}{DOY}_60_V08.TAB",
-                "time_format_type": "timestamp",
-                "time_offset": 1091505556,
-                "values": [-1e3, 1e3]
+                "version_default": {
+                    "columns": [
+                        {
+                            "alt_names": ["B_RTN", "BFIELD"],
+                            "default": true,
+                            "frame": "MSGR_RTN",
+                            "indices": [10, 11, 12],
+                            "name": "B_RTN",
+                            "valid_range": [-1e3, 1e3]
+                        }
+                    ],
+                    "format": "text",
+                    "time": {
+                        "index": 5,
+                        "format": 1091505556
+                    }
+                },
+                "versions": [
+                    {
+                        "version_start": "2004-09-01T01:00:00.000",
+                        "version_end": "2015-04-30T15:08:00.000"
+                        
+                    }
+                ]
             }
-        },
-        "mission_start": "2004-09-01T01:00:00.000",
-        "mission_end": "2015-04-30T15:08:00.000"
+        }    
     },
     "psp": {
         "kernel_group": "psp",
-        "data": {
+        "data_keys": {
             "psp_fields_l2": {
-                "alt_names": ["fields_l2", "mag"],
-                "columns": ["epoch_mag_RTN_1min", "psp_fld_l2_mag_RTN_1min"],
-                "format": "cdf",
-                "frame": "SPP_RTN",
+                "alt_keys": ["fields_l2", "mag", "psp_mag"],
                 "urls": "https://spdf.gsfc.nasa.gov/pub/data/psp/fields/l2/mag_rtn_1min/{YYYY}/psp_fld_l2_mag_rtn_1min_{YYYY}{MM}{DD}_v01.cdf",
-                "values": [-1e3, 1e3]
+                "version_default": {
+                    "columns": [
+                        {   
+                            "alt_names": ["B_RTN", "BFIELD"],
+                            "default": true,
+                            "frame": "SPP_RTN",
+                            "key": "psp_fld_l2_mag_RTN_1min",
+                            "name": "BRTN",
+                            "valid_range": [-1e3, 1e3]
+                        }
+                    ],
+                    "format": "nasa_cdf",
+                    "time": {
+                        "key": "epoch_mag_RTN_1min"
+                    }
+                },
+                "versions" : [
+                    {
+                        "version_start": "2018-10-06T00:00:00.000",
+                        "version_end": "2100-01-01T00:00:00.000"
+                    }
+                ]
             },
             "psp_spc_l3": {
-                "alt_names": ["spc_l3", "spc_l3i", "proton"],
-                "columns": ["Epoch", "np_moment", "wp_moment", "vp_moment_RTN"],
-                "format": "cdf",
+                "alt_keys": ["spc_l3", "spc_l3i", "proton", "psp_proton"],
                 "urls": "https://spdf.gsfc.nasa.gov/pub/data/psp/sweap/spc/l3/l3i/{YYYY}/psp_swp_spc_l3i_{YYYY}{MM}{DD}_v01.cdf",
-                "values": [-1e6, 1e6]
+                "version_default": {
+                    "columns": [
+                        {
+                            "alt_names": ["proton_density", "hplus_density"],
+                            "default": true,
+                            "key": "np_moment",
+                            "name": "density",
+                            "valid_range": [1, 1e6]
+                        },
+                        {
+                            "alt_names": ["proton_velocity", "hplus_velocity"],
+                            "default": true,
+                            "frame": "SPP_RTN",
+                            "key": "vp_moment_RTN",
+                            "name": "velocity",
+                            "valid_range": [-1e6, 1e6]
+                        },
+                        {
+                            "alt_names": ["proton_temp", "proton_temperature", "hplus_temp", "hplus_temperature"],
+                            "default": true,
+                            "key": "wp_moment",
+                            "name": "temperature",
+                            "valid_range": [1, 1e6]
+                        }
+                    ],
+                    "format": "nasa_cdf",
+                    "time": {
+                        "key": "Epoch"
+                    }
+                },
+                "versions" : [
+                    {
+                        "version_start": "2018-10-06T00:00:00.000",
+                        "version_end": "2100-01-01T00:00:00.000"
+                    }
+                ]
             }
-        },
-        "mission_start": "2018-10-06T00:00:00.000"
+        }
     },
     "stereo_ahead": {
         "kernel_group": "stereo",
-        "data": {
+        "data_keys": {
             "sta_impact_l1": {
-                "alt_names": ["mag"],
-                "columns": ["Epoch", "BFIELD:3"],
-                "format": "cdf",
-                "frame": "STAHGRTN",
-                "urls": "https://stereo-ssc.nascom.nasa.gov/data/ins_data/impact/level1/ahead/mag/RTN/{YYYY}/{MM}/STA_L1_MAG_RTN_{YYYY}{MM}{DD}_V06.cdf",
-                "values": [-1e3, 1e3]
+                "alt_keys": ["mag", "sta_mag", "sta_impact"],
+                "urls": "https://stereo-ssc.nascom.nasa.gov/data/ins_data/impact/level1/ahead/mag/RTN/{YYYY}/{MM}/STA_L1_MAG_RTN_{YYYY}{MM}{DD}_{V0}.cdf",
+                "version_default": {
+                    "columns": [
+                        {
+                            "alt_names": ["B_RTN", "BFIELD"],
+                            "default": true,
+                            "frame": "STAHGRTN",
+                            "indices": [0, 1, 2],
+                            "key": "BFIELD",
+                            "name": "BRTN",
+                            "valid_range": [-1e3, 1e3]
+                        },
+                        {
+                            "alt_names": ["BTOT", "B_T", "B_TOT"],
+                            "default": false,
+                            "indices": [3],
+                            "key": "BFIELD",
+                            "name": "BT",
+                            "valid_range": [-1e3, 1e3]
+                        },
+                        {
+                            "alt_names": ["F", "FLAG", "MAGFLAGUC"],
+                            "default": false,
+                            "key": "MAGFLAGUC",
+                            "name": "FLAGS"
+                        }
+                    ],
+                    "format": "nasa_cdf",
+                    "time": {
+                        "key": "Epoch"
+                    }
+                },
+                "versions": [
+                    {
+                        "identifiers": ["V06"],
+                        "version_start": "2006-11-09T00:00:00.000",
+                        "version_end": "2100-01-01T00:00:00.000"
+                    }
+                ]
             },
             "sta_plastic_l2": {
-                "alt_names": ["proton"],
-                "columns": ["epoch", "proton_number_density", "proton_bulk_speed", "proton_temperature"],
-                "format": "cdf",
+                "alt_keys": ["proton", "hplus", "sta_proton", "sta_hplus", "sta_plastic"],
                 "urls": "https://stereo-ssc.nascom.nasa.gov/data/ins_data/plastic/level2/Protons/Derived_from_1D_Maxwellian/ahead/1min/{YYYY}/STA_L2_PLA_1DMax_1min_{YYYY}{MM}{DD}_{V0}.cdf",
+                "version_default": {
+                    "columns": [
+                        {
+                            "alt_names": ["proton_density", "hplus_density"],
+                            "default": true,
+                            "key": "proton_number_density",
+                            "name": "density",
+                            "valid_range": [1, 1e6]
+                        },
+                        {
+                            "alt_names": ["proton_speed", "hplus_speed"],
+                            "default": true,
+                            "key": "proton_bulk_speed",
+                            "name": "speed",
+                            "valid_range": [1, 1e6]
+                        },
+                        {
+                            "alt_names": ["proton_temp", "proton_temperature", "hplus_temp", "hplus_temperature"],
+                            "default": true,
+                            "key": "proton_temperature",
+                            "name": "temperature",
+                            "valid_range": [1, 1e6]
+                        }
+                    ],
+                    "format": "nasa_cdf",
+                    "time": {
+                        "key": "Epoch"
+                    }
+                },
                 "versions": [
                     {
+                        "identifiers": ["V09"],
                         "version_start": "2006-11-09T00:00:00.000",
-                        "version_end": "2014-12-18T00:00:00.000",
-                        "identifiers": ["V09"]
+                        "version_end": "2014-12-18T00:00:00.000"
                     },
                     {
+                        "identifiers": ["V11"],
                         "version_start": "2015-07-20T00:00:00.000",
-                        "version_end": "2100-01-01T00:00:00.000",
-                        "identifiers": ["V11"]
+                        "version_end": "2100-01-01T00:00:00.000"                 
                     }
-                ],
-                "values": [-1e1, 1e3]
-            },
-            "sta_impact_beacon": {
-                "alt_names": ["mag_beacon"],
-                "columns": ["Epoch_MAG", "MAGBField:3"],
-                "format": "cdf",
-                "frame": "STAHGRTN",
-                "urls": "https://stereo-ssc.nascom.nasa.gov/data/beacon/ahead/impact/{YYYY}/{MM}/STA_LB_IMPACT_{YYYY}{MM}{DD}_{V0}.cdf",
-                "versions": [
-                    {
-                        "version_start": "2006-11-09T00:00:00.000",
-                        "version_end": "2007-06-27T00:00:00.000",
-                        "identifiers": ["V01"]
-                    },
-                    {
-                        "version_start": "2007-06-27T00:00:00.000",
-                        "version_end": "2100-01-01T00:00:00.000",
-                        "identifiers": ["V02"]
-                    }
-                ],
-                "values": [-1e3, 1e3]
-            },
-            "sta_plastic_beacon": {
-                "alt_names": ["proton_beacon"],
-                "columns": ["Epoch1", "Density", "Temperature_Inst"],
-                "format": "cdf",
-                "urls": "https://stereo-ssc.nascom.nasa.gov/data/beacon/ahead/plastic/{YYYY}/{MM}/STA_LB_PLASTIC_{YYYY}{MM}{DD}_{V0}.cdf",
-                "versions": [
-                    {
-                        "version_start": "2006-11-09T00:00:00.000",
-                        "version_end": "2007-05-21T00:00:00.000",
-                        "identifiers": ["V06"]
-                    },
-                    {
-                        "version_start": "2007-05-21T00:00:00.000",
-                        "version_end": "2007-09-19T00:00:00.000",
-                        "identifiers": ["V07"]
-                    },
-                    {
-                        "version_start": "2007-09-19T00:00:00.000",
-                        "version_end": "2009-09-17T00:00:00.000",
-                        "identifiers": ["V08"]
-                    },
-                    {
-                        "version_start": "2009-09-17T00:00:00.000",
-                        "version_end": "2011-01-01T00:00:00.000",
-                        "identifiers": ["V09"]
-                    },
-                    {
-                        "version_start": "2011-01-01T00:00:00.000",
-                        "version_end": "2014-05-01T00:00:00.000",
-                        "identifiers": ["V10"]
-                    },
-                    {
-                        "version_start": "2014-05-01T00:00:00.000",
-                        "version_end": "2017-09-03T00:00:00.000",
-                        "identifiers": ["V11"]
-                    },
-                    {
-                        "version_start": "2017-09-03T00:00:00.000",
-                        "version_end": "2100-01-01T00:00:00.000",
-                        "identifiers": ["V12"]
-                    }
-                ],
-                "values": [-1e1, 1e3]
+                ]
             }
-        },
-        "mission_start": "2006-11-09T00:00:00.000"
+        }
     },
     "stereo_behind": {
         "kernel_group": "stereo",
-        "data": {
+        "data_keys": {
             "stb_impact_l1": {
-                "alt_names": ["mag"],
-                "columns": ["Epoch", "BFIELD:3"],
-                "format": "cdf",
-                "frame": "STBHGRTN",
-                "urls": "https://stereo-ssc.nascom.nasa.gov/data/ins_data/impact/level1/behind/mag/RTN/{YYYY}/{MM}/STB_L1_MAG_RTN_{YYYY}{MM}{DD}_V06.cdf",
-                "values": [-1e3, 1e3]
+                "alt_keys": ["mag", "stb_mag", "stb_impact"],
+                "urls": "https://stereo-ssc.nascom.nasa.gov/data/ins_data/impact/level1/behind/mag/RTN/{YYYY}/{MM}/STB_L1_MAG_RTN_{YYYY}{MM}{DD}_{V0}.cdf",
+                "version_default": {
+                    "columns": [
+                        {
+                            "alt_names": ["B_RTN", "BFIELD"],
+                            "default": true,
+                            "frame": "STBHGRTN",
+                            "indices": [0, 1, 2],
+                            "key": "BFIELD",
+                            "name": "BRTN",
+                            "valid_range": [-1e3, 1e3]
+                        },
+                        {
+                            "alt_names": ["BTOT", "B_T", "B_TOT"],
+                            "default": false,
+                            "indices": [3],
+                            "key": "BFIELD",
+                            "name": "BT",
+                            "valid_range": [-1e3, 1e3]
+                        },
+                        {
+                            "alt_names": ["F", "FLAG", "MAGFLAGUC"],
+                            "default": false,
+                            "key": "MAGFLAGUC",
+                            "name": "FLAGS"
+                        }
+                    ],
+                    "format": "nasa_cdf",
+                    "time": {
+                        "key": "Epoch"
+                    }
+                },
+                "versions": [
+                    {
+                        "identifiers": ["V06"],
+                        "version_start": "2006-11-09T00:00:00.000",
+                        "version_end": "2014-09-26T00:00:00.000"
+                    }
+                ]
             },
             "stb_plastic_l2": {
-                "alt_names": ["proton"],
-                "columns": ["epoch", "proton_number_density", "proton_bulk_speed", "proton_temperature"],
-                "format": "cdf",
-                "urls": "https://stereo-ssc.nascom.nasa.gov/data/ins_data/plastic/level2/Protons/Derived_from_1D_Maxwellian/behind/1min/{YYYY}/STB_L2_PLA_1DMax_1min_{YYYY}{MM}{DD}_V09.cdf",
-                "values": [-1e1, 1e3]
-            },
-            "stb_impact_beacon": {
-                "alt_names": ["mag_beacon"],
-                "columns": ["Epoch_MAG", "MAGBField:3"],
-                "format": "cdf",
-                "frame": "STBHGRTN",
-                "urls": "https://stereo-ssc.nascom.nasa.gov/data/beacon/behind/impact/{YYYY}/{MM}/STB_LB_IMPACT_{YYYY}{MM}{DD}_{V0}.cdf",
+                "alt_keys": ["proton", "hplus", "stb_proton", "stb_hplus", "stb_plastic"],
+                "urls": "https://stereo-ssc.nascom.nasa.gov/data/ins_data/plastic/level2/Protons/Derived_from_1D_Maxwellian/behind/1min/{YYYY}/STB_L2_PLA_1DMax_1min_{YYYY}{MM}{DD}_{V0}.cdf",
+                "version_default": {
+                    "columns": [
+                        {
+                            "alt_names": ["proton_density", "hplus_density"],
+                            "default": true,
+                            "key": "proton_number_density",
+                            "name": "density",
+                            "valid_range": [1, 1e6]
+                        },
+                        {
+                            "alt_names": ["proton_speed", "hplus_speed"],
+                            "default": true,
+                            "key": "proton_bulk_speed",
+                            "name": "speed",
+                            "valid_range": [1, 1e6]
+                        },
+                        {
+                            "alt_names": ["proton_temp", "proton_temperature", "hplus_temp", "hplus_temperature"],
+                            "default": true,
+                            "key": "proton_temperature",
+                            "name": "temperature",
+                            "valid_range": [1, 1e6]
+                        }
+                    ],
+                    "format": "nasa_cdf",
+                    "time": {
+                        "key": "Epoch"
+                    }
+                },
                 "versions": [
                     {
+                        "identifiers": ["V09"],
                         "version_start": "2006-11-09T00:00:00.000",
-                        "version_end": "2007-06-27T00:00:00.000",
-                        "identifiers": ["V01"]
-                    },
-                    {
-                        "version_start": "2007-06-27T00:00:00.000",
-                        "version_end": "2014-09-26T00:00:00.000",
-                        "identifiers": ["V02"]
+                        "version_end": "2014-09-26T00:00:00.000"
                     }
-                ],
-                "values": [-1e3, 1e3]
-            },
-            "stb_plastic_beacon": {
-                "alt_names": ["proton_beacon"],
-                "columns": ["Epoch1", "Density", "Temperature_Inst"],
-                "format": "cdf",
-                "urls": "https://stereo-ssc.nascom.nasa.gov/data/beacon/behind/plastic/{YYYY}/{MM}/STB_LB_PLASTIC_{YYYY}{MM}{DD}_{V0}.cdf",
-                "versions": [
-                    {
-                        "version_start": "2006-11-09T00:00:00.000",
-                        "version_end": "2007-05-21T00:00:00.000",
-                        "identifiers": ["V06"]
-                    },
-                    {
-                        "version_start": "2007-05-21T00:00:00.000",
-                        "version_end": "2007-09-19T00:00:00.000",
-                        "identifiers": ["V07"]
-                    },
-                    {
-                        "version_start": "2007-09-19T00:00:00.000",
-                        "version_end": "2009-09-17T00:00:00.000",
-                        "identifiers": ["V08"]
-                    },
-                    {
-                        "version_start": "2009-09-17T00:00:00.000",
-                        "version_end": "2011-01-01T00:00:00.000",
-                        "identifiers": ["V09"]
-                    },
-                    {
-                        "version_start": "2011-01-01T00:00:00.000",
-                        "version_end": "2014-05-01T00:00:00.000",
-                        "identifiers": ["V10"]
-                    },
-                    {
-                        "version_start": "2014-05-01T00:00:00.000",
-                        "version_end": "2017-09-03T00:00:00.000",
-                        "identifiers": ["V11"]
-                    },
-                    {
-                        "version_start": "2017-09-03T00:00:00.000",
-                        "version_end": "2100-01-01T00:00:00.000",
-                        "identifiers": ["V12"]
-                    }
-                ],
-                "values": [-1e1, 1e3]
+                ]
             }
-        },
-        "mission_start": "2006-11-09T00:00:00.000",
-        "mission_end": "2014-09-26T00:00:00.000"
+        }
     },
     "venus_express": {
         "kernel_group": "venus_express",
-        "data": {
+        "data_keys": {
             "vex_mag": {
-                "alt_names": ["mag"],
-                "columns": [0, 1, 2, 3],
-                "format": "pds3",
-                "frame": "VSO",
+                "alt_keys": ["mag"],
                 "urls": "ftp://psa.esac.esa.int/pub/mirror/VENUS-EXPRESS/MAG/VEX-V-Y-MAG-4-{V0}V1.0/DATA/ORB{YYYY}{MM}_S004/MAG_{YYYY}{MM}{DD}_DOY{DOY}_S004_V1.TAB",
-                "skip_rows": 228,
-                "time_format_type": "string",
-                "time_format": "%Y-%m-%dT%H:%M:%S.%f",
+                "version_default": {
+                    "columns": [
+                        {
+                            "alt_names": ["B_VSO", "BFIELD"],
+                            "default": true,
+                            "frame": "VSO",
+                            "indices": [1, 2, 3],
+                            "name": "BVSO",
+                            "valid_range": [-1e3, 1e3]
+                        }
+                    ],
+                    "format": "text",
+                    "skip_rows": 228,
+                    "time": {
+                        "index": 0,
+                        "format": "%Y-%m-%dT%H:%M:%S.%f"
+                    }
+                },
                 "versions": [
                     {
                         "version_start": "2006-05-15T00:00:00.000",
-                        "version_end": "2007-10-04T00:00:00.000",
-                        "identifiers": [""]
+                        "version_end": "2007-10-04T00:00:00.000"
+                        
                     },
                     {
+                        "identifiers": ["EXT1-"],
                         "version_start": "2007-10-04T00:00:00.000",
-                        "version_end": "2009-06-01T00:00:00.000",
-                        "identifiers": ["EXT1-"]
+                        "version_end": "2009-06-01T00:00:00.000"
+                        
                     },
                     {
+                        "identifiers": ["EXT2-"],
                         "version_start": "2009-06-01T00:00:00.000",
-                        "version_end": "2010-08-22T00:00:00.000",
-                        "identifiers": ["EXT2-"]
+                        "version_end": "2010-08-22T00:00:00.000"
                     },
                     {
+                        "identifiers": ["EXT3-"],
                         "version_start": "2010-08-22T00:00:00.000",
-                        "version_end": "2012-12-29T00:00:00.000",
-                        "identifiers": ["EXT3-"]
+                        "version_end": "2012-12-29T00:00:00.000"
                     },
                     {
+                        "identifiers": ["EXT4-"],
                         "version_start": "2012-12-29T00:00:00.000",
-                        "version_end": "2014-11-26T00:00:00.000",
-                        "identifiers": ["EXT4-"]
+                        "version_end": "2014-11-26T00:00:00.000"
                     }
-                ],
-                "values": [-1e3, 1e3]
+                ]
             }
-        },
-        "mission_start": "2006-05-15T00:00:00.000",
-        "mission_end": "2014-11-26T00:00:00.000"        
+        }    
     },
     "wind": {
-        "data": {
+        "data_keys": {
             "wind_mfi_h0": {
-                "alt_names": ["mfi_h0", "mag"],
-                "columns": ["Epoch3", "B3GSE"],
-                "format": "cdf",
-                "frame": "GSE",
+                "alt_keys": ["mfi_h0", "mag"],
                 "urls": "https://spdf.gsfc.nasa.gov/pub/data/wind/mfi/mfi_h0/{YYYY}/wi_h0_mfi_{YYYY}{MM}{DD}_{V0}.cdf",
+                "version_default": {
+                    "columns": [
+                        {
+                            "alt_names": ["B_GSE", "BFIELD"],
+                            "default": true,
+                            "frame": "GSE",
+                            "indices": [0, 1, 2],
+                            "key": "B3GSE",
+                            "name": "BGSE",
+                            "valid_range": [-1e3, 1e3]
+                        }
+                    ],
+                    "format": "nasa_cdf",
+                    "time": {
+                        "key": "Epoch"
+                    }
+                },
+                "versions": [
+                    {
+                        "identifiers": ["v05"],
+                        "version_start": "1995-01-01T00:00:00.000",
+                        "version_end": "2019-01-01T00:00:00.000"
+                    },
+                    {
+                        "identifiers": ["v04"],
+                        "version_start": "2019-01-01T00:00:00.000",
+                        "version_end": "2100-01-01T00:00:00.000"
+                    }
+                ]
+            },
+            "wind_swe_h1": {
+                "alt_keys": ["swe_h1", "proton"],
+                "urls": "https://spdf.gsfc.nasa.gov/pub/data/wind/swe/swe_h1/{YYYY}/wi_h1_swe_{YYYY}{MM}{DD}_v01.cdf",
+                "version_default": {
+                    "columns": [
+                        {
+                            "alt_names": ["proton_density", "hplus_density"],
+                            "default": true,
+                            "key": "Proton_Np_moment",
+                            "name": "density",
+                            "valid_range": [1, 1e6]
+                        },
+                        {
+                            "alt_names": ["proton_speed", "hplus_speed"],
+                            "default": true,
+                            "key": "Proton_V_moment",
+                            "name": "speed",
+                            "valid_range": [1, 1e6]
+                        },
+                        {
+                            "alt_names": ["proton_temp", "proton_temperature", "hplus_temp", "hplus_temperature"],
+                            "default": true,
+                            "key": "Proton_W_moment",
+                            "name": "temperature",
+                            "valid_range": [1, 1e6]
+                        }
+                    ],
+                    "format": "nasa_cdf",
+                    "time": {
+                        "key": "Epoch"
+                    }
+                },
                 "versions": [
                     {
                         "version_start": "1995-01-01T00:00:00.000",
-                        "version_end": "2019-01-01T00:00:00.000",
-                        "identifiers": ["v05"]
-                    },
-                    {
-                        "version_start": "2019-01-01T00:00:00.000",
-                        "version_end": "2020-01-01T00:00:00.000",
-                        "identifiers": ["v04"]
+                        "version_end": "2100-01-01T00:00:00.000"
                     }
-                ],
-                "values": [-1e3, 1e3]
-            },
-            "wind_swe_h1": {
-                "alt_names": ["swe_h1", "proton"],
-                "columns": ["Epoch", "Proton_Np_moment", "Proton_V_moment", "Proton_W_moment"],
-                "format": "cdf",
-                "urls": "https://spdf.gsfc.nasa.gov/pub/data/wind/swe/swe_h1/{YYYY}/wi_h1_swe_{YYYY}{MM}{DD}_v01.cdf",
-                "values": [-1e1, 1e3]
+                ]
             }
-        },
-        "mission_start": "1995-01-01T00:00:00.000"
+        }
     }
 }

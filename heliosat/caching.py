@@ -1,24 +1,25 @@
 # -*- coding: utf-8 -*-
 
-"""smoothing.py
+"""caching.py
 
-Implements simple file caching functionality.
+Implements simple caching functionality.
 
-All cached files are stored in the a single cache folder located at either ~/.heliosat/cache or
-$HELIOSAT_DATAPATH/cache if the environment variable is set.
+All cached files are stored in a single folder located at either ~/.heliosat/cache or
+$HELIOSAT_DATAPATH/cache if the environment variable is set. The required disk space can grow to be
+very large if used extensively, but the folder can be deleted manually if required without the loss
+of any functionality.
 """
 
 import hashlib
+import heliosat
 import json
 import logging
 import os
 import pickle
 
-import heliosat
-
 
 def generate_cache_key(identifiers):
-    """Generate SHA256 digest from identifiers dictionary which acts as key for cached data.
+    """Generate SHA256 digest from the dictionary which acts as key for cached data.
 
     Parameters
     ----------
@@ -37,7 +38,7 @@ def generate_cache_key(identifiers):
 
 
 def delete_cache_entry(key):
-    """Delete cached entry belonging to specified key.
+    """Delete cache entry belonging to specified key.
 
     Parameters
     ----------
@@ -103,7 +104,7 @@ def cache_entry_exists(key):
     Returns
     -------
     bool
-        If key exists.
+        Flag if key exists.
     """
     cache_path = heliosat._paths["cache"]
 
@@ -111,7 +112,7 @@ def cache_entry_exists(key):
 
 
 def set_cache_entry(key, obj):
-    """Store data in cache using specified key.
+    """Store data in cache using the specified key.
 
     Parameters
     ----------

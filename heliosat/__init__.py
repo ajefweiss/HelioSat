@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from .spacecraft import DSCOVR, MES, PSP, STA, STB, VEX, WIND  # noqa: F401
+from .spacecrafts import DSCOVR, MES, PSP, STA, STB, VEX, WIND  # noqa: F401
 from .spice import SpiceObject as _SpiceObject
 from .util import get_heliosat_paths
 
@@ -8,7 +8,7 @@ from .util import get_heliosat_paths
 __author__ = "Andreas J. Weiss"
 __copyright__ = "Copyright (C) 2019 Andreas J. Weiss"
 __license__ = "MIT"
-__version__ = "0.3.1"
+__version__ = "0.4.0"
 
 _paths = get_heliosat_paths()
 _spice = None

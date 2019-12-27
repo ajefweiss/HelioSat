@@ -2,7 +2,8 @@
 
 """spacecraft.py
 
-Implements the Spacecraft base class and all spacecraft classes.
+Implements the Spacecraft base class. All implemented spacecraft classes inherit from the base
+Spacecraft class which defines basic data handling routines.
 """
 
 import cdflib
@@ -15,16 +16,16 @@ import multiprocessing
 import numpy as np
 import os
 import shutil
-import spiceypy
 
-from netCDF4 import Dataset
-
+from concurrent.futures import ProcessPoolExecutor
 from heliosat.caching import generate_cache_key, get_cache_entry, cache_entry_exists, \
     set_cache_entry
 from heliosat.download import download_files
 from heliosat.smoothing import smooth_data
 from heliosat.spice import SpiceObject, spice_load, transform_frame
-from heliosat.util import string_to_datetime, urls_build, urls_resolve
+from heliosat.util import datetime_to_string, string_to_datetime, urls_resolve
+from netCDF4 import Dataset
+from itertools import compress
 
 
 class Spacecraft(SpiceObject):
@@ -33,19 +34,23 @@ class Spacecraft(SpiceObject):
     spacecraft = None
 
     def __init__(self, name, body_name, **kwargs):
-        """Summary
+        """Initialize Spacecraft object. This just fetches the spacecraft.json entry and loads any
+        spacecraft specific SPICE kernels.
 
         Parameters
         ----------
         name : str
             Spacecraft name as defined in the spacecraft.json file.
         body_name : str
-            SPICE body name assosicated with the given spacecraft.
+            SPICE body name assosicated with the given spacecraft. In some cases a different body
+            is given with a similar orbital trajectory (e.g. Earth for DSCOVR/Wind).
 
         Other Parameters
         ----------------
         kernel_group: str
             Spacecraft kernel group as defined in the spacecraft.json file, by default None.
+        skip_download: bool
+            Skip kernel downloads (requires kernels to exist locally), by default False.
 
         Raises
         ------
@@ -72,7 +77,8 @@ class Spacecraft(SpiceObject):
             raise NotImplementedError("spacecraft \"%s\" is not implemented", name)
 
         if kwargs.get("kernel_group", None) is None and self.spacecraft.get("kernel_group", None):
-            spice_load(self.spacecraft["kernel_group"])
+            spice_load(self.spacecraft["kernel_group"],
+                       skip_download=kwargs.get("skip_download", False))
 
     def get_data(self, t, data_key, **kwargs):
         """Get processed data for type "data_key" at specified datetimes t.
@@ -90,17 +96,17 @@ class Spacecraft(SpiceObject):
             Cache data, by default False.
         cache_raw: bool
             Store raw data files, by default False.
-        extra_columns: str
-            Read extra columns from data files, by default None.
+        columns: list[str]
+            Read columns instead of default, by default None.
+        extra_columns: list[str]
+            Read extra columns ontop of default, by default None.
         frame: str
             Data reference frame, by default None.
-        frame_interval: float
-            For large data arrays, evaluate reference frame every "frame_interval" seconds,
-            by defautl None.
-        remove_nans: bool
-            Remove NaN values from data array, by default False.
+        frame_cadence: float
+            Evaluate frame transformation matrix every "frame_cadence" seconds instead of at very
+            time point (significant speed up).
         return_datetimes: bool
-            Return datetimes instead of timestamps , by default False.
+            Return datetimes instead of timestamps, by default False.
         smoothing: str
             Smoothing method, by default None.
         smoothing_scale: float
@@ -110,11 +116,6 @@ class Spacecraft(SpiceObject):
         -------
         (list[float], np.ndarray)
             Evaluation datetimes as timestamps & processed data array.
-
-        Raises
-        ------
-        KeyError
-            If frame is specified but data has no associated frame.
         """
         logger = logging.getLogger(__name__)
 
@@ -128,20 +129,13 @@ class Spacecraft(SpiceObject):
 
         identifiers.update(kwargs)
 
-        cache = kwargs.pop("cache", False)
-        frame = kwargs.pop("frame", None)
-        frame_interval = kwargs.pop("frame_interval", None)
-        remove_nans = kwargs.pop("remove_nans", False)
+        # clean up kwargs so it can be passed on to get_data_raw
+        cache = kwargs.get("cache", False)
         return_datetimes = kwargs.pop("return_datetimes", False)
         smoothing = kwargs.get("smoothing", None)
 
-        smoothing_dict = {"smoothing": smoothing}
-        for key in dict(kwargs):
-            if "smoothing" in key:
-                smoothing_dict[key] = kwargs.pop(key)
-
-        # fetch cached entry if selected and available
         if cache:
+            # fetch cached entry
             cache_key = generate_cache_key(identifiers)
 
             if cache_entry_exists(cache_key):
@@ -150,27 +144,23 @@ class Spacecraft(SpiceObject):
         time, data = self.get_data_raw(t[0], t[-1], data_key, **kwargs)
 
         if smoothing:
+            # smooth data
+            # all parameters that include "smoothing" are passed onto the smoothing function
+            smoothing_dict = {"smoothing": smoothing}
+
+            for key in dict(kwargs):
+                if "smoothing" in key:
+                    smoothing_dict[key] = kwargs.pop(key)
+
             time, data = smooth_data(t, time, data, **smoothing_dict)
-
-        # remove NaN's which may persist after smoothing
-        if remove_nans:
-            nan_mask = np.invert(np.isnan(data[:, 0]))
-            time = time[nan_mask]
-            data = data[nan_mask]
-
-        if frame and "frame" in self.spacecraft["data"][data_key]:
-            data = transform_frame(time, data, self.spacecraft["data"][data_key]["frame"], frame,
-                                   frame_interval=frame_interval)
-        elif frame and not self.spacecraft["data"][data_key].get("frame"):
-            logger.exception("no reference frame defined for data_key \"%s\"", data_key)
-            raise KeyError("no reference frame defined for data_key \"%s\"", data_key)
-
-        if cache and not cache_entry_exists(cache_key):
-            logger.info("generating cache entry \"%s\"", cache_key)
-            set_cache_entry(cache_key, (time, data))
 
         if return_datetimes:
             time = [datetime.datetime.fromtimestamp(_ts) for _ts in time]
+
+        if cache and not cache_entry_exists(cache_key):
+            # save cache entry
+            logger.info("generating cache entry \"%s\"", cache_key)
+            set_cache_entry(cache_key, (time, data))
 
         return time, data
 
@@ -189,9 +179,16 @@ class Spacecraft(SpiceObject):
         Other Parameters
         ----------------
         cache_raw: bool
-            Store raw data files, by default False.
-        extra_columns: str
-            Read extra columns from data files, by default None.
+            Store raw data files, by default True.
+        columns: list[str]
+            Read columns instead of default, by default None.
+        extra_columns: list[str]
+            Read extra columns ontop of default, by default None.
+        frame: str
+            Data reference frame, by default None.
+        frame_cadence: float
+            Evaluate frame transformation matrix every "frame_cadence" seconds instead of at very
+            time point (significant speed up).
 
         Returns
         -------
@@ -207,53 +204,42 @@ class Spacecraft(SpiceObject):
 
         data_key = self.resolve_data_key(data_key)
 
-        raw_files = self.get_data_files(range_start, range_end, data_key)
+        frame = kwargs.get("frame", None)
+        frame_cadence = kwargs.get("frame_cadence", None)
+
+        files, file_versions = self.get_data_files(range_start, range_end, data_key)
 
         logger.info("using %s files to generate "
-                    "data in between %s - %s", len(raw_files), range_start, range_end)
+                    "data in between %s - %s", len(files), range_start, range_end)
 
-        pool = multiprocessing.Pool(processes=min(multiprocessing.cpu_count() * 2, len(raw_files)))
+        max_workers = min(multiprocessing.cpu_count() * 2, len(files))
 
-        kwargs_read = dict(self.spacecraft["data"][data_key])
+        # setup columns, ~ is a placeholder for the default columns
+        columns = kwargs.get("columns", ["~"])
+        columns.extend(kwargs.get("extra_columns", []))
 
-        if "extra_columns" in kwargs:
-            kwargs_read["columns"].extend(kwargs["extra_columns"])
+        kernels = heliosat._spice["kernels_loaded"]
 
-        results = pool.starmap(read_file, [(raw_files[i], range_start, range_end,
-                                            kwargs_read)
-                                           for i in range(len(raw_files))])
+        with ProcessPoolExecutor(max_workers=max_workers) as executor:
+            args = [(files[i], file_versions[i], range_start, range_end, columns, frame,
+                     frame_cadence, kernels)
+                    for i in range(len(files))]
 
-        i = 0
-        while True:
-            if results[i][0] is None:
-                results.pop(i)
-                i = i - 1
+            futures = executor.map(read_task, args)
 
-            i += 1
+        results = [_ for _ in futures]
 
-            if i >= len(results):
-                break
-
-        # concatenate data
-        lengths = [len(result[0]) for result in results]
-        columns = len(results[0][1][0])
-
-        time = np.empty(sum(lengths), dtype=np.float64)
-        data = np.empty((sum(lengths), columns), dtype=np.float32)
-
-        for i in range(0, len(results)):
-            if len(results[i][0]) > 0:
-                time[sum(lengths[:i]):sum(lengths[:i + 1])] = results[i][0]
-                data[sum(lengths[:i]):sum(lengths[:i + 1])] = results[i][1]
+        time_all = np.concatenate([_[0] for _ in results])
+        data_all = np.concatenate([_[1] for _ in results])
 
         # delete raw data files if required (must be explicitly set)
         if not kwargs.get("cache_raw", True):
-            for file in raw_files:
+            for file in files:
                 os.remove(file)
 
-        return time, data
+        return time_all, data_all
 
-    def get_data_files(self, range_start, range_end, data_key):
+    def get_data_files(self, range_start, range_end, data_key, return_versions=False):
         """Get raw data file paths for type "data_key" within specified time range.
 
         Parameters
@@ -264,6 +250,8 @@ class Spacecraft(SpiceObject):
             Time range end datetime.
         data_key : str
             Data key.
+        return_versions : bool
+            Return file version information (as list index).
 
         Returns
         -------
@@ -272,21 +260,51 @@ class Spacecraft(SpiceObject):
         """
         logger = logging.getLogger(__name__)
 
-        if range_start < self.mission_start or range_end > self.mission_end:
-            logger.exception("invalid time range (must be within %s - %s)",
-                             string_to_datetime(self.mission_start),
-                             string_to_datetime(self.mission_end))
-            raise ValueError("invalid time range (must be within %s - %s)",
-                             string_to_datetime(self.mission_start),
-                             string_to_datetime(self.mission_end))
-
+        data_key = self.resolve_data_key(data_key)
         data_path = os.path.join(heliosat._paths["data"], data_key)
 
-        urls = urls_build(self.spacecraft["data"][data_key]["urls"], range_start, range_end,
-                          versions=self.spacecraft["data"][data_key].get("versions", None))
+        urls = []
+        versions = []
+
+        # adjust ranges slightly
+        range_start -= datetime.timedelta(hours=range_start.hour, minutes=range_start.minute,
+                                          seconds=range_start.second)
+        if range_end.hour == 0 and range_end.minute == 0 and range_end.second == 0:
+            range_end -= datetime.timedelta(seconds=1)
+
+        # build url for each day in range (this assumes all files are daily)
+        for day in [range_start + datetime.timedelta(days=i)
+                    for i in range((range_end - range_start).days + 1)]:
+            url = self.spacecraft["data_keys"][data_key]["urls"]
+
+            url = url.replace("{YYYY}", str(day.year))
+            url = url.replace("{YY}", "{0:02d}".format(day.year % 100))
+            url = url.replace("{MM}", "{:02d}".format(day.month))
+            url = url.replace("{MONTH}", day.strftime("%B")[:3].upper())
+            url = url.replace("{DD}", "{:02d}".format(day.day))
+            url = url.replace("{DOY}", "{:03d}".format(day.timetuple().tm_yday))
+
+            doym1 = datetime.datetime(day.year, day.month, 1)
+
+            if day.month == 12:
+                doym2 = datetime.datetime(day.year + 1, 1, 1) - datetime.timedelta(days=1)
+            else:
+                doym2 = datetime.datetime(day.year, day.month + 1, 1) - datetime.timedelta(days=1)
+
+            url = url.replace("{DOYM1}", "{:03d}".format(doym1.timetuple().tm_yday))
+            url = url.replace("{DOYM2}", "{:03d}".format(doym2.timetuple().tm_yday))
+
+            # insert version if required
+            version = self.get_data_version(data_key, day)
+
+            for i in range(len(version.get("identifiers", []))):
+                url = url.replace("{{V{0}}}".format(i), version["identifiers"][i])
+
+            urls.append(url)
+            versions.append(version)
 
         # resolve regex urls if required
-        if self.spacecraft["data"][data_key].get("use_regex", False):
+        if self.spacecraft["data_keys"][data_key].get("use_regex", False):
             urls = urls_resolve(urls)
 
         # some files are archives, skip the download if the extracted versions exist
@@ -303,7 +321,11 @@ class Spacecraft(SpiceObject):
                     urls.remove(url)
                     files_extracted.append(os.path.join(data_path, file))
 
-        download_files(urls, data_path, logger=logger)
+        if len(urls) > 0:
+            results = download_files(urls, data_path, logger=logger)
+            check_downloads = True
+        else:
+            check_downloads = False
 
         files = [
             os.path.join(data_path, urls[i].split("/")[-1])
@@ -322,25 +344,55 @@ class Spacecraft(SpiceObject):
                 os.remove(file)
                 files.remove(file)
                 files.append(".".join(file.split(".")[:-1]))
-            if not os.path.isfile(file):
-                files.remove(file)
 
-        return files
+        if check_downloads:
+            return list(compress(files, results)), list(compress(versions, results))
+        else:
+            return files, versions
+
+    def get_data_version(self, data_key, time):
+        """Get version information from type "data_key" at specific time.
+
+        Parameters
+        ----------
+        data_key : str
+            Data key.
+        time : datetime.datetime
+            Version time.
+
+        Returns
+        -------
+        dict
+            Version information.
+
+        Raises
+        ------
+        RuntimeError
+            If no version is defined at specified time.
+        """
+        data_key = self.resolve_data_key(data_key)
+
+        versions = self.spacecraft["data_keys"][data_key]["versions"]
+
+        ver_found = False
+
+        # get version defaults
+        selected_version = self.spacecraft["data_keys"][data_key]["version_default"]
+
+        for version in versions:
+            if string_to_datetime(version["version_start"]) <= time < \
+               string_to_datetime(version["version_end"]):
+                selected_version.update(version)
+
+                return selected_version
+
+        if not ver_found:
+            raise RuntimeError("no version found for data key \"%s\" at time %s", data_key,
+                               datetime_to_string(time))
 
     @property
     def data_keys(self):
-        return list(self.spacecraft["data"].keys())
-
-    @property
-    def mission_start(self):
-        return string_to_datetime(self.spacecraft["mission_start"])
-
-    @property
-    def mission_end(self):
-        if "mission_end" in self.spacecraft:
-            return string_to_datetime(self.spacecraft.get("mission_end"))
-        else:
-            return datetime.datetime.now()
+        return list(self.spacecraft["data_keys"].keys())
 
     def resolve_data_key(self, data_key):
         """Replace data_key with actual key in case it is an alternative name.
@@ -353,7 +405,7 @@ class Spacecraft(SpiceObject):
         Returns
         -------
         str
-            Actual data key.
+            Data key.
 
         Raises
         ------
@@ -361,11 +413,11 @@ class Spacecraft(SpiceObject):
             If invalid time range is given.
         """
         # check if data_key exists, or check for general name
-        if data_key not in self.spacecraft["data"]:
+        if data_key not in self.spacecraft["data_keys"]:
             key_resolved = False
 
-            for key in self.spacecraft["data"]:
-                alt_names = self.spacecraft["data"][key].get("alt_names", [])
+            for key in self.spacecraft["data_keys"]:
+                alt_names = self.spacecraft["data_keys"][key].get("alt_keys", [])
 
                 if data_key in alt_names:
                     data_key = key
@@ -378,51 +430,117 @@ class Spacecraft(SpiceObject):
         return data_key
 
 
-class DSCOVR(Spacecraft):
-    def __init__(self):
-        super(DSCOVR, self).__init__("dscovr", body_name="EARTH")
+def read_task(args):
+    """Wrapper for reading data files.
+
+    Parameters
+    ----------
+    args : tuple
+        Function arguments as tuple.
+
+    Returns
+    -------
+    (list[float], np.ndarray)
+        Evaluation datetimes as timestamps & processed data array.
+
+    Raises
+    ------
+    KeyError
+        If a data column is invalid.
+    NotImplementedError
+        If time format for text files is not supported.
+    """
+    (file_path, file_version, range_start, range_end, columns, frame, frame_cadence, kernels) = args
+
+    column_dicts = []
+
+    # resolve default columns
+    if columns[0] == "~":
+        default_columns = []
+
+        for column in file_version["columns"]:
+            if column.get("default", False):
+                default_columns.append(column["name"])
+
+        if len(columns) > 1:
+            default_columns.extend(columns[1:])
+
+        columns = default_columns
+
+    # resolve alternative columns and populate column_dicts
+    for i in range(len(columns)):
+        valid_column = False
+
+        for j in range(len(file_version["columns"])):
+            column = file_version["columns"][j]
+
+            if columns[i] != column["name"] and columns[i] in column["alt_names"]:
+                columns[i] = column["name"]
+                column_dicts.append(column)
+                valid_column = True
+
+                break
+            elif columns[i] == column["name"]:
+                column_dicts.append(column)
+                valid_column = True
+
+                break
+
+        if not valid_column:
+            raise KeyError("data column \"%s\" is invalid", columns[i])
+
+    if "_cdf" in file_version["format"]:
+        time, data = read_cdf_task(file_path, range_start, range_end, file_version, column_dicts,
+                                   cdf_type=file_version["format"])
+    elif file_version["format"] == "text":
+        time, data = read_text_task(file_path, range_start, range_end, file_version, column_dicts)
+    else:
+        raise NotImplementedError("format \"%s\" is not implemented", file_version["format"])
+
+    # time mask
+    time_mask = np.where((time > range_start.timestamp()) & (time < range_end.timestamp()))[0]
+
+    if len(time_mask) == 1:
+        raise NotImplementedError
+    if len(time_mask) > 1:
+        time = time[time_mask]
+
+        # process data
+        for i in range(len(data)):
+            column = column_dicts[i]
+
+            data_entry = data[i][time_mask]
+
+            # filter values outside of range
+            valid_range = column.get("valid_range", None)
+
+            if valid_range:
+                data_entry = np.where((data_entry > valid_range[0]) & (data_entry < valid_range[1]),
+                                      data_entry, np.nan)
+
+            sort_mask = np.argsort(time)
+            time = time[sort_mask]
+            data_entry = data_entry[sort_mask]
+
+            if data_entry.ndim == 1:
+                data_entry = data_entry.reshape((-1, 1))
+
+            if frame and "frame" in column and frame != column.get("frame", None):
+                heliosat.spice.spice_init()
+                heliosat.spice.spice_reload(kernels)
+
+                data_entry = transform_frame(time, data_entry, column["frame"], frame,
+                                             frame_cadence)
+
+            data[i] = data_entry
+
+        return time, np.concatenate(data, axis=1)
+    else:
+        return None, None
 
 
-class MES(Spacecraft):
-    def __init__(self):
-        super(MES, self).__init__("messenger", body_name="MESSENGER")
-
-
-class PSP(Spacecraft):
-    def __init__(self):
-        from spiceypy.utils.support_types import SpiceyError
-
-        super(PSP, self).__init__("psp", body_name="SPP")
-
-        try:
-            spiceypy.bodn2c("SPP_SPACECRAFT")
-        except SpiceyError:
-            # kernel fix
-            spiceypy.boddef("SPP_SPACECRAFT", spiceypy.bodn2c("SPP"))
-
-
-class STA(Spacecraft):
-    def __init__(self):
-        super(STA, self).__init__("stereo_ahead", body_name="STEREO AHEAD")
-
-
-class STB(Spacecraft):
-    def __init__(self):
-        super(STB, self).__init__("stereo_behind", body_name="STEREO BEHIND")
-
-
-class VEX(Spacecraft):
-    def __init__(self):
-        super(VEX, self).__init__("venus_express", body_name="VENUS EXPRESS")
-
-
-class WIND(Spacecraft):
-    def __init__(self):
-        super(WIND, self).__init__("wind", body_name="EARTH")
-
-
-def read_file(file_path, range_start, range_end, kwargs):
-    """Worker function for reading data files.
+def read_cdf_task(file_path, range_start, range_end, version_dict, column_dicts, cdf_type):
+    """Worker function for reading cdf data files.
 
     Parameters
     ----------
@@ -432,112 +550,133 @@ def read_file(file_path, range_start, range_end, kwargs):
         Time range start datetime.
     range_end : datetime.datetime
         Time range end datetime.
-    kwargs : dict
-        Additional parameters (dict as defined in spacecraft.json)
+    version_dict : dict
+        Version information.
+    column_dicts : list[dict]
+        Data column information.
+    cdf_type : str
+        CDF file type (cdf, netcdf4).
 
     Returns
     -------
-    (np.ndarray, np.ndarray)
-        Datetimes as timestamps and raw data array
+    (list[float], np.ndarray)
+        Evaluation datetimes as timestamps & processed data array.
+    """
+    time_dict = version_dict["time"]
 
-    Raises
-    ------
-    NotImplementedError
-        If data format is not supported.
-    NotImplementedError
-        If time format is not supported (pds3 format only).
+    if cdf_type == "nasa_cdf":
+        file = cdflib.CDF(file_path)
+
+        time = cdflib.epochs.CDFepoch.unixtime(file.varget(time_dict["key"]), to_np=True)
+        data = []
+
+        for column in column_dicts:
+            key = column["key"]
+
+            if isinstance(key, str):
+                indices = column.get("indices", None)
+
+                if indices is not None:
+                    indices = np.array(indices)
+                    data.append(np.array(file.varget(key)[:, indices], dtype=np.float32))
+                else:
+                    data.append(np.array(file.varget(key), dtype=np.float32))
+            elif isinstance(key, list):
+                data.append(np.stack(arrays=[np.array(file.varget(k), dtype=np.float32)
+                                             for k in key], axis=1))
+            else:
+                raise NotImplementedError
+    elif cdf_type == "net_cdf4":
+        file = Dataset(file_path, "r")
+
+        time = np.array([t / 1000 for t in file.variables[time_dict["key"]][...]])
+        data = []
+
+        for column in column_dicts:
+            key = column["key"]
+
+            if isinstance(key, str):
+                indices = column.get("indices", None)
+
+                if indices is not None:
+                    indices = np.array(indices)
+                    data.append(np.array(file[key][:, indices], dtype=np.float32))
+                else:
+                    data.append(np.array(file[key][:], dtype=np.float32))
+            elif isinstance(key, list):
+                data.append(np.stack(arrays=[np.array(file[k][:], dtype=np.float32)
+                                             for k in key], axis=1))
+            else:
+                raise NotImplementedError
+    else:
+        raise NotImplementedError("CDF type \"%s\" is not supported", cdf_type)
+
+    return time, data
+
+
+def read_text_task(file_path, range_start, range_end, version_dict, column_dicts):
+    """Worker function for reading text files.
+
+    Parameters
+    ----------
+    file_path : str
+        File path.
+    range_start : datetime.datetime
+        Time range start datetime.
+    range_end : datetime.datetime
+        Time range end datetime.
+    version_dict : dict
+        Version information.
+    column_dicts : list[dict]
+        Data column information.
+
+    Returns
+    -------
+    (list[float], np.ndarray)
+        Evaluation datetimes as timestamps & processed data array.
     """
     logger = logging.getLogger(__name__)
 
-    columns = kwargs.get("columns")
-    format = kwargs.get("format")
-    values = kwargs.get("values", None)
+    skip_rows = version_dict.get("skip_rows", 0)
 
-    if format == "cdf":
-        file = cdflib.CDF(file_path)
+    time_format = version_dict["time"]["format"]
+    time_index = version_dict["time"]["index"]
 
-        # offset between python datetimes and cdf epochs
-        time = cdflib.epochs.CDFepoch.unixtime(file.varget(columns[0]), to_np=True)
-        data = [np.array(file.varget(key.split(":")[0]), dtype=np.float32) for key in columns[1:]]
-    elif format == "netcdf":
-        file = Dataset(file_path, "r")
+    def decode(string, format):
+        if string.endswith("60.000"):
+            string = "{0}59.000".format(string[:-6])
 
-        time = np.array([t / 1000 for t in file.variables[columns[0]][...]])
-        data = [np.array(file[key][:], dtype=np.float32) for key in columns[1:]]
-    elif format == "pds3":
-        skip_rows = kwargs.get("skip_rows", 0)
-        time_format_type = kwargs.get("time_format_type", "string")
-        time_format = kwargs.get("time_format", "%Y-%m-%dT%H:%M:%S.%f")
-        time_offset = kwargs.get("time_offset", 0)
-
-        def decode_string(string, format):
-            # fix datetimes with "60" as seconds
-            if string.endswith("60.000"):
-                # TODO: fix :17 (only works for one specific format)
-                string = "{0}59.000".format(string[:17])
-
-                return datetime.datetime.strptime(string, format).timestamp() + 1
-            else:
-                return datetime.datetime.strptime(string, format).timestamp()
-
-        if time_format_type == "string":
-            file = np.loadtxt(file_path, skiprows=skip_rows, encoding="latin1",
-                              converters={0: lambda s: decode_string(s, time_format)})
-
-            time = file[:, columns[0]]
-        elif time_format_type == "timestamp":
-            file = np.loadtxt(file_path, skiprows=skip_rows)
-
-            time = file[:, columns[0]] + time_offset
+            return datetime.datetime.strptime(string, format).timestamp() + 1
         else:
-            logger.exception("time_format_type \"%s\" is not implemented", time_format_type)
-            raise NotImplementedError("time_format_type \"%s\" is not implemented",
-                                      time_format_type)
+            return datetime.datetime.strptime(string, format).timestamp()
 
-        data = [np.array(file[:, key], dtype=np.float32) for key in columns[1:]]
+    if isinstance(time_format, str):
+        file = np.loadtxt(file_path, skiprows=skip_rows, encoding="latin1",
+                          converters={0: lambda string: decode(string, time_format)})
+
+        time = file[:, time_index]
+    elif isinstance(time_format, int):
+        file = np.loadtxt(file_path, skiprows=skip_rows)
+
+        time = file[:, time_index] + time_format
     else:
-        logger.exception("format \"%s\" is not implemented", format)
-        raise NotImplementedError("format \"%s\" is not implemented", format)
+        logger.exception("time_format \"%s\" is not implemented", type(time_format))
+        raise NotImplementedError("time_format \"%s\" is not implemented", time_format)
 
-    # fix some odd shapes
-    for i in range(len(data)):
-        if data[i].ndim == 1:
-            data[i] = data[i].reshape(-1, 1)
+    data = []
 
-    # discard unneeded dimensions
-    if isinstance(columns[0], str):
-        for i in range(0, len(columns[1:])):
-            if ":" in columns[i + 1]:
-                data[i] = data[i][:, 0:int(columns[i + 1].split(":")[1])]
+    for column in column_dicts:
+        indices = column["indices"]
 
-    mask = np.where((time > range_start.timestamp()) & (time < range_end.timestamp()))[0]
+        if isinstance(indices, int):
+            indices = column.get("indices", None)
+            indices = np.array(indices)
+            data.append(np.stack([np.array(file[:, index], dtype=np.float32) for index in indices]))
 
-    if len(mask) > 1:
-        time_part = np.squeeze(time[mask])
+        elif isinstance(indices, list):
+            data.append(np.stack([np.array(file[:, index], dtype=np.float32)
+                                  for index in indices], axis=1))
+        else:
+            raise NotImplementedError
 
-        for i in range(len(data)):
-            if i == 0:
-                data_part = data[0][mask]
-            else:
-                data_part = np.hstack((data_part, data[i][mask]))
-
-        data_part = np.squeeze(data_part)
-
-        # remove values outside valid range
-        if values:
-            valid_indices = np.where(
-                np.array(data_part[:, 0] > values[0]) & np.array(data_part[:, 0] < values[1])
-            )
-
-            time_part = time_part[valid_indices]
-            data_part = data_part[valid_indices]
-
-        # sort time array
-        sort_mask = np.argsort(time_part)
-        time_part = time_part[sort_mask]
-        data_part = data_part[sort_mask]
-    else:
-        time_part = None
-        data_part = None
-
-    return time_part, data_part
+    return time, data
