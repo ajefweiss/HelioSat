@@ -37,7 +37,7 @@ class SpiceObject(object):
         kernel_group : str, optional
             SPICE kernel group name, by default None.
         skip_download: bool, optional
-            Skip kernel downloads (requires kernels to exist locally), by default False
+            Skip kernel downloads (requires kernels to exist locally), by default False.
         """
         logger = logging.getLogger(__name__)
 
@@ -84,8 +84,7 @@ class SpiceObject(object):
                 frame,
                 "NONE",
                 observer
-            )[0],
-            dtype=np.float32
+            )[0]
         )
 
         if units == "AU":
