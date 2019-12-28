@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""spacecrafts.py
+"""satellites.py
 
 Implements all spacecraft classes.
 """

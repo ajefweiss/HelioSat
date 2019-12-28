@@ -39,6 +39,7 @@ def get_heliosat_paths():
     return {
         "cache": os.path.join(root_path, "cache"),
         "data": os.path.join(root_path, "data"),
+        "helcats": os.path.join(root_path, "helcats"),
         "kernels": os.path.join(root_path, "kernels"),
         "root": root_path
     }
@@ -57,7 +58,10 @@ def string_to_datetime(time_string):
     datetime.datetime
         Datetime object.
     """
-    return datetime.datetime.strptime(time_string, "%Y-%m-%dT%H:%M:%S.%f")
+    try:
+        return datetime.datetime.strptime(time_string, "%Y-%m-%dT%H:%M:%S.%f")
+    except ValueError:
+        return datetime.datetime.strptime(time_string, "%Y-%m-%dT%H:%MZ")
 
 
 def urls_expand(urls):

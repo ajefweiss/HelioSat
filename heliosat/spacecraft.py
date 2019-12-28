@@ -148,6 +148,8 @@ class Spacecraft(SpiceObject):
             # all parameters that include "smoothing" are passed onto the smoothing function
             smoothing_dict = {"smoothing": smoothing}
 
+            logger.info("smoothing data (%s)", smoothing)
+
             for key in dict(kwargs):
                 if "smoothing" in key:
                     smoothing_dict[key] = kwargs.pop(key)
@@ -155,7 +157,13 @@ class Spacecraft(SpiceObject):
             time, data = smooth_data(t, time, data, **smoothing_dict)
 
         if return_datetimes:
-            time = [datetime.datetime.fromtimestamp(_ts) for _ts in time]
+            _time = list(time)
+
+            for i in range(len(_time)):
+                if _time[i] != np.nan:
+                    _time[i] = datetime.datetime.fromtimestamp(time[i])
+
+            time = _time
 
         if cache and not cache_entry_exists(cache_key):
             # save cache entry
@@ -578,11 +586,11 @@ def read_cdf_task(file_path, range_start, range_end, version_dict, column_dicts,
 
                 if indices is not None:
                     indices = np.array(indices)
-                    data.append(np.array(file.varget(key)[:, indices], dtype=np.float32))
+                    data.append(np.array(file.varget(key)[:, indices]))
                 else:
-                    data.append(np.array(file.varget(key), dtype=np.float32))
+                    data.append(np.array(file.varget(key)))
             elif isinstance(key, list):
-                data.append(np.stack(arrays=[np.array(file.varget(k), dtype=np.float32)
+                data.append(np.stack(arrays=[np.array(file.varget(k))
                                              for k in key], axis=1))
             else:
                 raise NotImplementedError
@@ -600,11 +608,11 @@ def read_cdf_task(file_path, range_start, range_end, version_dict, column_dicts,
 
                 if indices is not None:
                     indices = np.array(indices)
-                    data.append(np.array(file[key][:, indices], dtype=np.float32))
+                    data.append(np.array(file[key][:, indices]))
                 else:
-                    data.append(np.array(file[key][:], dtype=np.float32))
+                    data.append(np.array(file[key][:]))
             elif isinstance(key, list):
-                data.append(np.stack(arrays=[np.array(file[k][:], dtype=np.float32)
+                data.append(np.stack(arrays=[np.array(file[k][:])
                                              for k in key], axis=1))
             else:
                 raise NotImplementedError
@@ -671,10 +679,10 @@ def read_text_task(file_path, range_start, range_end, version_dict, column_dicts
         if isinstance(indices, int):
             indices = column.get("indices", None)
             indices = np.array(indices)
-            data.append(np.stack([np.array(file[:, index], dtype=np.float32) for index in indices]))
+            data.append(np.stack([np.array(file[:, index]) for index in indices]))
 
         elif isinstance(indices, list):
-            data.append(np.stack([np.array(file[:, index], dtype=np.float32)
+            data.append(np.stack([np.array(file[:, index])
                                   for index in indices], axis=1))
         else:
             raise NotImplementedError

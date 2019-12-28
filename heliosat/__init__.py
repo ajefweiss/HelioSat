@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from .spacecrafts import DSCOVR, MES, PSP, STA, STB, VEX, WIND  # noqa: F401
+from .helcats import ICMECAT_EVENT  # noqa: F401
+from .satellites import DSCOVR, MES, PSP, STA, STB, VEX, WIND  # noqa: F401
 from .spice import SpiceObject as _SpiceObject
 from .util import get_heliosat_paths
 
@@ -12,6 +13,9 @@ __version__ = "0.4.0"
 
 _paths = get_heliosat_paths()
 _spice = None
+
+# helcats integration
+_helcats = None
 
 # common solar system objects
 Sun = lambda: _SpiceObject(None, "SUN")  # noqa: E731
