@@ -263,6 +263,260 @@
                         "version_end": "2100-01-01T00:00:00.000"                 
                     }
                 ]
+            },
+            "sta_impact_beacon": {
+                "alt_keys": ["mag_beacon", "sta_mag_beacon"],
+                "urls": "https://stereo-ssc.nascom.nasa.gov/data/beacon/ahead/impact/{YYYY}/{MM}//STA_LB_IMPACT_{YYYY}{MM}{DD}_{V0}.cdf",
+                "version_default": {
+                    "columns": [
+                        {
+                            "alt_names": ["B_RTN", "BFIELD"],
+                            "default": true,
+                            "frame": "STAHGRTN",
+                            "indices": [0, 1, 2],
+                            "key": "MAGBField",
+                            "name": "BRTN",
+                            "valid_range": [-1e3, 1e3]
+                        },
+                        {
+                            "alt_names": ["BTOT", "B_T", "B_TOT"],
+                            "default": false,
+                            "indices": [3],
+                            "key": "MAGBField",
+                            "name": "BT",
+                            "valid_range": [-1e3, 1e3]
+                        }
+                    ],
+                    "format": "nasa_cdf",
+                    "time": {
+                        "key": "Epoch_MAG"
+                    }
+                },
+                "versions": [
+                    {
+                        "identifiers": ["V01"],
+                        "version_start": "2006-11-09T00:00:00.000",
+                        "version_end": "2007-06-27T00:00:00.000"
+                    },
+                    {
+                        "identifiers": ["V02"],
+                        "version_start": "2007-06-27T00:00:00.000",
+                        "version_end": "2100-01-01T00:00:00.000"
+                    }
+                ]
+            },
+            "sta_plastic_beacon": {
+                "alt_keys": ["plastic_beacon", "proton_beacon", "sta_proton_beacon"],
+                "urls": "https://stereo-ssc.nascom.nasa.gov/data/beacon/ahead/plastic/{YYYY}/{MM}//STA_LB_PLASTIC_{YYYY}{MM}{DD}_{V0}.cdf",
+                "version_default": {
+                    "columns": [
+                        {
+                            "alt_names": ["proton_density", "hplus_density"],
+                            "default": true,
+                            "key": "Density",
+                            "name": "density",
+                            "valid_range": [1, 1e6]
+                        },
+                        {
+                            "alt_names": ["proton_speed_rtn", "hplus_speed_rtn"],
+                            "default": false,
+                            "frame": "GSE",
+                            "indices": [0, 1, 2],
+                            "key": "Velocity_GSE",
+                            "name": "speed_rtn",
+                            "valid_range": [-1e6, 1e6]
+                        },
+                        {
+                            "alt_names": ["proton_speed", "hplus_speed"],
+                            "default": true,
+                            "indices": [3],
+                            "key": "Velocity_GSE",
+                            "name": "speed",
+                            "valid_range": [1, 1e6]
+                        },
+                        {
+                            "alt_names": ["proton_temp", "proton_temperature", "hplus_temp", "hplus_temperature"],
+                            "default": true,
+                            "key": "Temperature_Inst",
+                            "name": "temperature",
+                            "valid_range": [1, 1e6]
+                        }
+                    ],
+                    "format": "nasa_cdf",
+                    "time": {
+                        "key": "Epoch1"
+                    }
+                },
+                "versions": [
+                    {
+                        "identifiers": ["V06"],
+                        "version_start": "2006-11-09T00:00:00.000",
+                        "version_end": "2007-05-21T00:00:00.000"
+                        
+                    },
+                    {
+                        "identifiers": ["V07"],
+                        "version_start": "2007-05-21T00:00:00.000",
+                        "version_end": "2007-09-19T00:00:00.000"
+                    },
+                    {
+                        "identifiers": ["V08"],
+                        "version_start": "2007-09-19T00:00:00.000",
+                        "version_end": "2009-09-17T00:00:00.000"
+                    },
+                    {
+                        "columns": [
+                            {
+                                "alt_names": ["proton_density", "hplus_density"],
+                                "default": true,
+                                "key": "Density",
+                                "name": "density",
+                                "valid_range": [1, 1e6]
+                            },
+                            {
+                                "alt_names": ["proton_speed_rtn", "hplus_speed_rtn"],
+                                "default": false,
+                                "frame": "STAHGRTN",
+                                "indices": [0, 1, 2],
+                                "key": "Velocity_RTN",
+                                "name": "speed_rtn",
+                                "valid_range": [-1e6, -1e6]
+                            },
+                            {
+                                "alt_names": ["proton_speed", "hplus_speed"],
+                                "default": true,
+                                "indices": [3],
+                                "key": "Velocity_RTN",
+                                "name": "speed",
+                                "valid_range": [1, 1e6]
+                            },
+                            {
+                                "alt_names": ["proton_temp", "proton_temperature", "hplus_temp", "hplus_temperature"],
+                                "default": true,
+                                "key": "Temperature_Inst",
+                                "name": "temperature",
+                                "valid_range": [1, 1e6]
+                            }
+                        ],
+                        "identifiers": ["V09"],
+                        "version_start": "2009-09-17T00:00:00.000",
+                        "version_end": "2011-01-01T00:00:00.000"
+                    },
+                    {
+                        "columns": [
+                            {
+                                "alt_names": ["proton_density", "hplus_density"],
+                                "default": true,
+                                "key": "Density",
+                                "name": "density",
+                                "valid_range": [1, 1e6]
+                            },
+                            {
+                                "alt_names": ["proton_speed_rtn", "hplus_speed_rtn"],
+                                "default": false,
+                                "frame": "STAHGRTN",
+                                "indices": [0, 1, 2],
+                                "key": "Velocity_RTN",
+                                "name": "speed_rtn",
+                                "valid_range": [-1e6, -1e6]
+                            },
+                            {
+                                "alt_names": ["proton_speed", "hplus_speed"],
+                                "default": true,
+                                "indices": [3],
+                                "key": "Velocity_RTN",
+                                "name": "speed",
+                                "valid_range": [1, 1e6]
+                            },
+                            {
+                                "alt_names": ["proton_temp", "proton_temperature", "hplus_temp", "hplus_temperature"],
+                                "default": true,
+                                "key": "Temperature_Inst",
+                                "name": "temperature",
+                                "valid_range": [1, 1e6]
+                            }
+                        ],
+                        "identifiers": ["V10"],
+                        "version_start": "2011-01-01T00:00:00.000",
+                        "version_end": "2014-05-01T00:00:00.000"
+                    },
+                    {
+                        "columns": [
+                            {
+                                "alt_names": ["proton_density", "hplus_density"],
+                                "default": true,
+                                "key": "Density",
+                                "name": "density",
+                                "valid_range": [1, 1e6]
+                            },
+                            {
+                                "alt_names": ["proton_speed_rtn", "hplus_speed_rtn"],
+                                "default": false,
+                                "frame": "STAHGRTN",
+                                "indices": [0, 1, 2],
+                                "key": "Velocity_RTN",
+                                "name": "speed_rtn",
+                                "valid_range": [-1e6, -1e6]
+                            },
+                            {
+                                "alt_names": ["proton_speed", "hplus_speed"],
+                                "default": true,
+                                "indices": [3],
+                                "key": "Velocity_RTN",
+                                "name": "speed",
+                                "valid_range": [1, 1e6]
+                            },
+                            {
+                                "alt_names": ["proton_temp", "proton_temperature", "hplus_temp", "hplus_temperature"],
+                                "default": true,
+                                "key": "Temperature_Inst",
+                                "name": "temperature",
+                                "valid_range": [1, 1e6]
+                            }
+                        ],
+                        "identifiers": ["V11"],
+                        "version_start": "2014-05-01T00:00:00.000",
+                        "version_end": "2017-09-03T00:00:00.000"
+                    },
+                    {
+                        "columns": [
+                            {
+                                "alt_names": ["proton_density", "hplus_density"],
+                                "default": true,
+                                "key": "Density",
+                                "name": "density",
+                                "valid_range": [1, 1e6]
+                            },
+                            {
+                                "alt_names": ["proton_speed_rtn", "hplus_speed_rtn"],
+                                "default": false,
+                                "frame": "STAHGRTN",
+                                "indices": [0, 1, 2],
+                                "key": "Velocity_RTN",
+                                "name": "speed_rtn",
+                                "valid_range": [-1e6, -1e6]
+                            },
+                            {
+                                "alt_names": ["proton_speed", "hplus_speed"],
+                                "default": true,
+                                "indices": [3],
+                                "key": "Velocity_RTN",
+                                "name": "speed",
+                                "valid_range": [1, 1e6]
+                            },
+                            {
+                                "alt_names": ["proton_temp", "proton_temperature", "hplus_temp", "hplus_temperature"],
+                                "default": true,
+                                "key": "Temperature_Inst",
+                                "name": "temperature",
+                                "valid_range": [1, 1e6]
+                            }
+                        ],
+                        "identifiers": ["V12"],
+                        "version_start": "2017-09-03T00:00:00.000",
+                        "version_end": "2100-01-01T00:00:00.000"
+                    }
+                ]
             }
         }
     },
@@ -348,6 +602,222 @@
                         "identifiers": ["V09"],
                         "version_start": "2006-11-09T00:00:00.000",
                         "version_end": "2014-09-26T00:00:00.000"
+                    }
+                ]
+            },
+            "stb_impact_beacon": {
+                "alt_keys": ["mag_beacon", "stb_mag_beacon"],
+                "urls": "https://stereo-ssc.nascom.nasa.gov/data/beacon/behind/impact/{YYYY}/{MM}//STB_LB_IMPACT_{YYYY}{MM}{DD}_{V0}.cdf",
+                "version_default": {
+                    "columns": [
+                        {
+                            "alt_names": ["B_RTN", "BFIELD"],
+                            "default": true,
+                            "frame": "STBHGRTN",
+                            "indices": [0, 1, 2],
+                            "key": "MAGBField",
+                            "name": "BRTN",
+                            "valid_range": [-1e3, 1e3]
+                        },
+                        {
+                            "alt_names": ["BTOT", "B_T", "B_TOT"],
+                            "default": false,
+                            "indices": [3],
+                            "key": "MAGBField",
+                            "name": "BT",
+                            "valid_range": [-1e3, 1e3]
+                        }
+                    ],
+                    "format": "nasa_cdf",
+                    "time": {
+                        "key": "Epoch_MAG"
+                    }
+                },
+                "versions": [
+                    {
+                        "identifiers": ["V01"],
+                        "version_start": "2006-11-09T00:00:00.000",
+                        "version_end": "2007-06-27T00:00:00.000"
+                    },
+                    {
+                        "identifiers": ["V02"],
+                        "version_start": "2007-06-27T00:00:00.000",
+                        "version_end": "2100-01-01T00:00:00.000"
+                    }
+                ]
+            },
+            "stb_plastic_beacon": {
+                "alt_keys": ["plastic_beacon", "proton_beacon", "stb_proton_beacon"],
+                "urls": "https://stereo-ssc.nascom.nasa.gov/data/beacon/behind/plastic/{YYYY}/{MM}//STB_LB_PLASTIC_{YYYY}{MM}{DD}_{V0}.cdf",
+                "version_default": {
+                    "columns": [
+                        {
+                            "alt_names": ["proton_density", "hplus_density"],
+                            "default": true,
+                            "key": "Density",
+                            "name": "density",
+                            "valid_range": [1, 1e6]
+                        },
+                        {
+                            "alt_names": ["proton_speed_rtn", "hplus_speed_rtn"],
+                            "default": false,
+                            "frame": "GSE",
+                            "indices": [0, 1, 2],
+                            "key": "Velocity_GSE",
+                            "name": "speed_rtn",
+                            "valid_range": [-1e6, 1e6]
+                        },
+                        {
+                            "alt_names": ["proton_speed", "hplus_speed"],
+                            "default": true,
+                            "indices": [3],
+                            "key": "Velocity_GSE",
+                            "name": "speed",
+                            "valid_range": [1, 1e6]
+                        },
+                        {
+                            "alt_names": ["proton_temp", "proton_temperature", "hplus_temp", "hplus_temperature"],
+                            "default": true,
+                            "key": "Temperature_Inst",
+                            "name": "temperature",
+                            "valid_range": [1, 1e6]
+                        }
+                    ],
+                    "format": "nasa_cdf",
+                    "time": {
+                        "key": "Epoch1"
+                    }
+                },
+                "versions": [
+                    {
+                        "identifiers": ["V06"],
+                        "version_start": "2006-11-09T00:00:00.000",
+                        "version_end": "2007-05-21T00:00:00.000"
+                        
+                    },
+                    {
+                        "identifiers": ["V07"],
+                        "version_start": "2007-05-21T00:00:00.000",
+                        "version_end": "2007-09-19T00:00:00.000"
+                    },
+                    {
+                        "identifiers": ["V08"],
+                        "version_start": "2007-09-19T00:00:00.000",
+                        "version_end": "2009-09-17T00:00:00.000"
+                    },
+                    {
+                        "columns": [
+                            {
+                                "alt_names": ["proton_density", "hplus_density"],
+                                "default": true,
+                                "key": "Density",
+                                "name": "density",
+                                "valid_range": [1, 1e6]
+                            },
+                            {
+                                "alt_names": ["proton_speed_rtn", "hplus_speed_rtn"],
+                                "default": false,
+                                "frame": "STAHGRTN",
+                                "indices": [0, 1, 2],
+                                "key": "Velocity_RTN",
+                                "name": "speed_rtn",
+                                "valid_range": [-1e6, -1e6]
+                            },
+                            {
+                                "alt_names": ["proton_speed", "hplus_speed"],
+                                "default": true,
+                                "indices": [3],
+                                "key": "Velocity_RTN",
+                                "name": "speed",
+                                "valid_range": [1, 1e6]
+                            },
+                            {
+                                "alt_names": ["proton_temp", "proton_temperature", "hplus_temp", "hplus_temperature"],
+                                "default": true,
+                                "key": "Temperature_Inst",
+                                "name": "temperature",
+                                "valid_range": [1, 1e6]
+                            }
+                        ],
+                        "identifiers": ["V09"],
+                        "version_start": "2009-09-17T00:00:00.000",
+                        "version_end": "2011-01-01T00:00:00.000"
+                    },
+                    {
+                        "columns": [
+                            {
+                                "alt_names": ["proton_density", "hplus_density"],
+                                "default": true,
+                                "key": "Density",
+                                "name": "density",
+                                "valid_range": [1, 1e6]
+                            },
+                            {
+                                "alt_names": ["proton_speed_rtn", "hplus_speed_rtn"],
+                                "default": false,
+                                "frame": "STAHGRTN",
+                                "indices": [0, 1, 2],
+                                "key": "Velocity_RTN",
+                                "name": "speed_rtn",
+                                "valid_range": [-1e6, -1e6]
+                            },
+                            {
+                                "alt_names": ["proton_speed", "hplus_speed"],
+                                "default": true,
+                                "indices": [3],
+                                "key": "Velocity_RTN",
+                                "name": "speed",
+                                "valid_range": [1, 1e6]
+                            },
+                            {
+                                "alt_names": ["proton_temp", "proton_temperature", "hplus_temp", "hplus_temperature"],
+                                "default": true,
+                                "key": "Temperature_Inst",
+                                "name": "temperature",
+                                "valid_range": [1, 1e6]
+                            }
+                        ],
+                        "identifiers": ["V10"],
+                        "version_start": "2011-01-01T00:00:00.000",
+                        "version_end": "2014-05-01T00:00:00.000"
+                    },
+                    {
+                        "columns": [
+                            {
+                                "alt_names": ["proton_density", "hplus_density"],
+                                "default": true,
+                                "key": "Density",
+                                "name": "density",
+                                "valid_range": [1, 1e6]
+                            },
+                            {
+                                "alt_names": ["proton_speed_rtn", "hplus_speed_rtn"],
+                                "default": false,
+                                "frame": "STAHGRTN",
+                                "indices": [0, 1, 2],
+                                "key": "Velocity_RTN",
+                                "name": "speed_rtn",
+                                "valid_range": [-1e6, -1e6]
+                            },
+                            {
+                                "alt_names": ["proton_speed", "hplus_speed"],
+                                "default": true,
+                                "indices": [3],
+                                "key": "Velocity_RTN",
+                                "name": "speed",
+                                "valid_range": [1, 1e6]
+                            },
+                            {
+                                "alt_names": ["proton_temp", "proton_temperature", "hplus_temp", "hplus_temperature"],
+                                "default": true,
+                                "key": "Temperature_Inst",
+                                "name": "temperature",
+                                "valid_range": [1, 1e6]
+                            }
+                        ],
+                        "identifiers": ["V11"],
+                        "version_start": "2014-05-01T00:00:00.000",
+                        "version_end": "2017-09-03T00:00:00.000"
                     }
                 ]
             }
