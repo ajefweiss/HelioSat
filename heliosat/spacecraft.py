@@ -328,6 +328,7 @@ class Spacecraft(SpiceObject):
 
         # some files are archives, skip the download if the extracted versions exist
         files_extracted = []
+        versions_extracted = []
 
         for url in list(urls):
             if url.endswith(".gz"):
@@ -337,8 +338,14 @@ class Spacecraft(SpiceObject):
                     logger.info("skipping download for \"%s\" as extracted version already exists",
                                 url)
 
-                    urls.remove(url)
+                    # remove url & version, and append extracted file at end
+                    rindex = urls.index(url)
+
                     files_extracted.append(os.path.join(data_path, file))
+                    versions_extracted.append(versions[rindex])
+
+                    del urls[rindex]
+                    del versions[rindex]
 
         if len(urls) > 0:
             results = download_files(urls, data_path, logger=logger)
@@ -353,6 +360,7 @@ class Spacecraft(SpiceObject):
 
         # extract new archives and add old ones to the list
         files.extend(files_extracted)
+        versions.extend(versions_extracted)
 
         for file in list(files):
             if file.endswith(".gz"):
@@ -361,8 +369,8 @@ class Spacecraft(SpiceObject):
                         shutil.copyfileobj(file_gz, file_extracted)
 
                 os.remove(file)
-                files.remove(file)
-                files.append(".".join(file.split(".")[:-1]))
+                rindex = files.index(file)
+                files[rindex] = ".".join(file.split(".")[:-1])
 
         if check_downloads:
             return list(compress(files, results)), list(compress(versions, results))
@@ -396,7 +404,7 @@ class Spacecraft(SpiceObject):
         ver_found = False
 
         # get version defaults
-        selected_version = self.spacecraft["data_keys"][data_key]["version_default"]
+        selected_version = dict(self.spacecraft["data_keys"][data_key]["version_default"])
 
         for version in versions:
             if string_to_datetime(version["version_start"]) <= time < \
@@ -582,56 +590,60 @@ def read_cdf_task(file_path, range_start, range_end, version_dict, column_dicts,
         Evaluation datetimes as timestamps & processed data array.
     """
     time_dict = version_dict["time"]
+    logger = logging.getLogger(__name__)
 
-    if cdf_type == "nasa_cdf":
-        file = cdflib.CDF(file_path)
+    try:
+        if cdf_type == "nasa_cdf":
+            file = cdflib.CDF(file_path)
 
-        time = cdflib.epochs.CDFepoch.unixtime(file.varget(time_dict["key"]), to_np=True)
-        data = []
+            time = cdflib.epochs.CDFepoch.unixtime(file.varget(time_dict["key"]), to_np=True)
+            data = []
 
-        for column in column_dicts:
-            key = column["key"]
+            for column in column_dicts:
+                key = column["key"]
 
-            if isinstance(key, str):
-                indices = column.get("indices", None)
+                if isinstance(key, str):
+                    indices = column.get("indices", None)
 
-                if indices is not None:
-                    indices = np.array(indices)
-                    data.append(np.array(file.varget(key)[:, indices]))
+                    if indices is not None:
+                        indices = np.array(indices)
+                        data.append(np.array(file.varget(key)[:, indices]))
+                    else:
+                        data.append(np.array(file.varget(key)))
+                elif isinstance(key, list):
+                    data.append(np.stack(arrays=[np.array(file.varget(k))
+                                                for k in key], axis=1))
                 else:
-                    data.append(np.array(file.varget(key)))
-            elif isinstance(key, list):
-                data.append(np.stack(arrays=[np.array(file.varget(k))
-                                             for k in key], axis=1))
-            else:
-                raise NotImplementedError
-    elif cdf_type == "net_cdf4":
-        file = Dataset(file_path, "r")
+                    raise NotImplementedError
+        elif cdf_type == "net_cdf4":
+            file = Dataset(file_path, "r")
 
-        time = np.array([t / 1000 for t in file.variables[time_dict["key"]][...]])
-        data = []
+            time = np.array([t / 1000 for t in file.variables[time_dict["key"]][...]])
+            data = []
 
-        for column in column_dicts:
-            key = column["key"]
+            for column in column_dicts:
+                key = column["key"]
 
-            if isinstance(key, str):
-                indices = column.get("indices", None)
+                if isinstance(key, str):
+                    indices = column.get("indices", None)
 
-                if indices is not None:
-                    indices = np.array(indices)
-                    data.append(np.array(file[key][:, indices]))
+                    if indices is not None:
+                        indices = np.array(indices)
+                        data.append(np.array(file[key][:, indices]))
+                    else:
+                        data.append(np.array(file[key][:]))
+                elif isinstance(key, list):
+                    data.append(np.stack(arrays=[np.array(file[k][:])
+                                                for k in key], axis=1))
                 else:
-                    data.append(np.array(file[key][:]))
-            elif isinstance(key, list):
-                data.append(np.stack(arrays=[np.array(file[k][:])
-                                             for k in key], axis=1))
-            else:
-                raise NotImplementedError
-    else:
-        raise NotImplementedError("CDF type \"%s\" is not supported", cdf_type)
+                    raise NotImplementedError
+        else:
+            raise NotImplementedError("CDF type \"%s\" is not supported", cdf_type)
 
-    return time, data
-
+        return time, data
+    except Exception as err:
+        logger.error("failed to read file \"%s\" (%s)", file_path, err)
+        raise Exception
 
 def read_text_task(file_path, range_start, range_end, version_dict, column_dicts):
     """Worker function for reading text files.

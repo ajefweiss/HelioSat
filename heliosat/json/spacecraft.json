@@ -337,6 +337,7 @@
                         {
                             "alt_names": ["proton_temp", "proton_temperature", "hplus_temp", "hplus_temperature"],
                             "default": true,
+                            "indices": [2],
                             "key": "Temperature_Inst",
                             "name": "temperature",
                             "valid_range": [1, 1e6]
@@ -362,7 +363,7 @@
                     {
                         "identifiers": ["V08"],
                         "version_start": "2007-09-19T00:00:00.000",
-                        "version_end": "2009-09-17T00:00:00.000"
+                        "version_end": "2009-09-14T00:00:00.000"
                     },
                     {
                         "columns": [
@@ -399,7 +400,7 @@
                             }
                         ],
                         "identifiers": ["V09"],
-                        "version_start": "2009-09-17T00:00:00.000",
+                        "version_start": "2009-09-14T00:00:00.000",
                         "version_end": "2011-01-01T00:00:00.000"
                     },
                     {
@@ -659,12 +660,12 @@
                             "valid_range": [1, 1e6]
                         },
                         {
-                            "alt_names": ["proton_speed_rtn", "hplus_speed_rtn"],
+                            "alt_names": ["proton_velocity"],
                             "default": false,
                             "frame": "GSE",
                             "indices": [0, 1, 2],
                             "key": "Velocity_GSE",
-                            "name": "speed_rtn",
+                            "name": "velocity",
                             "valid_range": [-1e6, 1e6]
                         },
                         {
@@ -678,6 +679,7 @@
                         {
                             "alt_names": ["proton_temp", "proton_temperature", "hplus_temp", "hplus_temperature"],
                             "default": true,
+                            "indices": [2],
                             "key": "Temperature_Inst",
                             "name": "temperature",
                             "valid_range": [1, 1e6]
@@ -703,7 +705,7 @@
                     {
                         "identifiers": ["V08"],
                         "version_start": "2007-09-19T00:00:00.000",
-                        "version_end": "2009-09-17T00:00:00.000"
+                        "version_end": "2009-09-14T00:00:00.000"
                     },
                     {
                         "columns": [
@@ -715,12 +717,12 @@
                                 "valid_range": [1, 1e6]
                             },
                             {
-                                "alt_names": ["proton_speed_rtn", "hplus_speed_rtn"],
+                                "alt_names": ["proton_velocity"],
                                 "default": false,
                                 "frame": "STAHGRTN",
                                 "indices": [0, 1, 2],
                                 "key": "Velocity_RTN",
-                                "name": "speed_rtn",
+                                "name": "velocity",
                                 "valid_range": [-1e6, -1e6]
                             },
                             {
@@ -740,7 +742,7 @@
                             }
                         ],
                         "identifiers": ["V09"],
-                        "version_start": "2009-09-17T00:00:00.000",
+                        "version_start": "2009-09-14T00:00:00.000",
                         "version_end": "2011-01-01T00:00:00.000"
                     },
                     {
@@ -753,12 +755,12 @@
                                 "valid_range": [1, 1e6]
                             },
                             {
-                                "alt_names": ["proton_speed_rtn", "hplus_speed_rtn"],
+                                "alt_names": ["proton_velocity"],
                                 "default": false,
                                 "frame": "STAHGRTN",
                                 "indices": [0, 1, 2],
                                 "key": "Velocity_RTN",
-                                "name": "speed_rtn",
+                                "name": "velocity",
                                 "valid_range": [-1e6, -1e6]
                             },
                             {
@@ -791,12 +793,12 @@
                                 "valid_range": [1, 1e6]
                             },
                             {
-                                "alt_names": ["proton_speed_rtn", "hplus_speed_rtn"],
+                                "alt_names": ["proton_velocity"],
                                 "default": false,
                                 "frame": "STAHGRTN",
                                 "indices": [0, 1, 2],
                                 "key": "Velocity_RTN",
-                                "name": "speed_rtn",
+                                "name": "velocity",
                                 "valid_range": [-1e6, -1e6]
                             },
                             {
