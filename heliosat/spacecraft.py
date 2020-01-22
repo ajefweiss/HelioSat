@@ -279,6 +279,9 @@ class Spacecraft(SpiceObject):
         """
         logger = logging.getLogger(__name__)
 
+        if range_end < range_start:
+            raise ValueError("starting date must be after final date")
+
         data_key = self.resolve_data_key(data_key)
         data_path = os.path.join(heliosat._paths["data"], data_key)
 
@@ -596,7 +599,16 @@ def read_cdf_task(file_path, range_start, range_end, version_dict, column_dicts,
         if cdf_type == "nasa_cdf":
             file = cdflib.CDF(file_path)
 
-            time = cdflib.epochs.CDFepoch.unixtime(file.varget(time_dict["key"]), to_np=True)
+            epochs = file.varget(time_dict["key"])
+
+            # fix for some cdf files that have 0 entries
+            if np.sum(epochs == 0) > 0:
+                null_filter = (epochs != 0)
+                epochs = epochs[null_filter]
+            else:
+                null_filter = None
+
+            time = cdflib.epochs.CDFepoch.unixtime(epochs, to_np=True)
             data = []
 
             for column in column_dicts:
@@ -615,6 +627,10 @@ def read_cdf_task(file_path, range_start, range_end, version_dict, column_dicts,
                                                 for k in key], axis=1))
                 else:
                     raise NotImplementedError
+
+            if null_filter is not None:
+                for i in range(len(data)):
+                    data[i] = data[i][null_filter]
         elif cdf_type == "net_cdf4":
             file = Dataset(file_path, "r")
 
