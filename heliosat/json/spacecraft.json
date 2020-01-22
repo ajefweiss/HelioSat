@@ -913,6 +913,61 @@
                     }
                 ]
             },
+            "wind_mfi_k0": {
+                "alt_keys": ["mfi_k0"],
+                "urls": "https://spdf.gsfc.nasa.gov/pub/data/wind/mfi/mfi_k0/{YYYY}/wi_k0_mfi_{YYYY}{MM}{DD}_{V0}.cdf",
+                "version_default": {
+                    "columns": [
+                        {
+                            "alt_names": ["B_GSE", "BFIELD"],
+                            "default": true,
+                            "frame": "GSE",
+                            "indices": [0, 1, 2],
+                            "key": "BGSEc",
+                            "name": "BGSE",
+                            "valid_range": [-1e3, 1e3]
+                        },
+                        {
+                            "alt_names": ["B_GSM"],
+                            "default": false,
+                            "frame": "GSM",
+                            "indices": [0, 1, 2],
+                            "key": "GSMc",
+                            "name": "BGSM",
+                            "valid_range": [-1e3, 1e3]
+                        },
+                        {
+                            "alt_names": ["P_GSE"],
+                            "default": false,
+                            "frame": "GSE",
+                            "indices": [0, 1, 2],
+                            "key": "PGSE",
+                            "name": "PGSE",
+                            "valid_range": [-1e9, 1e9]
+                        },
+                        {
+                            "alt_names": ["P_GSM"],
+                            "default": false,
+                            "frame": "GSM",
+                            "indices": [0, 1, 2],
+                            "key": "PGSM",
+                            "name": "PGSM",
+                            "valid_range": [-1e9, 1e9]
+                        }
+                    ],
+                    "format": "nasa_cdf",
+                    "time": {
+                        "key": "Epoch"
+                    }
+                },
+                "versions": [
+                    {
+                        "identifiers": ["v01"],
+                        "version_start": "2017-01-01T00:00:00.000",
+                        "version_end": "2100-01-01T00:00:00.000"
+                    }
+                ]
+            },
             "wind_swe_h1": {
                 "alt_keys": ["swe_h1", "proton"],
                 "urls": "https://spdf.gsfc.nasa.gov/pub/data/wind/swe/swe_h1/{YYYY}/wi_h1_swe_{YYYY}{MM}{DD}_v01.cdf",

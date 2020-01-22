@@ -197,6 +197,8 @@ class Spacecraft(SpiceObject):
         frame_cadence: float
             Evaluate frame transformation matrix every "frame_cadence" seconds instead of at very
             time point (significant speed up).
+        return_datetimes: bool
+            Return datetimes instead of timestamps, by default False.
 
         Returns
         -------
@@ -244,6 +246,15 @@ class Spacecraft(SpiceObject):
         if not kwargs.get("cache_raw", True):
             for file in files:
                 os.remove(file)
+
+        if kwargs.get("return_datetimes", False):
+            _time = list(time_all)
+
+            for i in range(len(_time)):
+                if _time[i] != np.nan:
+                    _time[i] = datetime.datetime.fromtimestamp(_time[i])
+
+            time_all = _time
 
         return time_all, data_all
 
