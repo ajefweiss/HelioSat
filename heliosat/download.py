@@ -109,27 +109,27 @@ def download_files_worker(args):
                 if os.path.getsize(file_path) == int(size):
                     return True
 
-        with open(file_path, "wb") as file:
-            if file_url.startswith("http"):
-                response = requests.get(file_url)
-            elif file_url.startswith("ftp"):
-                ftp_session = requests_ftp.ftp.FTPSession()
-                response = ftp_session.retr(file_url)
-                ftp_session.close()
-            else:
-                logger.exception("invalid url: \"%s\"", file_url)
-                raise NotImplementedError("invalid url: \"%s\"", file_url)
+        if file_url.startswith("http"):
+            response = requests.get(file_url)
+        elif file_url.startswith("ftp"):
+            ftp_session = requests_ftp.ftp.FTPSession()
+            response = ftp_session.retr(file_url)
+            ftp_session.close()
+        else:
+            logger.exception("invalid url: \"%s\"", file_url)
+            raise NotImplementedError("invalid url: \"%s\"", file_url)
 
-            if response.ok:
-                # fix for url's that return 200 instead of a 404
-                if "Content-Length" in response.headers and \
-                        int(response.headers.get("Content-Length")) < 1000:
-                    raise requests.HTTPError("Content-Length is very small"
-                                             "(url is most likely not a valid file)")
-                else:
-                    file.write(response.content)
+        if response.ok:
+            # fix for url's that return 200 instead of a 404
+            if "Content-Length" in response.headers and \
+                    int(response.headers.get("Content-Length")) < 1000:
+                raise requests.HTTPError("Content-Length is very small"
+                                         "(url is most likely not a valid file)")
             else:
-                return response.raise_for_status()
+                with open(file_path, "wb") as file:
+                    file.write(response.content)
+        else:
+            return response.raise_for_status()
 
         return True
     except requests.RequestException as error:
@@ -137,6 +137,7 @@ def download_files_worker(args):
             logger.error("failed to check existing file \"%s\" (%s)", file_url, error)
         else:
             logger.error("failed to download \"%s\" (%s)", file_url, error)
+            print("REMOVING REMOVING\n\n\n")
             os.remove(file_path)
 
         return False

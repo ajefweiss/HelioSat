@@ -48,7 +48,7 @@ def smooth_data(t, time_raw, data_raw, **kwargs):
     smoothing_scale = kwargs.get("smoothing_scale", 300)
 
     if smoothing in ["average", "moving_average", "mean"]:
-        moving_average_smoothing(time_smooth, time_raw, data_raw, data_smooth, smoothing_scale)
+        average_smoothing(time_smooth, time_raw, data_raw, data_smooth, smoothing_scale)
     elif smoothing in ["kernel", "kernel_gaussian", "gaussian"]:
         kernel_smoothing(time_smooth, time_raw, data_raw, data_smooth, smoothing_scale)
     elif smoothing == ["spline", "spline_smoothing", "tps", "tps_smoothing"]:
@@ -61,8 +61,8 @@ def smooth_data(t, time_raw, data_raw, **kwargs):
     return time_smooth, data_smooth
 
 
-@numba.njit("void(f8[:], f8[:], f4[:, :], f4[:, :], f8)", parallel=True)
-def moving_average_smoothing(t, time_raw, data_raw, data_smooth, smoothing_scale):
+@numba.njit(parallel=True)
+def average_smoothing(t, time_raw, data_raw, data_smooth, smoothing_scale):
     """Smooth data using moving average.
 
     Parameters
@@ -97,7 +97,7 @@ def moving_average_smoothing(t, time_raw, data_raw, data_smooth, smoothing_scale
                 data_smooth[i, k] = vector[k] / total
 
 
-@numba.njit("void(f8[:], f8[:], f4[:, :], f4[:, :], f8)", parallel=True)
+@numba.njit(parallel=True)
 def kernel_smoothing(t, time_raw, data_raw, data_smooth, smoothing_scale):
     """Smooth data using a gaussian kernel.
 
