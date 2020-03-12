@@ -137,7 +137,8 @@ def download_files_worker(args):
             logger.error("failed to check existing file \"%s\" (%s)", file_url, error)
         else:
             logger.error("failed to download \"%s\" (%s)", file_url, error)
-            print("REMOVING REMOVING\n\n\n")
-            os.remove(file_path)
+
+            if os.path.exists(file_path):
+                os.remove(file_path)
 
         return False
