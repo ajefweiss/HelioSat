@@ -380,7 +380,7 @@ class Spacecraft(SpiceObject):
         else:
             return files, versions
 
-    def get_data_version(self, data_key, time):
+    def get_data_version(self, data_key, time=None):
         """Get version information from type "data_key" at specific time.
 
         Parameters
@@ -388,7 +388,7 @@ class Spacecraft(SpiceObject):
         data_key : str
             Data key.
         time : datetime.datetime
-            Version time.
+            Version time, by default None.
 
         Returns
         -------
@@ -409,6 +409,9 @@ class Spacecraft(SpiceObject):
         # get version defaults
         selected_version = dict(self.spacecraft["data_keys"][data_key]["version_default"])
 
+        if time is None:
+            return selected_version
+
         for version in versions:
             if string_to_datetime(version["version_start"]) <= time < \
                string_to_datetime(version["version_end"]):
@@ -419,6 +422,32 @@ class Spacecraft(SpiceObject):
         if not ver_found:
             raise RuntimeError("no version found for data key \"%s\" at time %s", data_key,
                                datetime_to_string(time))
+
+    def get_data_columns(self, data_key, time=None, show_all=False):
+        """Get data columns from type "data_key" at specific time.
+
+        Parameters
+        ----------
+        data_key : str
+            Data key.
+        time : datetime.datetime
+            Version time, by default None.
+        show_all : bool
+            show non-default columns, by default False
+
+        Returns
+        -------
+        dict
+            Version information.
+
+        Raises
+        ------
+        RuntimeError
+            If no version is defined at specified time.
+        """
+        version = self.get_data_version(data_key, time)
+
+        return [c["name"] for c in version["columns"] if (c["default"] | show_all)]
 
     @property
     def data_keys(self):
