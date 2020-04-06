@@ -917,7 +917,8 @@
             },
             "wind_mfi_k0": {
                 "alt_keys": ["mfi_k0"],
-                "urls": "https://spdf.gsfc.nasa.gov/pub/data/wind/mfi/mfi_k0/{YYYY}/wi_k0_mfi_{YYYY}{MM}{DD}_{V0}.cdf",
+                "urls": "https://spdf.gsfc.nasa.gov/pub/data/wind/mfi/mfi_k0/{YYYY}/wi_k0_mfi_{YYYY}{MM}{DD}_v[0-9]{2}.cdf",
+                "use_regex": true,
                 "version_default": {
                     "columns": [
                         {
@@ -964,7 +965,6 @@
                 },
                 "versions": [
                     {
-                        "identifiers": ["v01"],
                         "version_start": "2017-01-01T00:00:00.000",
                         "version_end": "2100-01-01T00:00:00.000"
                     }
@@ -972,7 +972,8 @@
             },
             "wind_swe_h1": {
                 "alt_keys": ["swe_h1", "proton"],
-                "urls": "https://spdf.gsfc.nasa.gov/pub/data/wind/swe/swe_h1/{YYYY}/wi_h1_swe_{YYYY}{MM}{DD}_v01.cdf",
+                "urls": "https://spdf.gsfc.nasa.gov/pub/data/wind/swe/swe_h1/{YYYY}/wi_h1_swe_{YYYY}{MM}{DD}_v[0-9]{2}.cdf",
+                "use_regex": true,
                 "version_default": {
                     "columns": [
                         {
