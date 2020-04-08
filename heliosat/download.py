@@ -135,6 +135,7 @@ def download_files_worker(args):
     except requests.RequestException as error:
         if file_already_exists:
             logger.error("failed to check existing file \"%s\" (%s)", file_url, error)
+            return True
         else:
             logger.error("failed to download \"%s\" (%s)", file_url, error)
 
