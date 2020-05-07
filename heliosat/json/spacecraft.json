@@ -1,4 +1,7 @@
 {
+    "bepi_colombo": {
+        "kernel_group": "bepi_colombo"
+    },
     "dscovr": {
         "data_keys": {
             "dscovr_mag": {
@@ -168,6 +171,36 @@
                 "versions" : [
                     {
                         "version_start": "2018-10-06T00:00:00.000",
+                        "version_end": "2100-01-01T00:00:00.000"
+                    }
+                ]
+            }
+        }
+    },
+    "solar_orbiter": {
+        "kernel_group": "solar_orbiter",
+        "data_keys": {
+            "soio_mag": {
+                "alt_keys": ["mag"],
+                "urls": null,
+                "version_default": {
+                    "columns": [
+                        {   
+                            "alt_names": ["B_RTN", "BFIELD"],
+                            "default": true,
+                            "frame": "SOLO_SUN_RTN",
+                            "key": "B_RTN",
+                            "name": "BRTN"
+                        }
+                    ],
+                    "format": "nasa_cdf",
+                    "time": {
+                        "key": "EPOCH"
+                    }
+                },
+                "versions" : [
+                    {
+                        "version_start": "2020-02-10T00:00:00.000",
                         "version_end": "2100-01-01T00:00:00.000"
                     }
                 ]

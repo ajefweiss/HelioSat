@@ -237,7 +237,7 @@ class Spacecraft(SpiceObject):
 
             futures = executor.map(read_task, args)
 
-        results = [_ for _ in futures]
+        results = [_ for _ in futures if _]
 
         time_all = np.concatenate([_[0] for _ in results])
         data_all = np.concatenate([_[1] for _ in results])
@@ -595,7 +595,7 @@ def read_task(args):
 
         return time, np.concatenate(data, axis=1)
     else:
-        return None, None
+        return None
 
 
 def read_cdf_task(file_path, range_start, range_end, version_dict, column_dicts, cdf_type):
@@ -627,7 +627,6 @@ def read_cdf_task(file_path, range_start, range_end, version_dict, column_dicts,
     try:
         if cdf_type == "nasa_cdf":
             file = cdflib.CDF(file_path)
-
             epochs = file.varget(time_dict["key"])
 
             # fix for some cdf files that have 0 entries
