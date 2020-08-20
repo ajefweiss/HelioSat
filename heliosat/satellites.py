@@ -38,9 +38,9 @@ class PSP(Spacecraft):
             spiceypy.boddef("SPP_SPACECRAFT", spiceypy.bodn2c("SPP"))
 
 
-class SOIO(Spacecraft):
+class SOLO(Spacecraft):
     def __init__(self, **kwargs):
-        super(SOIO, self).__init__("solar_orbiter", body_name="SOLAR ORBITER", **kwargs)
+        super(SOLO, self).__init__("solar_orbiter", body_name="SOLAR ORBITER", **kwargs)
 
 
 class STA(Spacecraft):

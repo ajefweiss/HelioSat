@@ -189,7 +189,7 @@ def spice_load(kernel_group, skip_download=False):
         if len(kernels_required) == 0:
             return
 
-        logger.info("loading kernel group \"%s\"", kernel_group)
+        logger.debug("loading kernel group \"%s\"", kernel_group)
 
         if not skip_download:
             download_files(kernels_required, kernels_path, logger=logger)
@@ -197,7 +197,7 @@ def spice_load(kernel_group, skip_download=False):
         for kernel_url in kernels_required:
             kernel = os.path.join(kernels_path, kernel_url.split("/")[-1])
 
-            logger.info("loading kernel \"%s\"", kernel)
+            logger.debug("loading kernel \"%s\"", kernel)
 
             try:
                 spiceypy.furnsh(kernel)
@@ -236,7 +236,7 @@ def spice_reload(kernel_urls, skip_download=True):
     for kernel_url in kernels_required:
         kernel = os.path.join(kernels_path, kernel_url.split("/")[-1])
 
-        logger.info("loading kernel \"%s\"", kernel)
+        logger.debug("loading kernel \"%s\"", kernel)
 
         try:
             spiceypy.furnsh(kernel)
@@ -273,7 +273,7 @@ def transform_frame(t, data, frame_from, frame_to, frame_cadence=None):
             t = [datetime.datetime.fromtimestamp(_t) for _t in t]
 
         if frame_cadence:
-            frames = (t[-1] - t[0]).total_seconds() // frame_cadence
+            frames = int((t[-1] - t[0]).total_seconds() // frame_cadence)
             indices = [np.floor(_) for _ in np.linspace(0, frames, len(t), endpoint=False)]
             time_indices = np.linspace(0, len(t), frames, endpoint=False)
 

@@ -548,6 +548,44 @@
                         ],
                         "identifiers": ["V12"],
                         "version_start": "2017-09-03T00:00:00.000",
+                        "version_end": "2020-05-01T00:00:00.000"
+                    },
+                    {
+                        "columns": [
+                            {
+                                "alt_names": ["proton_density", "hplus_density"],
+                                "default": true,
+                                "key": "Density",
+                                "name": "density",
+                                "valid_range": [1, 1e6]
+                            },
+                            {
+                                "alt_names": ["proton_speed_rtn", "hplus_speed_rtn"],
+                                "default": false,
+                                "frame": "STAHGRTN",
+                                "indices": [0, 1, 2],
+                                "key": "Velocity_RTN",
+                                "name": "speed_rtn",
+                                "valid_range": [-1e6, -1e6]
+                            },
+                            {
+                                "alt_names": ["proton_speed", "hplus_speed"],
+                                "default": true,
+                                "indices": [3],
+                                "key": "Velocity_RTN",
+                                "name": "speed",
+                                "valid_range": [1, 1e6]
+                            },
+                            {
+                                "alt_names": ["proton_temp", "proton_temperature", "hplus_temp", "hplus_temperature"],
+                                "default": true,
+                                "key": "Temperature_Inst",
+                                "name": "temperature",
+                                "valid_range": [1, 1e6]
+                            }
+                        ],
+                        "identifiers": ["V13"],
+                        "version_start": "2020-05-01T00:00:00.000",
                         "version_end": "2100-01-01T00:00:00.000"
                     }
                 ]
@@ -925,7 +963,7 @@
                             "default": true,
                             "frame": "GSE",
                             "indices": [0, 1, 2],
-                            "key": "B3GSE",
+                            "key": "BGSE",
                             "name": "BGSE",
                             "valid_range": [-1e3, 1e3]
                         }

@@ -120,14 +120,14 @@ def kernel_smoothing(t, time_raw, data_raw, data_smooth, smoothing_scale):
         vector = np.zeros((dims,))
 
         for j in range(0, len(data_raw)):
-            if np.abs(time_raw[j] - t[i]) < 4 * smoothing_scale:
+            if np.abs(time_raw[j] - t[i]) < 3 * smoothing_scale and not np.isnan(data_raw[j, 0]):
                 kernel = np.exp(-(time_raw[j] - t[i]) ** 2 / 2 / smoothing_scale ** 2)
 
                 total += kernel
 
                 for k in range(0, len(vector)):
                     vector[k] += kernel * data_raw[j, k]
-
+        
         for k in range(0, len(vector)):
             if total == 0:
                 data_smooth[i, k] = np.nan

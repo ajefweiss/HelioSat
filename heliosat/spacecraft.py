@@ -155,6 +155,13 @@ class Spacecraft(SpiceObject):
                     smoothing_dict[key] = kwargs.pop(key)
 
             time, data = smooth_data(t, time, data, **smoothing_dict)
+        else:
+            # no smoothing, choose closest time values
+            _time = []
+            _data = []
+
+            for _t in t:
+                pass
 
         if return_datetimes:
             _time = list(time)
@@ -635,7 +642,6 @@ def read_cdf_task(file_path, range_start, range_end, version_dict, column_dicts,
                 epochs = epochs[null_filter]
             else:
                 null_filter = None
-
             time = cdflib.epochs.CDFepoch.unixtime(epochs, to_np=True)
             data = []
 
@@ -652,7 +658,7 @@ def read_cdf_task(file_path, range_start, range_end, version_dict, column_dicts,
                         data.append(np.array(file.varget(key)))
                 elif isinstance(key, list):
                     data.append(np.stack(arrays=[np.array(file.varget(k))
-                                                for k in key], axis=1))
+                                                 for k in key], axis=1))
                 else:
                     raise NotImplementedError
 
@@ -678,7 +684,7 @@ def read_cdf_task(file_path, range_start, range_end, version_dict, column_dicts,
                         data.append(np.array(file[key][:]))
                 elif isinstance(key, list):
                     data.append(np.stack(arrays=[np.array(file[k][:])
-                                                for k in key], axis=1))
+                                                 for k in key], axis=1))
                 else:
                     raise NotImplementedError
         else:
@@ -688,6 +694,7 @@ def read_cdf_task(file_path, range_start, range_end, version_dict, column_dicts,
     except Exception as err:
         logger.error("failed to read file \"%s\" (%s)", file_path, err)
         raise Exception
+
 
 def read_text_task(file_path, range_start, range_end, version_dict, column_dicts):
     """Worker function for reading text files.

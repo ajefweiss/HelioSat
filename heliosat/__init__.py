@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from .helcats import ICMECAT_EVENT  # noqa: F401
-from .satellites import BEPI, DSCOVR, MES, PSP, SOIO, STA, STB, VEX, WIND  # noqa: F401
+from .satellites import BEPI, DSCOVR, MES, PSP, SOLO, STA, STB, VEX, WIND  # noqa: F401
 from .spice import SpiceObject as _SpiceObject
 from .util import get_heliosat_paths
 
@@ -28,3 +28,6 @@ Jupiter = lambda: _SpiceObject(None, "JUPITER BARYCENTER")  # noqa: E731
 Saturn = lambda: _SpiceObject(None, "SATURN BARYCENTER")  # noqa: E731
 Uranus = lambda: _SpiceObject(None, "URANUS BARYCENTER")  # noqa: E731
 Neptune = lambda: _SpiceObject(None, "NEPTUNE BARYCENTER")  # noqa: E731
+
+# legacy fix
+SOIO = SOLO
