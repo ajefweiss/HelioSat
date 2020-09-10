@@ -8,11 +8,11 @@
                 "version_default": {
                     "columns": [
                         {
-                            "alt_names": ["B_HCI", "BFIELD"],
+                            "alt_names": ["B_ECLIPJ2000", "BFIELD", "B_J2000", "BJ2000"],
                             "default": true,
-                            "frame": "HCI",
+                            "frame": "ECLIPJ2000",
                             "indices": [5, 6, 7],
-                            "name": "BHCI",
+                            "name": "BECLIPJ2000",
                             "valid_range": [-1e3, 1e3]
                         }
                     ],
