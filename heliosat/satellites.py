@@ -2,7 +2,7 @@
 
 """satellites.py
 
-Implements all spacecraft classes.
+Implements spacecraft classes.
 """
 
 import spiceypy
@@ -34,7 +34,7 @@ class PSP(Spacecraft):
         try:
             spiceypy.bodn2c("SPP_SPACECRAFT")
         except SpiceyError:
-            # kernel fix that is required due to PSP having different names in different kernels
+            # kernel fix that is required due to PSP having different names
             spiceypy.boddef("SPP_SPACECRAFT", spiceypy.bodn2c("SPP"))
 
 

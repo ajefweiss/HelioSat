@@ -2,7 +2,7 @@
 
 """smoothing.py
 
-Implements data smoothing functions.
+Implements smoothing functionality.
 """
 
 import logging

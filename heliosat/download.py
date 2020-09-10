@@ -55,11 +55,11 @@ def download_files(file_urls, file_paths, **kwargs):
         file_paths = [os.path.join(file_paths, file_url.split("/")[-1]) for file_url in file_urls]
 
     if len(file_urls) != len(file_paths):
-        logger.exception("invalid file path list (size mismatch)")
-        raise ValueError("invalid file path list (size mismatch)")
+        logger.exception("invalid file path list (length mismatch)")
+        raise ValueError("invalid file path list (length mismatch)")
 
     with ThreadPoolExecutor(max_workers=threads) as executor:
-        futures = executor.map(download_files_worker, [(file_urls[i], file_paths[i], force, logger)
+        futures = executor.map(worker_download_files, [(file_urls[i], file_paths[i], force, logger)
                                                        for i in range(len(file_urls))])
 
     results = [_ for _ in futures]
@@ -72,7 +72,7 @@ def download_files(file_urls, file_paths, **kwargs):
     return results
 
 
-def download_files_worker(args):
+def worker_download_files(args):
     """Worker function for downloading files.
 
     Parameters
@@ -93,8 +93,6 @@ def download_files_worker(args):
     try:
         (file_url, file_path, force, logger) = args
 
-        logger.debug("downloading \"%s\"", file_url)
-
         file_already_exists = os.path.isfile(file_path)
 
         if file_already_exists and os.path.getsize(file_path) == 0:
@@ -107,7 +105,10 @@ def download_files_worker(args):
 
                 # skip download if file appears to be the same (checking size only)
                 if os.path.getsize(file_path) == int(size):
+                    logger.debug("checked \"%s\"", file_url)
                     return True
+
+        logger.debug("downloading \"%s\"", file_url)
 
         if file_url.startswith("http"):
             response = requests.get(file_url)
@@ -116,8 +117,8 @@ def download_files_worker(args):
             response = ftp_session.retr(file_url)
             ftp_session.close()
         else:
-            logger.exception("invalid url: \"%s\"", file_url)
-            raise NotImplementedError("invalid url: \"%s\"", file_url)
+            logger.exception("invalid url \"%s\"", file_url)
+            raise NotImplementedError("invalid url \"%s\"", file_url)
 
         if response.ok:
             # fix for url's that return 200 instead of a 404
@@ -135,10 +136,13 @@ def download_files_worker(args):
     except requests.RequestException as error:
         if file_already_exists:
             logger.error("failed to check existing file \"%s\" (%s)", file_url, error)
+
+            # local file is assumed to be correct if it cannot be checked
             return True
         else:
             logger.error("failed to download \"%s\" (%s)", file_url, error)
 
+            # delete empty file that may have been created
             if os.path.exists(file_path):
                 os.remove(file_path)
 

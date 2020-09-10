@@ -19,7 +19,7 @@ import pickle
 
 
 def generate_cache_key(identifiers):
-    """Generate SHA256 digest from the dictionary which acts as key for cached data.
+    """Generate SHA256 digest from the identifiers dictionary which acts as the cache key.
 
     Parameters
     ----------
@@ -38,7 +38,7 @@ def generate_cache_key(identifiers):
 
 
 def delete_cache_entry(key):
-    """Delete cache entry belonging to specified key.
+    """Delete cache entry belonging to specified cache key.
 
     Parameters
     ----------
@@ -55,14 +55,15 @@ def delete_cache_entry(key):
     cache_path = heliosat._paths["cache"]
 
     if not cache_entry_exists(key):
-        logger.exception("cache key \"%s\" does not exist", key)
-        raise KeyError("cache key \"%s\" does not exist", key)
+        logger.exception("cache entry \"%s\" does not exist", key)
+        raise KeyError("cache entry \"%s\" does not exist", key)
 
+    logger.debug("deleting cache entry \"%s\"", key)
     os.remove(os.path.join(cache_path, "{0}.cache".format(key)))
 
 
 def get_cache_entry(key):
-    """Retrieve cache entry specified by key.
+    """Retrieve cache entry specified by cache key.
 
     Parameters
     ----------
@@ -77,7 +78,7 @@ def get_cache_entry(key):
     Raises
     ------
     KeyError
-        If no entry for the given key is found.
+        If no entry is found.
     """
     logger = logging.getLogger(__name__)
 
@@ -88,6 +89,7 @@ def get_cache_entry(key):
         raise KeyError("cache key \"%s\" does not exist", key)
 
     with open(os.path.join(cache_path, "{0}.cache".format(key)), "rb") as pickle_file:
+        logger.debug("loading cache entry \"%s\"", key)
         cache_data = pickle.load(pickle_file)
 
     return cache_data
@@ -121,10 +123,14 @@ def set_cache_entry(key, obj):
     obj : object
         Data object.
     """
+    logger = logging.getLogger(__name__)
+
     cache_path = heliosat._paths["cache"]
 
     if not os.path.exists(cache_path):
+        logger.debug("cache path does not exist, creating \"%s\"", cache_path)
         os.makedirs(cache_path)
 
     with open(os.path.join(cache_path, "{}.cache".format(key)), "wb") as pickle_file:
+        logger.debug("creating cache entry \"%s\"", key)
         pickle.dump(obj, pickle_file)

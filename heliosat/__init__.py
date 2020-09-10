@@ -9,7 +9,7 @@ from .util import get_heliosat_paths
 __author__ = "Andreas J. Weiss"
 __copyright__ = "Copyright (C) 2019 Andreas J. Weiss"
 __license__ = "MIT"
-__version__ = "0.4.2"
+__version__ = "0.4.3"
 
 _paths = get_heliosat_paths()
 _spice = None

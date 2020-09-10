@@ -1,7 +1,7 @@
 HelioSat
 ========
 
-A simple and small python package for handling and processing heliospheric satellite data.
+A simple and small python package for handling and processing heliospheric satellite data. The current primary features are automatic data downloading & crude processing for DSCOVR, MES, PSP, STA, STB, VEX and WIND (plus BEPI and SOLO once data products are publicly available). Furthermore all related SPICE kernels are downloaded automatically.
 
 Installation
 ------------
@@ -46,26 +46,3 @@ Alternatively processed data at specific times in a specific reference frame can
                                       return_datetimes=True, remove_nans=True)
 
 If particular data columns are not being read out but are present within the data files, they can be added by setting the `extra_columns` parameter.
-
-Features
---------
-
-By default most satellites will have "mag" and "proton" data available. For a full list of all available data and definitions see the heliosat/json/spacecraft.json file.
-
-SPICE:
-
- - Get object trajectory using `wind_sat.trajectory(obs, frame="J2000")`
-
-Available satellites & data:
-
-| Satellites | Trajectory | Magnetic Field | Protons |
-| ---------- |:----------:|:--------------:|:-------:|
-| DSCOVR     | No*        | Yes            | Yes     |
-| MESSENGER  | Yes        | Yes            | No      |
-| PSP        | Yes        | Yes            | Yes     |
-| STEREO A   | Yes        | Yes            | Yes     |
-| STEREO B   | Yes        | Yes            | Yes     |
-| VEX        | Yes        | Yes            | No      |
-| WIND       | No*        | Yes            | Yes     |
-
-**DSCOVR and WIND trajectory currently return the Earth trajectory.*

@@ -64,14 +64,15 @@ def string_to_datetime(time_string):
         return datetime.datetime.strptime(time_string, "%Y-%m-%dT%H:%MZ")
 
 
-def urls_expand(urls):
+def urls_expand(urls, pre="$"):
     """"Expand list of url's using regular expressions. Both HTTP and FTP url's are supported.
-    Only url's with a "$" prefix are expanded.
 
     Parameters
     ----------
     urls : list
         Url list (including expandables and non-expandables).
+    pre : str
+        Prefix to identify expandable url's.
 
     Returns
     -------
@@ -88,7 +89,7 @@ def urls_expand(urls):
     # copy url's that do not need expansion
     urls_expanded = [_ for _ in urls if not _.startswith("$")]
 
-    for url in [_ for _ in urls if _.startswith("$")]:
+    for url in [_ for _ in urls if _.startswith(pre)]:
         if url[1:].startswith("http"):
             url_parent = "/".join(url[1:].split("/")[:-1])
             url_regex = url.split("/")[-1]

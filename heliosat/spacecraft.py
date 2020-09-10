@@ -724,6 +724,8 @@ def read_text_task(file_path, range_start, range_end, version_dict, column_dicts
     time_format = version_dict["time"]["format"]
     time_index = version_dict["time"]["index"]
 
+    delimiter = version_dict.get("delimiter", None)
+
     def decode(string, format):
         if string.endswith("60.000"):
             string = "{0}59.000".format(string[:-6])
@@ -732,13 +734,22 @@ def read_text_task(file_path, range_start, range_end, version_dict, column_dicts
         else:
             return datetime.datetime.strptime(string, format).timestamp()
 
+    converters = {}
+
+    skip_cols = version_dict.get("skip_columns")
+
+    for col in skip_cols:
+        converters[col] = lambda string: -1
+
     if isinstance(time_format, str):
-        file = np.loadtxt(file_path, skiprows=skip_rows, encoding="latin1",
-                          converters={0: lambda string: decode(string, time_format)})
+        converters[0] = lambda string: decode(string, time_format)
+
+        file = np.loadtxt(file_path, skiprows=skip_rows, encoding="latin1", delimiter=delimiter,
+                          converters=converters)
 
         time = file[:, time_index]
     elif isinstance(time_format, int):
-        file = np.loadtxt(file_path, skiprows=skip_rows)
+        file = np.loadtxt(file_path, skiprows=skip_rows, converters=converters)
 
         time = file[:, time_index] + time_format
     else:

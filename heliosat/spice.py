@@ -5,7 +5,6 @@
 Implements the SPICE base class and SPICE related functions.
 """
 
-import datetime
 import heliosat
 import json
 import logging
@@ -17,6 +16,9 @@ import time
 
 from heliosat.download import download_files
 from heliosat.util import urls_expand
+
+# LEGACY CODE
+from heliosat.coordinates import transform_lonlat, transform_frame  # noqa: F401
 
 
 class SpiceObject(object):
@@ -243,51 +245,3 @@ def spice_reload(kernel_urls, skip_download=True):
             heliosat._spice["kernels_loaded"].append(kernel_url)
         except spiceypy.support_types.SpiceyError:
             logger.exception("failed to load kernel \"%s\"", kernel_url)
-
-
-def transform_frame(t, data, frame_from, frame_to, frame_cadence=None):
-    """Transform 3D vector array from one reference frame to another.
-
-    Parameters
-    ----------
-    t : list[datetime.datetime]
-        Evaluation datetimes.
-    data : np.ndarray
-        3D vector array.
-    frame_from : str
-        Source refernce frame.
-    frame_to : str
-        Target reference frame.
-    frame_cadence: float, optional
-            Evaluate frame transformation matrix every "frame_cadence" seconds instead of at very
-            time point (significant speed up), by default None.
-
-    Returns
-    -------
-    np.ndarray
-        Transformed vector array in target reference frame.
-    """
-    if frame_to and frame_from != frame_to:
-        # convert timestamps to python datetimes if required
-        if not isinstance(t[0], datetime.datetime):
-            t = [datetime.datetime.fromtimestamp(_t) for _t in t]
-
-        if frame_cadence:
-            frames = int((t[-1] - t[0]).total_seconds() // frame_cadence)
-            indices = [np.floor(_) for _ in np.linspace(0, frames, len(t), endpoint=False)]
-            time_indices = np.linspace(0, len(t), frames, endpoint=False)
-
-            frames = [spiceypy.pxform(frame_from, frame_to, spiceypy.datetime2et(t[int(i)]))
-                      for i in time_indices]
-
-            for i in range(0, len(t)):
-                data[i] = spiceypy.mxv(frames[int(indices[i])], data[i])
-        else:
-            for i in range(0, len(t)):
-                data[i] = spiceypy.mxv(spiceypy.pxform(frame_from, frame_to,
-                                       spiceypy.datetime2et(t[i])),
-                                       data[i])
-
-        return data
-    else:
-        return data

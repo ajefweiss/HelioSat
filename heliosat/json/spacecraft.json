@@ -1,6 +1,38 @@
 {
     "bepi_colombo": {
-        "kernel_group": "bepi_colombo"
+        "kernel_group": "bepi_colombo",
+        "data_keys": {
+            "bepi_mag": {
+                "alt_keys": ["mag", "bepi_colombo_mag"],
+                "urls": null,
+                "version_default": {
+                    "columns": [
+                        {
+                            "alt_names": ["B_HCI", "BFIELD"],
+                            "default": true,
+                            "frame": "HCI",
+                            "indices": [5, 6, 7],
+                            "name": "BHCI",
+                            "valid_range": [-1e3, 1e3]
+                        }
+                    ],
+                    "delimiter": ",",
+                    "format": "text",
+                    "skip_columns": [1],
+                    "time": {
+                        "index": 0,
+                        "format": "%Y-%m-%dT%H:%M:%S.%fZ"
+                    }
+                },
+                "versions": [
+                    {
+                        "version_start": "2019-03-06T00:00:00.000",
+                        "version_end": "2100-01-01T00:00:00.000"
+                        
+                    }
+                ]
+            }
+        }  
     },
     "dscovr": {
         "data_keys": {
