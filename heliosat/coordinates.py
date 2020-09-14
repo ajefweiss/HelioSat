@@ -25,8 +25,44 @@ def transform_lonlat(t, lons, lats, frame_from, frame_to):
         Longitudes array.
     lats : np.ndarray
         Latitudes array.
+
+    Returns
+    -------
+    (np.ndarray, np.ndarray)
+        Transformed longitude/latitude's.
+
+    Raises
+    ------
+    ValueError
+        If source and target frame are equal.
     """
-    pass
+    if frame_from == frame_to:
+        raise ValueError("source frame and target frame are equal")
+
+    vecs = np.array([
+        [np.cos(2 * np.pi * lon / 360), np.sin(2 * np.pi * lon / 360), np.sin(2 * np.pi * lat / 360)]
+        for (lon, lat) in list(zip(lons, lats))
+    ])
+
+    if isinstance(t, datetime.datetime):
+        for i in range(0, len(vecs)):
+            vecs[i] = spiceypy.mxv(spiceypy.pxform(frame_from, frame_to,
+                                   spiceypy.datetime2et(t)),
+                                   vecs[i])
+    elif isinstance(t, np.ndarray) or isinstance(t, list):
+        for i in range(0, len(t)):
+            vecs[i] = spiceypy.mxv(spiceypy.pxform(frame_from, frame_to,
+                                   spiceypy.datetime2et(t[i])),
+                                   vecs[i])
+    else:
+        raise TypeError("variable t is not a datetime or array/list")
+
+    res = np.array([
+        [360 * np.arccos(v[0]) / 2 / np.pi, 360 * np.arcsin(v[2]) / 2 / np.pi]
+        for v in vecs
+    ])
+
+    return res
 
 
 def transform_frame(t, data, frame_from, frame_to, frame_cadence=None):
@@ -54,10 +90,11 @@ def transform_frame(t, data, frame_from, frame_to, frame_cadence=None):
     Raises
     ------
     ValueError
-        If data array has the wrong dimensions (must be 2d or 3d).
+        If data array has the wrong dimensions (must be 2d or 3d)
+        or source and target frame are equal.
     """
-    if not frame_to or frame_from == frame_to:
-        raise ValueError("no target frame defined (or source frame and target frame are equal)")
+    if frame_from == frame_to:
+        raise ValueError("source frame and target frame are equal")
 
     # convert timestamps to python datetimes if required
     if not isinstance(t[0], datetime.datetime):

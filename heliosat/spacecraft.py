@@ -736,7 +736,7 @@ def read_text_task(file_path, range_start, range_end, version_dict, column_dicts
 
     converters = {}
 
-    skip_cols = version_dict.get("skip_columns")
+    skip_cols = version_dict.get("skip_columns", [])
 
     for col in skip_cols:
         converters[col] = lambda string: -1
