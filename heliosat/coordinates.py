@@ -39,9 +39,12 @@ def transform_lonlat(t, lons, lats, frame_from, frame_to):
     if frame_from == frame_to:
         raise ValueError("source frame and target frame are equal")
 
+    lons_rad = 2 * np.pi * lons / 360
+    lats_rad = 2 * np.pi * lats / 360
+
     vecs = np.array([
-        [np.cos(2 * np.pi * lon / 360), np.sin(2 * np.pi * lon / 360), np.sin(2 * np.pi * lat / 360)]
-        for (lon, lat) in list(zip(lons, lats))
+        [np.cos(lon), np.sin(lon), np.sin(lat)]
+        for (lon, lat) in list(zip(lons_rad, lats_rad))
     ])
 
     if isinstance(t, datetime.datetime):

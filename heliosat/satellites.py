@@ -73,7 +73,7 @@ def select_satellite(satellite):
     elif satellite.upper() == "STA":
         return STA()
     elif satellite.upper() == "STB":
-        return STA()  
+        return STB()
     elif satellite.upper() == "VEX":
         return VEX()
     elif satellite.upper() == "WIND":

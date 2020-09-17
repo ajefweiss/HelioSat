@@ -42,7 +42,7 @@ def smooth_data(t, time_raw, data_raw, **kwargs):
     logger = logging.getLogger(__name__)
 
     time_smooth = np.array([_t.timestamp() for _t in t])
-    data_smooth = np.zeros((len(t), data_raw.shape[1]), dtype=np.float32)
+    data_smooth = np.zeros((len(t), data_raw.shape[1]))
 
     smoothing = kwargs.get("smoothing", "kernel")
     smoothing_scale = kwargs.get("smoothing_scale", 300)
@@ -127,7 +127,7 @@ def kernel_smoothing(t, time_raw, data_raw, data_smooth, smoothing_scale):
 
                 for k in range(0, len(vector)):
                     vector[k] += kernel * data_raw[j, k]
-        
+
         for k in range(0, len(vector)):
             if total == 0:
                 data_smooth[i, k] = np.nan
