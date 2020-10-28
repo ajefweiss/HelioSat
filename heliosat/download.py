@@ -12,16 +12,17 @@ import requests
 import requests_ftp
 
 from concurrent.futures import ThreadPoolExecutor
+from typing import List, Union
 
 
-def download_files(file_urls, file_paths, **kwargs):
+def download_files(file_urls: List[str], file_paths: Union[str, List[str]], **kwargs) -> List[bool]:
     """Download files from given url's and store them locally.
 
     Parameters
     ----------
-    file_urls : list[str]
+    file_urls : List[str]
         Target url's.
-    file_paths : Union[list[str], str]
+    file_paths : Union[str, list[str]]
         Destination file paths (or optionally the destination folder).
 
     Other Parameters
@@ -35,7 +36,7 @@ def download_files(file_urls, file_paths, **kwargs):
 
     Returns
     -------
-    list[bool]
+    List[bool]
         Flags if files were downloaded succesfully, or they already existed.
 
     Raises
@@ -59,8 +60,8 @@ def download_files(file_urls, file_paths, **kwargs):
         raise ValueError("invalid file path list (length mismatch)")
 
     with ThreadPoolExecutor(max_workers=threads) as executor:
-        futures = executor.map(worker_download_files, [(file_urls[i], file_paths[i], force, logger)
-                                                       for i in range(len(file_urls))])
+        futures = executor.map(_worker_download_files, [(file_urls[i], file_paths[i], force, logger)
+                                                        for i in range(len(file_urls))])
 
     results = [_ for _ in futures]
 
@@ -72,7 +73,7 @@ def download_files(file_urls, file_paths, **kwargs):
     return results
 
 
-def worker_download_files(args):
+def _worker_download_files(args: tuple) -> bool:
     """Worker function for downloading files.
 
     Parameters

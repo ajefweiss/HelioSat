@@ -5,6 +5,7 @@
 Implements the SPICE base class and SPICE related functions.
 """
 
+import datetime
 import heliosat
 import json
 import logging
@@ -16,9 +17,11 @@ import time
 
 from heliosat.download import download_files
 from heliosat.util import urls_expand
+from typing import Iterable, List, Optional, Union
 
 # LEGACY CODE
-from heliosat.coordinates import transform_lonlat, transform_frame  # noqa: F401
+from heliosat.coordinates import transform_lonlat  # noqa: F401
+from heliosat.coordinates import transform_pos as transform_frame  # noqa: F401
 
 
 class SpiceObject(object):
@@ -27,7 +30,8 @@ class SpiceObject(object):
     name = None
     body_name = None
 
-    def __init__(self, name, body_name, kernel_group=None, skip_download=False):
+    def __init__(self, name: str, body_name: str, kernel_group: Optional[str] = None,
+                 skip_download: bool = False):
         """Initialize SPICE aware object and load required kernels if given.
 
         Parameters
@@ -53,12 +57,13 @@ class SpiceObject(object):
         if kernel_group:
             spice_load(kernel_group, skip_download)
 
-    def trajectory(self, t, frame="J2000", observer="SUN", units="AU"):
+    def trajectory(self, t: Union[datetime.datetime, Iterable[datetime.datetime]],
+                   frame: str = "J2000", observer: str = "SUN", units: str = "AU"):
         """Evaluate body trajectory at given datetimes.
 
         Parameters
         ----------
-        t : Union[list[datetime.datetime], datetime.datetime]
+        t : Union[datetime.datetime, Iterable[datetime.datetime]]
             Evaluate datetime(s).
         frame : str, optional
             Trajectory reference frame, by default "J2000".
@@ -102,7 +107,7 @@ class SpiceObject(object):
         return trajectory
 
 
-def spice_init(skip_download=False):
+def spice_init(skip_download: bool = False):
     """Initialize SPICE kernels.
 
     Parameters
@@ -167,7 +172,7 @@ def spice_init(skip_download=False):
         heliosat._spice["kernels_loaded"].append(kernel_url)
 
 
-def spice_load(kernel_group, skip_download=False):
+def spice_load(kernel_group: str, skip_download: bool = False):
     """Load SPICE kernel group.
 
     Parameters
@@ -208,13 +213,13 @@ def spice_load(kernel_group, skip_download=False):
                 logger.exception("failed to load kernel \"%s\"", kernel_url)
 
 
-def spice_reload(kernel_urls, skip_download=True):
+def spice_reload(kernel_urls: List[str], skip_download: bool = True):
     """Load SPICE kernels by url. This function is meant to be used in child processes that need
     to reload all SPICE kernels.
 
     Parameters
     ----------
-    kernel_urls : list[str]
+    kernel_urls : List[str]
         SPICE kernel urls.
     skip_download : bool, optional
         Skip kernel downloads (requires kernels to exist locally), by default True.

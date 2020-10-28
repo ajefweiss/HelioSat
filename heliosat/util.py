@@ -13,9 +13,18 @@ import requests
 import requests_ftp
 
 from bs4 import BeautifulSoup
+from typing import Iterable, List, Optional, Union
 
 
-def datetime_to_string(time_datetime):
+def datetime_utc(*args: tuple) -> datetime.datetime:
+    return datetime.datetime(*args).replace(tzinfo=datetime.timezone.utc)
+
+
+def datetime_utc_timestamp(timestamp: float) -> datetime.datetime:
+    return datetime.datetime.fromtimestamp(timestamp, datetime.timezone.utc)
+
+
+def datetime_to_string(time_datetime: datetime.datetime) -> str:
     """Convert python datetime to string.
 
     Parameters
@@ -31,12 +40,18 @@ def datetime_to_string(time_datetime):
     return time_datetime.strftime("%Y-%m-%dT%H:%M:%S.%f")
 
 
-def get_heliosat_paths():
+def get_heliosat_paths() -> dict:
     """Get heliosat file paths.
+
+    Returns
+    -------
+    dict
+        Dictionary containing heliosat paths.
     """
     root_path = os.getenv('HELIOSAT_DATAPATH', os.path.join(os.path.expanduser("~"), ".heliosat"))
 
     return {
+        "att_data": os.path.join(root_path, "att_data"),
         "cache": os.path.join(root_path, "cache"),
         "data": os.path.join(root_path, "data"),
         "helcats": os.path.join(root_path, "helcats"),
@@ -45,38 +60,79 @@ def get_heliosat_paths():
     }
 
 
-def string_to_datetime(time_string):
+def sanitize_datetimes(t: Union[datetime.datetime, Iterable[datetime.datetime]]) \
+        -> Union[datetime.datetime, Iterable[datetime.datetime]]:
+    if isinstance(t, datetime.datetime) and t.tzinfo is None:
+        return t.replace(tzinfo=datetime.timezone.utc)
+    elif isinstance(t, datetime.datetime):
+        return t.astimezone(datetime.timezone.utc)
+    elif hasattr(t, "__iter__"):
+        _t = list(t)
+
+        for i in range(len(_t)):
+            if _t[i].tzinfo is None:
+                _t[i] = _t[i].replace(tzinfo=datetime.timezone.utc)
+            else:
+                _t[i] = _t[i].astimezone(datetime.timezone.utc)
+
+        return _t
+    else:
+        return t
+
+
+def string_to_datetime(time_string: str, time_format: Optional[str] = None) -> datetime.datetime:
     """Convert string to python datetime.
 
     Parameters
     ----------
     time_string : str
         Datetime string.
+    time_format : str
+        Datetime string format.
 
     Returns
     -------
     datetime.datetime
         Datetime object.
     """
-    try:
-        return datetime.datetime.strptime(time_string, "%Y-%m-%dT%H:%M:%S.%f")
-    except ValueError:
-        return datetime.datetime.strptime(time_string, "%Y-%m-%dT%H:%MZ")
+    formats = [
+        "%Y-%m-%dT%H:%M:%S.%f",
+        "%Y-%m-%dT%H:%M:%S",
+        "%Y-%m-%dT%H:%MZ",
+        "%Y-%m-%dT%H:%M",
+        "%Y-%m-%d"
+    ]
+
+    if time_format:
+        try:
+            return datetime.datetime.strptime(
+                time_string, time_format
+                ).replace(tzinfo=datetime.timezone.utc)
+        except ValueError:
+            pass
+
+    for f in formats:
+        try:
+            return datetime.datetime.strptime(time_string, f).replace(tzinfo=datetime.timezone.utc)
+        except ValueError:
+            pass
+
+    raise ValueError("could not convert \"%s\", unkown format", time_string)
 
 
-def urls_expand(urls, pre="$"):
+def urls_expand(urls: List[str], pre: str = "$") -> list:
     """"Expand list of url's using regular expressions. Both HTTP and FTP url's are supported.
 
     Parameters
     ----------
-    urls : list
+    urls : List[str]
         Url list (including expandables and non-expandables).
     pre : str
         Prefix to identify expandable url's.
 
     Returns
     -------
-    list
+    List[str]
         Expanded url list (including non-expandables).
 
     Raises
@@ -131,17 +187,17 @@ def urls_expand(urls, pre="$"):
     return urls_expanded
 
 
-def urls_resolve(urls):
+def urls_resolve(urls: List[str]) -> List[str]:
     """Resolve list of url's using regular expressions.
 
     Parameters
     ----------
-    urls : list
+    urls : List[str]
         Url list.
 
     Returns
     -------
-    list
+    List[str]
         Resolved url list.
     """
     # organize url's so that any page is only called once

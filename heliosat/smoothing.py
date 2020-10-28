@@ -5,17 +5,21 @@
 Implements smoothing functionality.
 """
 
+import datetime
 import logging
 import numba
 import numpy as np
 
+from typing import Iterable
 
-def smooth_data(t, time_raw, data_raw, **kwargs):
+
+def smooth_data(t: Iterable[datetime.datetime],
+                time_raw: np.ndarray, data_raw: np.ndarray, **kwargs) -> (np.ndarray, np.ndarray):
     """Smooth raw data and evaluate at timesteps t.
 
     Parameters
     ----------
-    t : list[datetime.datetime]
+    t : Iterable[datetime.datetime]
         Evaluation datetimes.
     time_raw : np.ndarray
         Raw time array.
@@ -31,7 +35,7 @@ def smooth_data(t, time_raw, data_raw, **kwargs):
 
     Returns
     -------
-    (list[float], np.ndarray)
+    (np.ndarray, np.ndarray)
             Evaluation datetimes as timestamps & smoothed data array.
 
     Raises
@@ -48,9 +52,13 @@ def smooth_data(t, time_raw, data_raw, **kwargs):
     smoothing_scale = kwargs.get("smoothing_scale", 300)
 
     if smoothing in ["average", "moving_average", "mean"]:
-        average_smoothing(time_smooth, time_raw, data_raw, data_smooth, smoothing_scale)
+        _smoothing_mean(time_smooth, time_raw, data_raw, data_smooth, smoothing_scale)
     elif smoothing in ["kernel", "kernel_gaussian", "gaussian"]:
-        kernel_smoothing(time_smooth, time_raw, data_raw, data_smooth, smoothing_scale)
+        _smoothing_gaussian_kernel(time_smooth, time_raw, data_raw, data_smooth, smoothing_scale)
+    elif smoothing in ["linear", "linear_interpolation"]:
+        data_smooth = np.array([np.interp(time_smooth, time_raw, data_raw[:, i])
+                                for i in range(data_raw.shape[1])])
+        return time_smooth, data_smooth.T
     elif smoothing == ["spline", "spline_smoothing", "tps", "tps_smoothing"]:
         raise NotImplementedError
     else:
@@ -62,7 +70,7 @@ def smooth_data(t, time_raw, data_raw, **kwargs):
 
 
 @numba.njit(parallel=True)
-def average_smoothing(t, time_raw, data_raw, data_smooth, smoothing_scale):
+def _smoothing_mean(t, time_raw, data_raw, data_smooth, smoothing_scale):
     """Smooth data using moving average.
 
     Parameters
@@ -98,7 +106,7 @@ def average_smoothing(t, time_raw, data_raw, data_smooth, smoothing_scale):
 
 
 @numba.njit(parallel=True)
-def kernel_smoothing(t, time_raw, data_raw, data_smooth, smoothing_scale):
+def _smoothing_gaussian_kernel(t, time_raw, data_raw, data_smooth, smoothing_scale):
     """Smooth data using a gaussian kernel.
 
     Parameters

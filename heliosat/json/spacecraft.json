@@ -240,8 +240,98 @@
         }
     },
     "stereo_ahead": {
+        "att_keys": {
+            "sta_hi1": {
+                "alt_keys": ["hi1", "hi1a"],
+                "urls": "https://sohowww.nascom.nasa.gov/solarsoft/stereo/secchi/data/hi/pnt_HI1A_{YYYY}-{MM}-{DD}_fix_mu_fov.fts",
+                "version_default": {
+                    "columns": [
+                        {
+                            "default": true,
+                            "key": "CRVAL1A",
+                            "name": "INST_RA"
+                        },
+                        {
+                            "default": true,
+                            "key": "CRVAL2A",
+                            "name": "INST_DEC"
+                        },
+                        {
+                            "default": false,
+                            "key": "XCEN",
+                            "name": "INST_YAW"
+                        },
+                        {
+                            "default": false,
+                            "key": "YCEN",
+                            "name": "INST_PITCH"
+                        },
+                        {
+                            "default": false,
+                            "key": "CROTA",
+                            "name": "INST_ROLL"
+                        }
+                    ],
+                    "format": "fits_header",
+                    "time": {
+                        "key": "DATE-AVG"
+                    }
+                },
+                "versions": [
+                    {
+                        "version_start": "2006-12-13T00:00:00.000",
+                        "version_end": "2100-01-01T00:00:00.000"
+                    }
+                ]
+            }
+        },
         "kernel_group": "stereo",
         "data_keys": {
+            "sta_hi1": {
+                "alt_keys": ["hi1", "hi1a"],
+                "urls": "https://sohowww.nascom.nasa.gov/solarsoft/stereo/secchi/data/hi/pnt_HI1A_{YYYY}-{MM}-{DD}_fix_mu_fov.fts",
+                "version_default": {
+                    "columns": [
+                        {
+                            "default": true,
+                            "key": "CRVAL1A",
+                            "name": "INST_RA",
+                            "valid_range": [-361, 361]
+                        },
+                        {
+                            "default": true,
+                            "key": "CRVAL2A",
+                            "name": "INST_DEC",
+                            "valid_range": [-361, 361]
+                        },
+                        {
+                            "default": false,
+                            "key": "XCEN",
+                            "name": "INST_YAW"
+                        },
+                        {
+                            "default": false,
+                            "key": "YCEN",
+                            "name": "INST_PITCH"
+                        },
+                        {
+                            "default": false,
+                            "key": "CROTA",
+                            "name": "INST_ROLL"
+                        }
+                    ],
+                    "format": "fits_header",
+                    "time": {
+                        "key": "DATE-AVG"
+                    }
+                },
+                "versions": [
+                    {
+                        "version_start": "2006-12-13T00:00:00.000",
+                        "version_end": "2100-01-01T00:00:00.000"
+                    }
+                ]
+            },
             "sta_impact_l1": {
                 "alt_keys": ["mag", "sta_mag", "sta_impact"],
                 "urls": "https://stereo-ssc.nascom.nasa.gov/data/ins_data/impact/level1/ahead/mag/RTN/{YYYY}/{MM}/STA_L1_MAG_RTN_{YYYY}{MM}{DD}_{V0}.cdf",
@@ -1009,11 +1099,11 @@
                     {
                         "identifiers": ["v05"],
                         "version_start": "1995-01-01T00:00:00.000",
-                        "version_end": "2019-01-01T00:00:00.000"
+                        "version_end": "2020-01-01T00:00:00.000"
                     },
                     {
                         "identifiers": ["v04"],
-                        "version_start": "2019-01-01T00:00:00.000",
+                        "version_start": "2020-01-01T00:00:00.000",
                         "version_end": "2100-01-01T00:00:00.000"
                     }
                 ]

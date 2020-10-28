@@ -12,35 +12,44 @@ import numpy as np
 import spiceypy
 
 from concurrent.futures import ProcessPoolExecutor
+from typing import Iterable, Optional, Union
 
 
-def transform_lonlat(t, lons, lats, frame_from, frame_to):
-    """Transform longitude/latitude direction from one reference frame to another.
+def transform_lonlat(t: Union[datetime.datetime, Iterable[datetime.datetime]],
+                     lonlat: np.ndarray, frame_from: str, frame_to: str) -> np.ndarray:
+    """Transform longitude/latitude's from one reference frame to another.
+
+    Inclination is not transformed, therefore the transformation only works in between reference
+    frames that share the same z-axis.
 
     Parameters
     ----------
-    t : datetime.datetime
+    t : Union[datetime.datetime, Iterable[datetime.datetime]]
         Evaluation datetimes.
-    lons : np.ndarray
-        Longitudes array.
-    lats : np.ndarray
-        Latitudes array.
+    lonlat : np.ndarray
+        Longitude/latitude's array.
+    frame_from : str
+        Source refernce frame.
+    frame_to : str
+        Target reference frame.
 
     Returns
     -------
-    (np.ndarray, np.ndarray)
+    np.ndarray
         Transformed longitude/latitude's.
 
     Raises
     ------
+    TypeError
+        Variable t is not a valid datetime or Iterable of datetimes
     ValueError
-        If source and target frame are equal.
+        Source and target frame are equal.
     """
     if frame_from == frame_to:
-        raise ValueError("source frame and target frame are equal")
+        raise ValueError("source and target frame are equal")
 
-    lons_rad = 2 * np.pi * lons / 360
-    lats_rad = 2 * np.pi * lats / 360
+    lons_rad = 2 * np.pi * lonlat[:, 0] / 360
+    lats_rad = 2 * np.pi * lonlat[:, 1] / 360
 
     vecs = np.array([
         [np.cos(lon), np.sin(lon), np.sin(lat)]
@@ -52,28 +61,28 @@ def transform_lonlat(t, lons, lats, frame_from, frame_to):
             vecs[i] = spiceypy.mxv(spiceypy.pxform(frame_from, frame_to,
                                    spiceypy.datetime2et(t)),
                                    vecs[i])
-    elif isinstance(t, np.ndarray) or isinstance(t, list):
+    elif hasattr(t, "__iter__"):
         for i in range(0, len(t)):
             vecs[i] = spiceypy.mxv(spiceypy.pxform(frame_from, frame_to,
                                    spiceypy.datetime2et(t[i])),
                                    vecs[i])
     else:
-        raise TypeError("variable t is not a datetime or array/list")
+        raise TypeError("Variable t is not a valid datetime or Iterable of datetimes")
 
-    res = np.array([
+    return np.array([
         [360 * np.arccos(v[0]) / 2 / np.pi, 360 * np.arcsin(v[2]) / 2 / np.pi]
         for v in vecs
     ])
 
-    return res
 
-
-def transform_frame(t, data, frame_from, frame_to, frame_cadence=None):
+def transform_pos(t: Union[datetime.datetime, Iterable[datetime.datetime]],
+                  data: np.ndarray, frame_from: str, frame_to: str,
+                  frame_cadence: Optional[float] = None) -> np.ndarray:
     """Transform 3D coordinates from one reference frame to another.
 
     Parameters
     ----------
-    t : list[datetime.datetime]
+    t : Union[datetime.datetime, Iterable[datetime.datetime]]
         Evaluation datetimes.
     data : np.ndarray
         3D vector array.
@@ -82,8 +91,8 @@ def transform_frame(t, data, frame_from, frame_to, frame_cadence=None):
     frame_to : str
         Target reference frame.
     frame_cadence: float, optional
-            Evaluate frame transformation matrix every "frame_cadence" seconds instead of at very
-            time point (significant speed up), by default None.
+        Evaluate frame transformation matrix every "frame_cadence" seconds instead of at very
+        time point (significant speed up), by default None.
 
     Returns
     -------
@@ -93,15 +102,15 @@ def transform_frame(t, data, frame_from, frame_to, frame_cadence=None):
     Raises
     ------
     ValueError
-        If data array has the wrong dimensions (must be 2d or 3d)
-        or source and target frame are equal.
+        Data array has the wrong dimensions (must be 2d or 3d)
+        Source and target frame are equal.
     """
     if frame_from == frame_to:
         raise ValueError("source frame and target frame are equal")
 
     # convert timestamps to python datetimes if required
     if not isinstance(t[0], datetime.datetime):
-        t = [datetime.datetime.fromtimestamp(_t) for _t in t]
+        t = [datetime.datetime.fromtimestamp(_t, datetime.timezone.utc) for _t in t]
 
     if frame_cadence:
         frames = int((t[-1] - t[0]).total_seconds() // frame_cadence)
@@ -133,7 +142,7 @@ def transform_frame(t, data, frame_from, frame_to, frame_cadence=None):
             args = [(t, data[:, i], frame_from, frame_to, frames, frame_indices, kernels)
                     for i in range(data.shape[1])]
 
-            futures = executor.map(worker_transform_frame, args)
+            futures = executor.map(_worker_transform_pos, args)
 
         result = np.array([_ for _ in futures])
 
@@ -143,7 +152,7 @@ def transform_frame(t, data, frame_from, frame_to, frame_cadence=None):
         raise ValueError("data array can only be 2 or 3 dimensional")
 
 
-def worker_transform_frame(args):
+def _worker_transform_pos(args: tuple) -> np.ndarray:
     """Worker function for transforming 3D coordinates.
 
     Parameters

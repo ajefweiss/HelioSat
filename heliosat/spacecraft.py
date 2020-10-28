@@ -17,13 +17,16 @@ import numpy as np
 import os
 import shutil
 
+from astropy.io import fits
 from concurrent.futures import ProcessPoolExecutor
-from heliosat.caching import generate_cache_key, get_cache_entry, cache_entry_exists, \
-    set_cache_entry
+from heliosat.caching import cache_add_entry, cache_entry_exists, \
+    cache_generate_key, cache_get_entry
+from heliosat.coordinates import transform_pos
 from heliosat.download import download_files
 from heliosat.smoothing import smooth_data
-from heliosat.spice import SpiceObject, spice_load, transform_frame
-from heliosat.util import datetime_to_string, string_to_datetime, urls_resolve
+from heliosat.spice import SpiceObject, spice_load
+from heliosat.util import datetime_utc, datetime_utc_timestamp, datetime_to_string, \
+    sanitize_datetimes, string_to_datetime, urls_resolve
 from netCDF4 import Dataset
 from itertools import compress
 
@@ -121,6 +124,9 @@ class Spacecraft(SpiceObject):
 
         data_key = self.resolve_data_key(data_key)
 
+        # sanitize time input
+        t = sanitize_datetimes(t)
+
         identifiers = {
             "data_key": data_key,
             "spacecraft": self.name,
@@ -136,10 +142,10 @@ class Spacecraft(SpiceObject):
 
         if cache:
             # fetch cached entry
-            cache_key = generate_cache_key(identifiers)
+            cache_key = cache_generate_key(identifiers)
 
             if cache_entry_exists(cache_key):
-                return get_cache_entry(cache_key)
+                return cache_get_entry(cache_key)
 
         time, data = self.get_data_raw(t[0], t[-1], data_key, **kwargs)
 
@@ -168,14 +174,14 @@ class Spacecraft(SpiceObject):
 
             for i in range(len(_time)):
                 if _time[i] != np.nan:
-                    _time[i] = datetime.datetime.fromtimestamp(time[i])
+                    _time[i] = datetime_utc_timestamp(time[i])
 
             time = _time
 
         if cache and not cache_entry_exists(cache_key):
             # save cache entry
             logger.info("generating cache entry \"%s\"", cache_key)
-            set_cache_entry(cache_key, (time, data))
+            cache_add_entry(cache_key, (time, data))
 
         return time, data
 
@@ -221,6 +227,9 @@ class Spacecraft(SpiceObject):
 
         data_key = self.resolve_data_key(data_key)
 
+        range_start = sanitize_datetimes(range_start)
+        range_end = sanitize_datetimes(range_end)
+
         frame = kwargs.get("frame", None)
         frame_cadence = kwargs.get("frame_cadence", None)
 
@@ -259,7 +268,7 @@ class Spacecraft(SpiceObject):
 
             for i in range(len(_time)):
                 if _time[i] != np.nan:
-                    _time[i] = datetime.datetime.fromtimestamp(_time[i])
+                    _time[i] = datetime_utc_timestamp(_time[i])
 
             time_all = _time
 
@@ -313,12 +322,12 @@ class Spacecraft(SpiceObject):
             url = url.replace("{DD}", "{:02d}".format(day.day))
             url = url.replace("{DOY}", "{:03d}".format(day.timetuple().tm_yday))
 
-            doym1 = datetime.datetime(day.year, day.month, 1)
+            doym1 = datetime_utc(day.year, day.month, 1)
 
             if day.month == 12:
-                doym2 = datetime.datetime(day.year + 1, 1, 1) - datetime.timedelta(days=1)
+                doym2 = datetime_utc(day.year + 1, 1, 1) - datetime.timedelta(days=1)
             else:
-                doym2 = datetime.datetime(day.year, day.month + 1, 1) - datetime.timedelta(days=1)
+                doym2 = datetime_utc(day.year, day.month + 1, 1) - datetime.timedelta(days=1)
 
             url = url.replace("{DOYM1}", "{:03d}".format(doym1.timetuple().tm_yday))
             url = url.replace("{DOYM2}", "{:03d}".format(doym2.timetuple().tm_yday))
@@ -540,7 +549,7 @@ def read_task(args):
         for j in range(len(file_version["columns"])):
             column = file_version["columns"][j]
 
-            if columns[i] != column["name"] and columns[i] in column["alt_names"]:
+            if columns[i] != column["name"] and columns[i] in column.get("alt_names", []):
                 columns[i] = column["name"]
                 column_dicts.append(column)
                 valid_column = True
@@ -560,6 +569,9 @@ def read_task(args):
                                    cdf_type=file_version["format"])
     elif file_version["format"] == "text":
         time, data = read_text_task(file_path, range_start, range_end, file_version, column_dicts)
+    elif file_version["format"] == "fits_header":
+        time, data = read_fits_header_task(file_path, range_start, range_end, file_version,
+                                           column_dicts)
     else:
         raise NotImplementedError("format \"%s\" is not implemented", file_version["format"])
 
@@ -595,8 +607,8 @@ def read_task(args):
                 heliosat.spice.spice_init()
                 heliosat.spice.spice_reload(kernels)
 
-                data_entry = transform_frame(time, data_entry, column["frame"], frame,
-                                             frame_cadence)
+                data_entry = transform_pos(time, data_entry, column["frame"], frame,
+                                           frame_cadence)
 
             data[i] = data_entry
 
@@ -642,6 +654,7 @@ def read_cdf_task(file_path, range_start, range_end, version_dict, column_dicts,
                 epochs = epochs[null_filter]
             else:
                 null_filter = None
+
             time = cdflib.epochs.CDFepoch.unixtime(epochs, to_np=True)
             data = []
 
@@ -696,6 +709,42 @@ def read_cdf_task(file_path, range_start, range_end, version_dict, column_dicts,
         raise Exception
 
 
+def read_fits_header_task(file_path, range_start, range_end, version_dict, column_dicts):
+    """Worker function for reading FITS files (headers).
+
+    Parameters
+    ----------
+    file_path : str
+        File path.
+    range_start : datetime.datetime
+        Time range start datetime.
+    range_end : datetime.datetime
+        Time range end datetime.
+    version_dict : dict
+        Version information.
+    column_dicts : list[dict]
+        Data column information.
+
+    Returns
+    -------
+    (list[float], np.ndarray)
+        Evaluation datetimes as timestamps & processed data array.
+    """
+    time_key = version_dict["time"]["key"]
+
+    file = fits.open(file_path)
+
+    time = np.array([string_to_datetime(file[i].header[time_key]).timestamp()
+                     for i in range(1, len(file))])
+
+    data = []
+
+    for column in column_dicts:
+        data.append(np.array([file[i].header[column["key"]] for i in range(1, len(file))]))
+
+    return time, data
+
+
 def read_text_task(file_path, range_start, range_end, version_dict, column_dicts):
     """Worker function for reading text files.
 
@@ -730,9 +779,9 @@ def read_text_task(file_path, range_start, range_end, version_dict, column_dicts
         if string.endswith("60.000"):
             string = "{0}59.000".format(string[:-6])
 
-            return datetime.datetime.strptime(string, format).timestamp() + 1
+            return string_to_datetime(string, format)(string, format).timestamp() + 1
         else:
-            return datetime.datetime.strptime(string, format).timestamp()
+            return string_to_datetime(string, format)(string, format).timestamp()
 
     converters = {}
 
