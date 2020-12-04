@@ -6,6 +6,7 @@ Implements spacecraft classes.
 """
 
 import heliosat
+import inspect
 import spiceypy
 
 from heliosat.spacecraft import Spacecraft
@@ -65,10 +66,10 @@ class WIND(Spacecraft):
 
 
 def select_satellite(satellite: str) -> Spacecraft:
-    if hasattr(heliosat, satellite.upper()):
-        sat = getattr(heliosat, satellite.upper())
+    if hasattr(heliosat, satellite):
+        sat = getattr(heliosat, satellite)
 
-        if isinstance(sat, Spacecraft):
+        if Spacecraft in inspect.getmro(sat):
             return sat
 
-    raise NotImplementedError("unkown satellite \"%s\"", satellite.upper())
+    raise NotImplementedError("unkown satellite \"%s\"", satellite)

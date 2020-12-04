@@ -240,7 +240,8 @@
         }
     },
     "stereo_ahead": {
-        "att_keys": {
+        "kernel_group": "stereo",
+        "data_keys": {
             "sta_hi1": {
                 "alt_keys": ["hi1", "hi1a"],
                 "urls": "https://sohowww.nascom.nasa.gov/solarsoft/stereo/secchi/data/hi/pnt_HI1A_{YYYY}-{MM}-{DD}_fix_mu_fov.fts",
@@ -257,67 +258,24 @@
                             "name": "INST_DEC"
                         },
                         {
-                            "default": false,
-                            "key": "XCEN",
-                            "name": "INST_YAW"
-                        },
-                        {
-                            "default": false,
-                            "key": "YCEN",
-                            "name": "INST_PITCH"
-                        },
-                        {
-                            "default": false,
+                            "default": true,
                             "key": "CROTA",
                             "name": "INST_ROLL"
-                        }
-                    ],
-                    "format": "fits_header",
-                    "time": {
-                        "key": "DATE-AVG"
-                    }
-                },
-                "versions": [
-                    {
-                        "version_start": "2006-12-13T00:00:00.000",
-                        "version_end": "2100-01-01T00:00:00.000"
-                    }
-                ]
-            }
-        },
-        "kernel_group": "stereo",
-        "data_keys": {
-            "sta_hi1": {
-                "alt_keys": ["hi1", "hi1a"],
-                "urls": "https://sohowww.nascom.nasa.gov/solarsoft/stereo/secchi/data/hi/pnt_HI1A_{YYYY}-{MM}-{DD}_fix_mu_fov.fts",
-                "version_default": {
-                    "columns": [
-                        {
-                            "default": true,
-                            "key": "CRVAL1A",
-                            "name": "INST_RA",
-                            "valid_range": [-361, 361]
-                        },
-                        {
-                            "default": true,
-                            "key": "CRVAL2A",
-                            "name": "INST_DEC",
-                            "valid_range": [-361, 361]
                         },
                         {
                             "default": false,
-                            "key": "XCEN",
-                            "name": "INST_YAW"
+                            "key": "INS_X0",
+                            "name": "OFFSET_X"
                         },
                         {
                             "default": false,
-                            "key": "YCEN",
-                            "name": "INST_PITCH"
+                            "key": "INS_Y0",
+                            "name": "OFFSET_Y"
                         },
                         {
                             "default": false,
-                            "key": "CROTA",
-                            "name": "INST_ROLL"
+                            "key": "INS_R0",
+                            "name": "OFFSET_R"
                         }
                     ],
                     "format": "fits_header",
@@ -1044,6 +1002,7 @@
                 },
                 "versions": [
                     {
+                        "identifiers": [""],
                         "version_start": "2006-05-15T00:00:00.000",
                         "version_end": "2007-10-04T00:00:00.000"
                         

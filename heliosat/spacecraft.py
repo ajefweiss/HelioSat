@@ -130,7 +130,8 @@ class Spacecraft(SpiceObject):
         identifiers = {
             "data_key": data_key,
             "spacecraft": self.name,
-            "times": [_t.timestamp() for _t in t]
+            "times": [_t.timestamp() for _t in t],
+            "version": heliosat.__version__
         }
 
         identifiers.update(kwargs)
@@ -143,9 +144,19 @@ class Spacecraft(SpiceObject):
         if cache:
             # fetch cached entry
             cache_key = cache_generate_key(identifiers)
+            logger.info("loading cache entry \"%s\"", cache_key)
 
             if cache_entry_exists(cache_key):
                 return cache_get_entry(cache_key)
+            else:
+                logger.info("cache entry \"%s\" not found", cache_key)
+
+        # if time is 2 elements, build list
+        if len(t) == 2:
+            time_ts = np.linspace(t[0].timestamp(), t[1].timestamp(),
+                                  int((t[1].timestamp() - t[0].timestamp()) // 60))
+
+            t = [datetime.datetime.fromtimestamp(_, datetime.timezone.utc) for _ in time_ts]
 
         time, data = self.get_data_raw(t[0], t[-1], data_key, **kwargs)
 
@@ -162,12 +173,7 @@ class Spacecraft(SpiceObject):
 
             time, data = smooth_data(t, time, data, **smoothing_dict)
         else:
-            # no smoothing, choose closest time values
-            _time = []
-            _data = []
-
-            for _t in t:
-                pass
+            time, data = smooth_data(t, time, data, smoothing="closest")
 
         if return_datetimes:
             _time = list(time)
@@ -562,7 +568,7 @@ def read_task(args):
                 break
 
         if not valid_column:
-            raise KeyError("data column \"%s\" is invalid", columns[i])
+            raise KeyError("data column \"%s\" is invalid (%s)", columns[i], file_path)
 
     if "_cdf" in file_version["format"]:
         time, data = read_cdf_task(file_path, range_start, range_end, file_version, column_dicts,
@@ -779,9 +785,9 @@ def read_text_task(file_path, range_start, range_end, version_dict, column_dicts
         if string.endswith("60.000"):
             string = "{0}59.000".format(string[:-6])
 
-            return string_to_datetime(string, format)(string, format).timestamp() + 1
+            return string_to_datetime(string, format).timestamp() + 1
         else:
-            return string_to_datetime(string, format)(string, format).timestamp()
+            return string_to_datetime(string, format).timestamp()
 
     converters = {}
 

@@ -13,6 +13,7 @@ import requests
 import requests_ftp
 
 from bs4 import BeautifulSoup
+from ftplib import FTP
 from typing import Iterable, List, Optional, Union
 
 
@@ -167,22 +168,37 @@ def urls_expand(urls: List[str], pre: str = "$") -> list:
             url_parent = "/".join(url[1:].split("/")[:-1])
             url_regex = url.split("/")[-1]
 
-            response = requests_ftp.ftp.FTPSession().list(url_parent)
+            try:
+                #print("ftp connecting", url_parent[6:].split("/")[0])
 
-            if response.ok:
-                response_text = response.text
-            else:
-                return response.raise_for_status()
+                #with FTP(url_parent[6:].split("/")[0]) as ftp:
+                #    print("ftp login")
+                #    ftp.login()
+                #    print("cwd ", url_parent[6:].split("/")[1:])
+                #    ftp.cwd(url_parent[6:].split("/")[1:])
+                #    filenames = ftp.retrlines('LIST')
+                #    print(filenames)
+                #    raise Exception("bad ftp")
+                response = requests_ftp.ftp.FTPSession().list(url_parent)
+                print(url_parent)
 
-            # match all urls's with regex pattern
-            filenames = [line.split()[-1] for line in response.content.decode("utf-8").splitlines()]
+                if response.ok:
+                    response_text = response.text
+                else:
+                    return response.raise_for_status()
 
-            for filename in filenames:
-                if re.match(url_regex, filename):
-                    urls_expanded.append("/".join([url_parent, filename]))
+                # match all urls's with regex pattern
+                filenames = [line.split()[-1] for line in response.content.decode("utf-8").splitlines()]
+
+                for filename in filenames:
+                    if re.match(url_regex, filename):
+                        urls_expanded.append("/".join([url_parent, filename]))
+            except Exception as err:
+                print(err)
+                raise
         else:
-            logger.exception("invalid url: \"%s\"", url)
-            raise NotImplementedError("invalid url: \"%s\"", url)
+            logger.exception("failed to expand url: \"%s\"", url)
+            raise NotImplementedError("failed to expand url: \"%s\"", url)
 
     return urls_expanded
 

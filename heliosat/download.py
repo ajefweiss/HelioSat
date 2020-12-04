@@ -109,14 +109,15 @@ def _worker_download_files(args: tuple) -> bool:
                     logger.debug("checked \"%s\"", file_url)
                     return True
 
-        logger.debug("downloading \"%s\"", file_url)
-
         if file_url.startswith("http"):
+            logger.debug("downloading \"%s\"", file_url)
             response = requests.get(file_url)
         elif file_url.startswith("ftp"):
-            ftp_session = requests_ftp.ftp.FTPSession()
-            response = ftp_session.retr(file_url)
-            ftp_session.close()
+            logger.debug("downloading (ftp) \"%s\"", file_url)
+            requests_ftp.monkeypatch_session()
+            s = requests.Session()
+            response = s.get(file_url)
+            s.close()
         else:
             logger.exception("invalid url \"%s\"", file_url)
             raise NotImplementedError("invalid url \"%s\"", file_url)

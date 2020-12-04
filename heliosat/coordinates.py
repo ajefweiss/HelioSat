@@ -52,7 +52,7 @@ def transform_lonlat(t: Union[datetime.datetime, Iterable[datetime.datetime]],
     lats_rad = 2 * np.pi * lonlat[:, 1] / 360
 
     vecs = np.array([
-        [np.cos(lon), np.sin(lon), np.sin(lat)]
+        [np.cos(lon) * np.cos(lat), np.sin(lon) * np.cos(lat), np.sin(lat)]
         for (lon, lat) in list(zip(lons_rad, lats_rad))
     ])
 

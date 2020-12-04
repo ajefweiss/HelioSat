@@ -59,7 +59,9 @@ def smooth_data(t: Iterable[datetime.datetime],
         data_smooth = np.array([np.interp(time_smooth, time_raw, data_raw[:, i])
                                 for i in range(data_raw.shape[1])])
         return time_smooth, data_smooth.T
-    elif smoothing == ["spline", "spline_smoothing", "tps", "tps_smoothing"]:
+    elif smoothing in ["closest"]:
+        return _smoothing_closest(time_smooth, time_raw, data_raw, data_smooth)
+    elif smoothing in ["spline", "spline_smoothing", "tps", "tps_smoothing"]:
         raise NotImplementedError
     else:
         logger.exception("smoothing method \"%s\" is not implemented", kwargs.get("smoothing"))
@@ -67,6 +69,34 @@ def smooth_data(t: Iterable[datetime.datetime],
                                   kwargs.get("smoothing"))
 
     return time_smooth, data_smooth
+
+
+@numba.njit(parallel=False)
+def _smoothing_closest(t, time_raw, data_raw, data_smooth):
+    """Smooth data using closest.
+
+    Parameters
+    ----------
+    t : list[float]
+        Evaluation times as timestamps.
+    time_raw : np.ndarray
+        Raw time array.
+    data_raw : np.ndarray
+        Raw data array.
+    data_smooth : np.ndarray
+        Smoothed data array.
+    smoothing_scale : float
+        Smoothing scale in seconds.
+    """
+    t_actual = np.zeros_like(t)
+
+    for i in numba.prange(len(t)):
+        index = np.argmin(np.abs(t[i] - time_raw))
+
+        t_actual[i] = time_raw[index]
+        data_smooth[i] = data_raw[index]
+
+    return t_actual, data_smooth
 
 
 @numba.njit(parallel=True)
