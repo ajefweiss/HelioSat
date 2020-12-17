@@ -166,6 +166,7 @@
             "https://sohowww.nascom.nasa.gov/solarsoft/stereo/gen/data/spice/depm/ahead/ahead_2020_303_01.depm.bsp",
             "https://sohowww.nascom.nasa.gov/solarsoft/stereo/gen/data/spice/depm/ahead/ahead_2020_317_01.depm.bsp",
             "https://sohowww.nascom.nasa.gov/solarsoft/stereo/gen/data/spice/depm/ahead/ahead_2020_329_01.depm.bsp",
+            "https://sohowww.nascom.nasa.gov/solarsoft/stereo/gen/data/spice/depm/ahead/ahead_2020_344_01.depm.bsp",
             "https://sohowww.nascom.nasa.gov/solarsoft/stereo/gen/data/spice/depm/behind/behind_2007_021_01.depm.bsp",
             "https://sohowww.nascom.nasa.gov/solarsoft/stereo/gen/data/spice/depm/behind/behind_2007_053_01.depm.bsp",
             "https://sohowww.nascom.nasa.gov/solarsoft/stereo/gen/data/spice/depm/behind/behind_2008_037_01.depm.bsp",
@@ -287,5 +288,5 @@
             "ftp://psa.esac.esa.int/pub/mirror/VENUS-EXPRESS/SPICE/VEX-E-V-SPICE-6-V1.0/DATA/SPK/ORVV__121101000000_00461.BSP"
         ]
     },
-    "timestamp": 1606906907.4109623
+    "timestamp": 1608109839.7833967
 }

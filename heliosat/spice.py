@@ -15,23 +15,15 @@ import requests
 import spiceypy
 import time
 
-from heliosat.download import download_files
-from heliosat.util import urls_expand
+from heliosat.download import download_files, urls_expand
 from typing import Iterable, List, Optional, Union
-
-# LEGACY CODE
-from heliosat.coordinates import transform_lonlat  # noqa: F401
-from heliosat.coordinates import transform_pos as transform_frame  # noqa: F401
 
 
 class SpiceObject(object):
     """Base SPICE class for SPICE aware objects (bodies, spacecraft etc.).
     """
-    name = None
-    body_name = None
-
     def __init__(self, name: str, body_name: str, kernel_group: Optional[str] = None,
-                 skip_download: bool = False):
+                 skip_init: bool = False, force_download: bool = False):
         """Initialize SPICE aware object and load required kernels if given.
 
         Parameters
@@ -42,20 +34,22 @@ class SpiceObject(object):
             SPICE object name.
         kernel_group : str, optional
             SPICE kernel group name, by default None.
-        skip_download: bool, optional
-            Skip kernel downloads (requires kernels to exist locally), by default False.
+        skip_init: bool, optional
+            Initialize default spice kernels, by default True.
+        force_download: bool, optional
+            Force kernel downloads (otherwise skip remote checks), by default False.
         """
         logger = logging.getLogger(__name__)
 
-        if heliosat._spice is None:
+        if skip_init is False and heliosat._spice is None:
             logger.info("running spice_init")
-            spice_init(skip_download)
+            spice_init(force_download)
 
         self.name = name
         self.body_name = body_name
 
         if kernel_group:
-            spice_load(kernel_group, skip_download)
+            spice_load(kernel_group, force_download)
 
     def trajectory(self, t: Union[datetime.datetime, Iterable[datetime.datetime]],
                    frame: str = "J2000", observer: str = "SUN", units: str = "AU"):
@@ -84,6 +78,10 @@ class SpiceObject(object):
         """
         logger = logging.getLogger(__name__)
 
+        if heliosat._spice is None:
+            logger.info("running spice_init")
+            spice_init(False)
+
         trajectory = np.array(
             spiceypy.spkpos(
                 self.body_name,
@@ -107,15 +105,18 @@ class SpiceObject(object):
         return trajectory
 
 
-def spice_init(skip_download: bool = False):
+def spice_init(force_download: bool = False):
     """Initialize SPICE kernels.
 
     Parameters
     ----------
-    skip_download : bool, optional
-        Skip kernel downloads (requires kernels to exist locally), by default False.
+    force_download: bool, optional
+            Force kernel downloads (otherwise skip remote checks), by default False.
     """
     logger = logging.getLogger(__name__)
+
+    # clear all
+    spiceypy.kclear()
 
     kernels_path = heliosat._paths["kernels"]
 
@@ -161,8 +162,7 @@ def spice_init(skip_download: bool = False):
                                    "and previous version cannot be found")
 
     # load generic kernels
-    if not skip_download:
-        download_files(json_kernels["generic"], kernels_path, logger=logger)
+    download_files(json_kernels["generic"], kernels_path, force=force_download, logger=logger)
 
     heliosat._spice["kernel_groups"] = json_kernels["_groups"]
     heliosat._spice["kernels_loaded"] = []
@@ -172,15 +172,15 @@ def spice_init(skip_download: bool = False):
         heliosat._spice["kernels_loaded"].append(kernel_url)
 
 
-def spice_load(kernel_group: str, skip_download: bool = False):
+def spice_load(kernel_group: str, force_download: bool = False):
     """Load SPICE kernel group.
 
     Parameters
     ----------
     kernel_group : str
         SPICE kernel group name as defined in the spacecraft.json file.
-    skip_download : bool, optional
-        Skip kernel downloads (requires kernels to exist locally), by default False.
+    force_download: bool, optional
+            Force kernel downloads (otherwise skip remote checks), by default False.
     """
     logger = logging.getLogger(__name__)
 
@@ -198,8 +198,7 @@ def spice_load(kernel_group: str, skip_download: bool = False):
 
         logger.debug("loading kernel group \"%s\"", kernel_group)
 
-        if not skip_download:
-            download_files(kernels_required, kernels_path, logger=logger)
+        download_files(kernels_required, kernels_path, force=force_download, logger=logger)
 
         for kernel_url in kernels_required:
             kernel = os.path.join(kernels_path, kernel_url.split("/")[-1])
@@ -213,7 +212,7 @@ def spice_load(kernel_group: str, skip_download: bool = False):
                 logger.exception("failed to load kernel \"%s\"", kernel_url)
 
 
-def spice_reload(kernel_urls: List[str], skip_download: bool = True):
+def spice_reload(kernel_urls: List[str], force_download: bool = False):
     """Load SPICE kernels by url. This function is meant to be used in child processes that need
     to reload all SPICE kernels.
 
@@ -221,15 +220,15 @@ def spice_reload(kernel_urls: List[str], skip_download: bool = True):
     ----------
     kernel_urls : List[str]
         SPICE kernel urls.
-    skip_download : bool, optional
-        Skip kernel downloads (requires kernels to exist locally), by default True.
+    force_download: bool, optional
+            Force kernel downloads (otherwise skip remote checks), by default False.
     """
     logger = logging.getLogger(__name__)
 
     kernels_path = heliosat._paths["kernels"]
 
     kernels_required = kernel_urls
-
+    
     for kernel in list(kernels_required):
         if kernel in heliosat._spice["kernels_loaded"]:
             kernels_required.remove(kernel)
@@ -237,14 +236,12 @@ def spice_reload(kernel_urls: List[str], skip_download: bool = True):
     if len(kernels_required) == 0:
         return
 
-    if not skip_download:
-        download_files(kernels_required, kernels_path, logger=logger)
+    download_files(kernels_required, kernels_path, force=force_download, logger=logger)
 
     for kernel_url in kernels_required:
         kernel = os.path.join(kernels_path, kernel_url.split("/")[-1])
 
         logger.debug("loading kernel \"%s\"", kernel)
-
         try:
             spiceypy.furnsh(kernel)
             heliosat._spice["kernels_loaded"].append(kernel_url)

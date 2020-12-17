@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 """coordinates.py
-
 Implements coordinate transformation functions requiring SPICE.
 """
 
@@ -18,10 +17,8 @@ from typing import Iterable, Optional, Union
 def transform_lonlat(t: Union[datetime.datetime, Iterable[datetime.datetime]],
                      lonlat: np.ndarray, frame_from: str, frame_to: str) -> np.ndarray:
     """Transform longitude/latitude's from one reference frame to another.
-
     Inclination is not transformed, therefore the transformation only works in between reference
     frames that share the same z-axis.
-
     Parameters
     ----------
     t : Union[datetime.datetime, Iterable[datetime.datetime]]
@@ -32,12 +29,10 @@ def transform_lonlat(t: Union[datetime.datetime, Iterable[datetime.datetime]],
         Source refernce frame.
     frame_to : str
         Target reference frame.
-
     Returns
     -------
     np.ndarray
         Transformed longitude/latitude's.
-
     Raises
     ------
     TypeError
@@ -79,7 +74,6 @@ def transform_pos(t: Union[datetime.datetime, Iterable[datetime.datetime]],
                   data: np.ndarray, frame_from: str, frame_to: str,
                   frame_cadence: Optional[float] = None) -> np.ndarray:
     """Transform 3D coordinates from one reference frame to another.
-
     Parameters
     ----------
     t : Union[datetime.datetime, Iterable[datetime.datetime]]
@@ -93,12 +87,10 @@ def transform_pos(t: Union[datetime.datetime, Iterable[datetime.datetime]],
     frame_cadence: float, optional
         Evaluate frame transformation matrix every "frame_cadence" seconds instead of at very
         time point (significant speed up), by default None.
-
     Returns
     -------
     np.ndarray
         Transformed vector array in target reference frame.
-
     Raises
     ------
     ValueError
@@ -154,12 +146,10 @@ def transform_pos(t: Union[datetime.datetime, Iterable[datetime.datetime]],
 
 def _worker_transform_pos(args: tuple) -> np.ndarray:
     """Worker function for transforming 3D coordinates.
-
     Parameters
     ----------
     args: (np.ndarray, np.ndarray, str, str, np.ndarray, np.ndarray, list)
         Function arguments as tuple.
-
     Returns
     -------
     np.ndarray
@@ -167,9 +157,8 @@ def _worker_transform_pos(args: tuple) -> np.ndarray:
     """
     (t, data, frame_from, frame_to, frames, frame_indices, kernels) = args
 
-    if len(heliosat._spice["kernels_loaded"]) == 0:
-        heliosat.spice.spice_init()
-        heliosat.spice.spice_reload(kernels)
+    heliosat.spice.spice_init()
+    heliosat.spice.spice_reload(kernels)
 
     if frames:
         for i in range(0, len(t)):

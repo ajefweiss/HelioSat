@@ -9,7 +9,7 @@ setup(
         "heliosat"
     ],
     package_data={"heliosat": ["json/*.json"]},
-    version="0.4.9",
+    version="0.5.0",
     author="Andreas J. Weiss",
     author_email="andreas.weiss@oeaw.ac.at",
     keywords=["astrophysics", "solar physics", "space weather"],
@@ -24,11 +24,10 @@ setup(
         "numba",
         "numpy",
         "requests",
-        "requests-ftp",
         "spiceypy"
     ],
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",

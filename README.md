@@ -1,7 +1,7 @@
 HelioSat
 ========
 
-A simple and small python package for handling and processing heliospheric satellite data. The current primary features are automatic data downloading & crude processing for DSCOVR, MES, PSP, STA, STB, VEX and WIND (plus BEPI and SOLO once data products are publicly available). Furthermore all related SPICE kernels are downloaded automatically.
+A simple and small python package for handling and processing heliospheric satellite data. The current primary features are automatic data downloading & crude processing for DSCOVR, MES, PSP, STA, STB, VEX and WIND (plus BEPI and SOLO once data products are publicly available). Furthermore all related and required SPICE kernels are downloaded automatically.
 
 Installation
 ------------
@@ -27,7 +27,7 @@ This will automatically download and load any required SPICE kernels (using `spi
 kernel or data files will be stored in `~/.heliosat` by default. As this may use up alot of disk
 space you can alternatively change the default path by setting the environment variable `HELIOSAT_DATAPATH`.
 
-Querying raw data in a certain time window can then be done using:
+Querying raw data in a certain time window (any tz-unaware datetime objects are assumed to be UTC) can then be done using:
 
     import datetime
 

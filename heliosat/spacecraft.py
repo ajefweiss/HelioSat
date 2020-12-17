@@ -22,11 +22,11 @@ from concurrent.futures import ProcessPoolExecutor
 from heliosat.caching import cache_add_entry, cache_entry_exists, \
     cache_generate_key, cache_get_entry
 from heliosat.coordinates import transform_pos
-from heliosat.download import download_files
+from heliosat.download import download_files, urls_resolve
 from heliosat.smoothing import smooth_data
 from heliosat.spice import SpiceObject, spice_load
 from heliosat.util import datetime_utc, datetime_utc_timestamp, datetime_to_string, \
-    sanitize_datetimes, string_to_datetime, urls_resolve
+    sanitize_datetimes, string_to_datetime
 from netCDF4 import Dataset
 from itertools import compress
 
@@ -34,8 +34,6 @@ from itertools import compress
 class Spacecraft(SpiceObject):
     """Base Spacecraft class.
     """
-    spacecraft = None
-
     def __init__(self, name, body_name, **kwargs):
         """Initialize Spacecraft object. This just fetches the spacecraft.json entry and loads any
         spacecraft specific SPICE kernels.
@@ -52,8 +50,8 @@ class Spacecraft(SpiceObject):
         ----------------
         kernel_group: str
             Spacecraft kernel group as defined in the spacecraft.json file, by default None.
-        skip_download: bool
-            Skip kernel downloads (requires kernels to exist locally), by default False.
+        force_download: bool, optional
+            Force kernel downloads (otherwise skip remote checks), by default False.
 
         Raises
         ------
@@ -81,7 +79,7 @@ class Spacecraft(SpiceObject):
 
         if kwargs.get("kernel_group", None) is None and self.spacecraft.get("kernel_group", None):
             spice_load(self.spacecraft["kernel_group"],
-                       skip_download=kwargs.get("skip_download", False))
+                       force_download=kwargs.get("force_download", False))
 
     def get_data(self, t, data_key, **kwargs):
         """Get processed data for type "data_key" at specified datetimes t.
@@ -107,13 +105,19 @@ class Spacecraft(SpiceObject):
             Data reference frame, by default None.
         frame_cadence: float
             Evaluate frame transformation matrix every "frame_cadence" seconds instead of at very
-            time point (significant speed up).
+            time point (significant speed up).+
+        remove_nans : bool
+            Remove invalid values, by default False.
         return_datetimes: bool
             Return datetimes instead of timestamps, by default False.
+        sampling_freq : int
+            Sampling frequency in seconds if t is only given by start/end, by default 60.
         smoothing: str
             Smoothing method, by default None.
         smoothing_scale: float
             Smoothing scale in seconds, by default 300.
+        force_download: bool, optional
+            Force kernel downloads (otherwise skip remote checks), by default False.
 
         Returns
         -------
@@ -131,22 +135,27 @@ class Spacecraft(SpiceObject):
             "data_key": data_key,
             "spacecraft": self.name,
             "times": [_t.timestamp() for _t in t],
-            "version": heliosat.__version__
+            "version": heliosat.__version__,
+            "remove_nans": kwargs.get("remove_nans", False),
+            "sampling_freq": kwargs.get("sampling_freq", 60)
         }
 
         identifiers.update(kwargs)
 
         # clean up kwargs so it can be passed on to get_data_raw
         cache = kwargs.get("cache", False)
+        remove_nans = kwargs.pop("remove_nans", False)
         return_datetimes = kwargs.pop("return_datetimes", False)
+        sampling_freq = kwargs.pop("sampling_freq", 60)
         smoothing = kwargs.get("smoothing", None)
+        force_download = kwargs.get("force_download", False)
 
         if cache:
             # fetch cached entry
             cache_key = cache_generate_key(identifiers)
-            logger.info("loading cache entry \"%s\"", cache_key)
 
             if cache_entry_exists(cache_key):
+                logger.info("loading cache entry \"%s\"", cache_key)
                 return cache_get_entry(cache_key)
             else:
                 logger.info("cache entry \"%s\" not found", cache_key)
@@ -154,7 +163,7 @@ class Spacecraft(SpiceObject):
         # if time is 2 elements, build list
         if len(t) == 2:
             time_ts = np.linspace(t[0].timestamp(), t[1].timestamp(),
-                                  int((t[1].timestamp() - t[0].timestamp()) // 60))
+                                  int((t[1].timestamp() - t[0].timestamp()) // sampling_freq))
 
             t = [datetime.datetime.fromtimestamp(_, datetime.timezone.utc) for _ in time_ts]
 
@@ -182,7 +191,13 @@ class Spacecraft(SpiceObject):
                 if _time[i] != np.nan:
                     _time[i] = datetime_utc_timestamp(time[i])
 
-            time = _time
+            time = np.array(_time)
+
+        if remove_nans:
+            nanfilter = np.invert(np.isnan(data[:, 0]))
+
+            time = time[nanfilter]
+            data = data[nanfilter]
 
         if cache and not cache_entry_exists(cache_key):
             # save cache entry
@@ -218,6 +233,8 @@ class Spacecraft(SpiceObject):
             time point (significant speed up).
         return_datetimes: bool
             Return datetimes instead of timestamps, by default False.
+        force_download: bool, optional
+            Force kernel downloads (otherwise skip remote checks), by default False.
 
         Returns
         -------
@@ -238,8 +255,10 @@ class Spacecraft(SpiceObject):
 
         frame = kwargs.get("frame", None)
         frame_cadence = kwargs.get("frame_cadence", None)
+        force_download = kwargs.get("force_download", False)
 
-        files, file_versions = self.get_data_files(range_start, range_end, data_key)
+        files, file_versions = self.get_data_files(range_start, range_end, data_key,
+                                                   force_download=force_download)
 
         logger.info("using %s files to generate "
                     "data in between %s - %s", len(files), range_start, range_end)
@@ -280,7 +299,7 @@ class Spacecraft(SpiceObject):
 
         return time_all, data_all
 
-    def get_data_files(self, range_start, range_end, data_key, return_versions=False):
+    def get_data_files(self, range_start, range_end, data_key, force_download=False):
         """Get raw data file paths for type "data_key" within specified time range.
 
         Parameters
@@ -291,8 +310,8 @@ class Spacecraft(SpiceObject):
             Time range end datetime.
         data_key : str
             Data key.
-        return_versions : bool
-            Return file version information (as list index).
+        force_download: bool, optional
+            Force kernel downloads (otherwise skip remote checks), by default False.
 
         Returns
         -------
@@ -373,7 +392,7 @@ class Spacecraft(SpiceObject):
                     del versions[rindex]
 
         if len(urls) > 0:
-            results = download_files(urls, data_path, logger=logger)
+            results = download_files(urls, data_path, force=force_download, logger=logger)
             check_downloads = True
         else:
             check_downloads = False
@@ -612,7 +631,6 @@ def read_task(args):
             if frame and "frame" in column and frame != column.get("frame", None):
                 heliosat.spice.spice_init()
                 heliosat.spice.spice_reload(kernels)
-
                 data_entry = transform_pos(time, data_entry, column["frame"], frame,
                                            frame_cadence)
 

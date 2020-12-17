@@ -61,8 +61,6 @@ def smooth_data(t: Iterable[datetime.datetime],
         return time_smooth, data_smooth.T
     elif smoothing in ["closest"]:
         return _smoothing_closest(time_smooth, time_raw, data_raw, data_smooth)
-    elif smoothing in ["spline", "spline_smoothing", "tps", "tps_smoothing"]:
-        raise NotImplementedError
     else:
         logger.exception("smoothing method \"%s\" is not implemented", kwargs.get("smoothing"))
         raise NotImplementedError("smoothing method \"%s\" is not implemented",
