@@ -5,11 +5,15 @@
 Implements spacecraft classes.
 """
 
+import datetime
+import logging
 import heliosat
 import inspect
 import spiceypy
 
+from heliosat.coordinates import transform_pos
 from heliosat.spacecraft import Spacecraft
+from typing import Iterable, List, Optional, Union
 
 
 class BEPI(Spacecraft):
@@ -63,6 +67,77 @@ class VEX(Spacecraft):
 class WIND(Spacecraft):
     def __init__(self, **kwargs):
         super(WIND, self).__init__("wind", body_name="EARTH", **kwargs)
+
+    def trajectory(self, t: Union[datetime.datetime, Iterable[datetime.datetime]],
+                   frame: str = "J2000", observer: str = "SUN", units: str = "AU"):
+        """Evaluate body trajectory at given datetimes.
+
+        Parameters
+        ----------
+        t : Union[datetime.datetime, Iterable[datetime.datetime]]
+            Evaluate datetime(s).
+        frame : str, optional
+            Trajectory reference frame, by default "J2000".
+        observer : str, optional
+            Observer body name, by default "SUN".
+        units : str, optional
+            Output units, by default "AU".
+
+        Returns
+        -------
+        np.ndarray
+            Body trajectory.
+
+        Raises
+        ------
+        NotImplementedError
+            If units are invalid.
+        """
+        logger = logging.getLogger(__name__)
+
+        if heliosat._spice is None:
+            logger.info("running spice_init")
+            spice_init(False)
+
+        if isinstance(t, datetime.datetime):
+            traj_t, traj_p = self.get_data([t, t + datetime.timedelta(hours=1)], "wind_trajectory")
+            traj_p = traj_p[0]
+            traj_p[0] *= -1
+            traj_p[1] *= -1
+
+            traj_p += heliosat.Earth().trajectory(t, units="km", frame="HEE")
+
+            trajectory = spiceypy.mxv(spiceypy.pxform("HEE", frame, spiceypy.datetime2et(t)), traj_p)
+        elif len(t) == 2:
+            traj_t, traj_p = self.get_data([t[0], t[1], t[1] + datetime.timedelta(hours=1)], "wind_trajectory")
+            traj_p = traj_p[0:2]
+
+            traj_p[:, 0] *= -1
+            traj_p[:, 1] *= -1
+
+            traj_p += heliosat.Earth().trajectory(t, units="km", frame="HEE")
+            
+            trajectory = transform_pos(t, traj_p, "HEE", frame)
+        else:
+            traj_t, traj_p = self.get_data(t, "wind_trajectory")
+            traj_p[:, 0] *= -1
+            traj_p[:, 1] *= -1
+
+            traj_p += heliosat.Earth().trajectory(t, units="km", frame="HEE")
+            
+            trajectory = transform_pos(t, traj_p, "HEE", frame)
+
+        if units == "AU":
+            trajectory *= 6.68459e-9
+        elif units == "m":
+            trajectory *= 1e3
+        elif units == "km":
+            pass
+        else:
+            logger.exception("unit \"%s\" is not supported", units)
+            raise NotImplementedError("unit \"%s\" is not supported", units)
+
+        return trajectory
 
 
 def select_satellite(satellite: str) -> Spacecraft:

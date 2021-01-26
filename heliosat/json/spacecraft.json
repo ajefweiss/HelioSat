@@ -1161,6 +1161,34 @@
                         "version_end": "2100-01-01T00:00:00.000"
                     }
                 ]
+            },
+            "wind_trajectory": {
+                "alt_keys": ["trajectory", "wind_pos"],
+                "urls": "https://cdaweb.gsfc.nasa.gov/pub/data/wind/orbit/pre_or/{YYYY}/wi_or_pre_{YYYY}{MM}{DD}_v[0-9]{2}.cdf",
+                "use_regex": true,
+                "version_default": {
+                    "columns": [
+                        {
+                            "alt_names": ["POS"],
+                            "default": true,
+                            "frame": "GSE",
+                            "indices": [0, 1, 2],
+                            "key": "GSE_POS",
+                            "name": "GSE",
+                            "valid_range": [-1e9, 1e9]
+                        }
+                    ],
+                    "format": "nasa_cdf",
+                    "time": {
+                        "key": "Epoch"
+                    }
+                },
+                "versions": [
+                    {
+                        "version_start": "1995-01-01T00:00:00.000",
+                        "version_end": "2100-01-01T00:00:00.000"
+                    }
+                ]
             }
         }
     }

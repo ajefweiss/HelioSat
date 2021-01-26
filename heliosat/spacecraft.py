@@ -131,14 +131,24 @@ class Spacecraft(SpiceObject):
         # sanitize time input
         t = sanitize_datetimes(t)
 
-        identifiers = {
-            "data_key": data_key,
-            "spacecraft": self.name,
-            "times": [_t.timestamp() for _t in t],
-            "version": heliosat.__version__,
-            "remove_nans": kwargs.get("remove_nans", False),
-            "sampling_freq": kwargs.get("sampling_freq", 60)
-        }
+        if isinstance(t, datetime.datetime):
+            identifiers = {
+                "data_key": data_key,
+                "spacecraft": self.name,
+                "times": t.timestamp(),
+                "version": heliosat.__version__,
+                "remove_nans": kwargs.get("remove_nans", False),
+                "sampling_freq": kwargs.get("sampling_freq", 60)
+            }
+        else:
+            identifiers = {
+                "data_key": data_key,
+                "spacecraft": self.name,
+                "times": [_t.timestamp() for _t in t],
+                "version": heliosat.__version__,
+                "remove_nans": kwargs.get("remove_nans", False),
+                "sampling_freq": kwargs.get("sampling_freq", 60)
+            }
 
         identifiers.update(kwargs)
 

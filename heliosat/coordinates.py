@@ -98,7 +98,7 @@ def transform_pos(t: Union[datetime.datetime, Iterable[datetime.datetime]],
         Source and target frame are equal.
     """
     if frame_from == frame_to:
-        raise ValueError("source frame and target frame are equal")
+        return data
 
     # convert timestamps to python datetimes if required
     if not isinstance(t[0], datetime.datetime):
