@@ -100,7 +100,7 @@ class WIND(Spacecraft):
             spice_init(False)
 
         if isinstance(t, datetime.datetime):
-            traj_t, traj_p = self.get_data([t, t + datetime.timedelta(hours=1)], "wind_trajectory")
+            traj_t, traj_p = self.get_data([t, t + datetime.timedelta(hours=1)], "wind_trajectory", cache=True)
             traj_p = traj_p[0]
             traj_p[0] *= -1
             traj_p[1] *= -1
@@ -109,7 +109,7 @@ class WIND(Spacecraft):
 
             trajectory = spiceypy.mxv(spiceypy.pxform("HEE", frame, spiceypy.datetime2et(t)), traj_p)
         elif len(t) == 2:
-            traj_t, traj_p = self.get_data([t[0], t[1], t[1] + datetime.timedelta(hours=1)], "wind_trajectory")
+            traj_t, traj_p = self.get_data([t[0], t[1], t[1] + datetime.timedelta(hours=1)], "wind_trajectory", cache=True)
             traj_p = traj_p[0:2]
 
             traj_p[:, 0] *= -1
@@ -119,7 +119,7 @@ class WIND(Spacecraft):
             
             trajectory = transform_pos(t, traj_p, "HEE", frame)
         else:
-            traj_t, traj_p = self.get_data(t, "wind_trajectory")
+            traj_t, traj_p = self.get_data(t, "wind_trajectory", cache=True)
             traj_p[:, 0] *= -1
             traj_p[:, 1] *= -1
 
