@@ -17,13 +17,13 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/ajefweiss/HelioSat",
     install_requires=[
-        "astropy",
         "bs4",
         "cdflib>=0.3.19",
         "netcdf4",
         "numba",
         "numpy",
         "requests",
+        "requests-ftp",
         "spiceypy"
     ],
     classifiers=[
@@ -32,7 +32,7 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
         "Topic :: Scientific/Engineering",
         "Topic :: Scientific/Engineering :: Physics",
     ],

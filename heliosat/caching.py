@@ -17,20 +17,13 @@ import logging
 import os
 import pickle
 
+from typing import Any
 
-def cache_add_entry(key: str, obj: object):
-    """Store data in cache using the specified key.
 
-    Parameters
-    ----------
-    key : str
-        Cache key.
-    obj : object
-        Data object.
-    """
+def cache_add_entry(key: str, obj: object) -> None:
     logger = logging.getLogger(__name__)
 
-    cache_path = heliosat._paths["cache"]
+    cache_path = os.path.join(os.getenv('HELIOSAT_DATAPATH', os.path.join(os.path.expanduser("~"), ".heliosat")), "cache")
 
     if not os.path.exists(cache_path):
         logger.debug("cache path does not exist, creating \"%s\"", cache_path)
@@ -41,22 +34,10 @@ def cache_add_entry(key: str, obj: object):
         pickle.dump(obj, pickle_file)
 
 
-def cache_delete_entry(key: str):
-    """Delete cache entry belonging to specified cache key.
-
-    Parameters
-    ----------
-    key : str
-        Cache key.
-
-    Raises
-    ------
-    KeyError
-        No entry for the given key is found.
-    """
+def cache_delete_entry(key: str) -> None:
     logger = logging.getLogger(__name__)
 
-    cache_path = heliosat._paths["cache"]
+    cache_path = os.path.join(os.getenv('HELIOSAT_DATAPATH', os.path.join(os.path.expanduser("~"), ".heliosat")), "cache")
 
     if not cache_entry_exists(key):
         logger.exception("cache entry \"%s\" does not exist", key)
@@ -67,63 +48,22 @@ def cache_delete_entry(key: str):
 
 
 def cache_entry_exists(key: str) -> bool:
-    """Check if an entry for the given cache key exists.
-
-    Parameters
-    ----------
-    key : str
-        Cache key.
-
-    Returns
-    -------
-    bool
-        Flag if key exists.
-    """
-    cache_path = heliosat._paths["cache"]
+    cache_path = os.path.join(os.getenv('HELIOSAT_DATAPATH', os.path.join(os.path.expanduser("~"), ".heliosat")), "cache")
 
     return os.path.exists(os.path.join(cache_path, "{}.cache".format(key)))
 
 
 def cache_generate_key(identifiers: dict) -> str:
-    """Generate SHA256 digest from the identifiers dictionary which acts as the cache key.
-
-    Parameters
-    ----------
-    identifiers : dict
-        Dictionary containing cache identifiers.
-
-    Returns
-    -------
-    str
-        Cache key (SHA256 digest).
-    """
     hashobj = hashlib.sha256()
     hashobj.update(json.dumps(identifiers, sort_keys=True).encode("utf-8"))
 
     return hashobj.hexdigest()
 
 
-def cache_get_entry(key: str) -> object:
-    """Retrieve cache entry specified by cache key.
-
-    Parameters
-    ----------
-    key : str
-        Cache key.
-
-    Returns
-    -------
-    object
-        Data object.
-
-    Raises
-    ------
-    KeyError
-        No entry is found.
-    """
+def cache_get_entry(key: str) -> Any:
     logger = logging.getLogger(__name__)
 
-    cache_path = heliosat._paths["cache"]
+    cache_path = os.path.join(os.getenv('HELIOSAT_DATAPATH', os.path.join(os.path.expanduser("~"), ".heliosat")), "cache")
 
     if not cache_entry_exists(key):
         logger.exception("cache key \"%s\" does not exist", key)

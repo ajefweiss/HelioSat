@@ -1,0 +1,10 @@
+{
+    "solo": [
+        [
+            "ftp://spiftp.esac.esa.int/data/SPICE/SOLAR-ORBITER/kernels/spk/solo_ANC_soc-orbit_20200210-20301120_L004_V1_00062_V01.bsp"
+        ],
+        [
+            "ftp://spiftp.esac.esa.int/data/SPICE/SOLAR-ORBITER/kernels/fk/solo_ANC_soc-sci-fk_V07.tf"
+        ]
+    ]
+}

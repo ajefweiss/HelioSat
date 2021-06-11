@@ -1,249 +1,238 @@
 # -*- coding: utf-8 -*-
 
 """spice.py
-
-Implements the SPICE base class and SPICE related functions.
 """
 
+import concurrent.futures
 import datetime
 import heliosat
 import json
 import logging
 import numpy as np
 import os
-import requests
 import spiceypy
-import time
 
-from heliosat.download import download_files, urls_expand
-from typing import Iterable, List, Optional, Union
+from .spacecraft import Spacecraft
+from .util import fetch_url, load_json, url_regex_files, url_regex_resolve
+from runpy import run_path
+from typing import Any, List, Optional, Sequence, Tuple, Union
 
 
-class SpiceObject(object):
-    """Base SPICE class for SPICE aware objects (bodies, spacecraft etc.).
+class SpiceKernel(object):
+    """SPICE Kernel class.
     """
-    def __init__(self, name: str, body_name: str, kernel_group: Optional[str] = None,
-                 skip_init: bool = False, force_download: bool = False):
-        """Initialize SPICE aware object and load required kernels if given.
+    url: Optional[str]
+    urls: list
+    loaded: bool
 
-        Parameters
-        ----------
-        name : str
-            Object name (for spacecrafts as defined in the spacecraft.json file).
-        body_name : str
-            SPICE object name.
-        kernel_group : str, optional
-            SPICE kernel group name, by default None.
-        skip_init: bool, optional
-            Initialize default spice kernels, by default True.
-        force_download: bool, optional
-            Force kernel downloads (otherwise skip remote checks), by default False.
-        """
+    def __init__(self, urls: list, data_path: str) -> None:
+        self.url = None
+        self.urls = urls
+
+        self.file_name = os.path.basename(urls[0])
+        self.file_path = os.path.join(data_path, "kernels", self.file_name)
+
+    def prepare(self, force_download: bool = False) -> None:
         logger = logging.getLogger(__name__)
 
-        if skip_init is False and heliosat._spice is None:
-            logger.info("running spice_init")
-            spice_init(force_download)
-
-        self.name = name
-        self.body_name = body_name
-
-        if kernel_group:
-            spice_load(kernel_group, force_download)
-
-    def trajectory(self, t: Union[datetime.datetime, Iterable[datetime.datetime]],
-                   frame: str = "J2000", observer: str = "SUN", units: str = "AU"):
-        """Evaluate body trajectory at given datetimes.
-
-        Parameters
-        ----------
-        t : Union[datetime.datetime, Iterable[datetime.datetime]]
-            Evaluate datetime(s).
-        frame : str, optional
-            Trajectory reference frame, by default "J2000".
-        observer : str, optional
-            Observer body name, by default "SUN".
-        units : str, optional
-            Output units, by default "AU".
-
-        Returns
-        -------
-        np.ndarray
-            Body trajectory.
-
-        Raises
-        ------
-        NotImplementedError
-            If units are invalid.
-        """
-        logger = logging.getLogger(__name__)
-
-        if heliosat._spice is None:
-            logger.info("running spice_init")
-            spice_init(False)
-
-        trajectory = np.array(
-            spiceypy.spkpos(
-                self.body_name,
-                spiceypy.datetime2et(t),
-                frame,
-                "NONE",
-                observer
-            )[0]
-        )
-
-        if units == "AU":
-            trajectory *= 6.68459e-9
-        elif units == "m":
-            trajectory *= 1e3
-        elif units == "km":
-            pass
-        else:
-            logger.exception("unit \"%s\" is not supported", units)
-            raise NotImplementedError("unit \"%s\" is not supported", units)
-
-        return trajectory
-
-
-def spice_init(force_download: bool = False):
-    """Initialize SPICE kernels.
-
-    Parameters
-    ----------
-    force_download: bool, optional
-            Force kernel downloads (otherwise skip remote checks), by default False.
-    """
-    logger = logging.getLogger(__name__)
-
-    # clear all
-    spiceypy.kclear()
-
-    kernels_path = heliosat._paths["kernels"]
-
-    json_kernels_path = os.path.join(os.path.dirname(heliosat.__file__), "json/kernels.json")
-
-    heliosat._spice = {"kernel_groups": None, "kernels_loaded": None}
-
-    # json/kernels.json
-    logger.info("loading available kernels")
-
-    with open(json_kernels_path) as json_file:
-        json_kernels = json.load(json_file)
-
-    timestamp = json_kernels.get("timestamp", 0)
-
-    # update kernels if timestamp is older than a day
-    if os.path.exists(kernels_path) and timestamp > time.time() - 86400:
-        logger.info("skipping check for new kernels")
-    else:
-        if not os.path.exists(kernels_path):
-            os.makedirs(kernels_path)
-
-        try:
-            logger.info("checking for new kernels")
-
-            json_kernels["_groups"] = dict(json_kernels["groups"])
-
-            for group in json_kernels["_groups"]:
-                json_kernels["_groups"][group] = \
-                    urls_expand(json_kernels["_groups"][group])
-
-            json_kernels["timestamp"] = time.time()
-
-            with open(json_kernels_path, "w") as json_file:
-                json.dump(json_kernels, json_file, indent=4)
-        except requests.RequestException as requests_error:
-            logger.error("skipping check for new kernels (%s)", requests_error)
-
-            if "_groups" not in json_kernels:
-                logger.exception("expanded kernel group \"_groups\" could not be generated"
-                                 "and previous version cannot be found")
-                raise RuntimeError("expanded kernel group \"_groups\" could not be generated"
-                                   "and previous version cannot be found")
-
-    # load generic kernels
-    download_files(json_kernels["generic"], kernels_path, force=force_download, logger=logger)
-
-    heliosat._spice["kernel_groups"] = json_kernels["_groups"]
-    heliosat._spice["kernels_loaded"] = []
-
-    for kernel_url in json_kernels["generic"]:
-        spiceypy.furnsh(os.path.join(kernels_path, kernel_url.split("/")[-1]))
-        heliosat._spice["kernels_loaded"].append(kernel_url)
-
-
-def spice_load(kernel_group: str, force_download: bool = False):
-    """Load SPICE kernel group.
-
-    Parameters
-    ----------
-    kernel_group : str
-        SPICE kernel group name as defined in the spacecraft.json file.
-    force_download: bool, optional
-            Force kernel downloads (otherwise skip remote checks), by default False.
-    """
-    logger = logging.getLogger(__name__)
-
-    kernels_path = heliosat._paths["kernels"]
-
-    if kernel_group:
-        kernels_required = heliosat._spice["kernel_groups"][kernel_group]
-
-        for kernel in list(kernels_required):
-            if kernel in heliosat._spice["kernels_loaded"]:
-                kernels_required.remove(kernel)
-
-        if len(kernels_required) == 0:
+        # check local availability
+        if self.is_available and not force_download:
             return
 
+        # download file (only need one url to work)
+        exception_list = []
+
+        for url in self.urls:
+            try:
+                file_data = fetch_url(url)
+
+                with open(self.file_path, "wb") as fh:
+                    fh.write(file_data)
+
+                self.url = url
+
+                return
+            except Exception as e:
+                exception_list.append(e)
+                continue
+
+        if self.is_available:
+            # fail gracefully
+            logger.warning("failed to fetch kernel \"%s\", using local file anyway (%s)", self.file_name, exception_list)
+            return
+        elif os.path.isfile(self.file_path) and os.path.getsize(self.file_path) == 0:
+            # special case, clean up
+            os.remove(self.file_path)
+
+        logger.exception("failed to fetch kernel \"%s\" (%s)", self.file_name, exception_list)
+        raise Exception("failed to fetch kernel \"%s\" (%s)", self.file_name, exception_list)
+
+    @property
+    def is_available(self) -> bool:
+        return os.path.isfile(self.file_path) and os.path.getsize(self.file_path) > 0
+
+    def load(self) -> None:
+        spiceypy.furnsh(self.file_path)
+
+
+class SpiceKernelManager(object):
+    """SPICE Kernel Manager class.
+    """
+    all_grps: dict
+    all_spcs: dict
+
+    data_path: str
+
+    kernel_list: List[SpiceKernel]
+    group_list: List[str]
+
+    def __init__(self, json_file: str = None) -> None:
+        logger = logging.getLogger(__name__)
+
+        # clear all kernels
+        spiceypy.kclear()
+
+        self.kernel_list = []
+        self.group_list = []
+
+        base_path = os.path.join(os.path.dirname(heliosat.__file__), "spacecraft")
+
+        self.data_path = os.getenv('HELIOSAT_DATAPATH', os.path.join(os.path.expanduser("~"), ".heliosat"))
+
+        logger.debug("using data path \"%s\"", self.data_path)
+
+        if json_file is None:
+            json_file = os.path.join(base_path, "manager.json")
+
+        json_mang = load_json(json_file)
+
+        if json_mang["default_kernel_path"]:
+            self.all_grps = load_json(os.path.join(base_path, json_mang["default_kernel_path"]))
+        else:
+            self.all_grps = {}
+
+        if json_mang["default_spacecraft_path"]:
+            self.all_spcs = load_json(os.path.join(base_path, json_mang["default_spacecraft_path"]))
+        else:
+            self.all_spcs = {}
+
+        # update all groups and spacecraft
+        for sub_folder in json_mang["sub_folders"]:
+            if os.path.isfile(os.path.join(base_path, sub_folder, "kernels.json")):
+                self.update_groups(os.path.join(base_path, sub_folder, "kernels.json"))
+
+            if os.path.isfile(os.path.join(base_path, sub_folder, "{}.json".format(sub_folder))):
+                self.update_spacecraft(os.path.join(base_path, sub_folder, "{}.json".format(sub_folder)))
+
+        self.load_spacecraft()
+    
+    def load_group(self, kernel_group: str, force_download: bool = False) -> None:
+        logger = logging.getLogger(__name__)
+        
         logger.debug("loading kernel group \"%s\"", kernel_group)
 
-        download_files(kernels_required, kernels_path, force=force_download, logger=logger)
+        # load groups in parallel (quicker downloads)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=25) as executor:
+            futures = [executor.submit(self.load_kernel, urls, kernel_group, force_download) for urls in self.all_grps[kernel_group]]
 
-        for kernel_url in kernels_required:
-            kernel = os.path.join(kernels_path, kernel_url.split("/")[-1])
+            for future in concurrent.futures.as_completed(futures):
+                kernels = future.result()
 
-            logger.debug("loading kernel \"%s\"", kernel)
+                if isinstance(kernels, SpiceKernel):
+                    kernel = kernels
+                    if kernel.file_name not in [_.file_name for _ in self.kernel_list]:
+                        self.kernel_list.append(kernel)
+                        self.kernel_list[-1].load()
+                elif isinstance(kernels, List):
+                    for kernel in kernels:
+                        if kernel.file_name not in [_.file_name for _ in self.kernel_list]:
+                            self.kernel_list.append(kernel)
+                            self.kernel_list[-1].load()
+        
+        if kernel_group not in self.group_list:
+            self.group_list.append(kernel_group)
 
-            try:
-                spiceypy.furnsh(kernel)
-                heliosat._spice["kernels_loaded"].append(kernel_url)
-            except spiceypy.support_types.SpiceyError:
-                logger.exception("failed to load kernel \"%s\"", kernel_url)
+    def load_groups(self, kernel_groups: List[str], force_download: bool = False) -> None:
+        for kernel_group in kernel_groups:
+            self.load_group(kernel_group, force_download)
 
+    def load_kernel(self, urls: List[str], group: str, force_download: bool = False) -> Union[SpiceKernel, List[SpiceKernel]]:
+        logger = logging.getLogger(__name__)
 
-def spice_reload(kernel_urls: List[str], force_download: bool = False):
-    """Load SPICE kernels by url. This function is meant to be used in child processes that need
-    to reload all SPICE kernels.
+        if len(urls) == 0:
+            logger.exception("an entry in the kernel group \"%s\" has no urls", group)
+            raise Exception("an entry in the kernel group \"%s\" has no urls", group)
 
-    Parameters
-    ----------
-    kernel_urls : List[str]
-        SPICE kernel urls.
-    force_download: bool, optional
-            Force kernel downloads (otherwise skip remote checks), by default False.
-    """
-    logger = logging.getLogger(__name__)
+        # check for regex
+        if urls[0].startswith("$"):
+            # figure out if kernels exist locally that match the regex, if any assume its all
+            kernels = []
+            local_files = url_regex_files(urls[0], os.path.join(self.data_path, "kernels"))
 
-    kernels_path = heliosat._paths["kernels"]
+            if len(local_files) > 0 and not force_download:
+                for local_file in local_files:
+                    resolved_urls = [os.path.join(os.path.dirname(_), os.path.basename(local_file)) for _ in urls]
+                    
+                    kernel = SpiceKernel(resolved_urls, self.data_path)
+                    kernels.append(kernel)
 
-    kernels_required = kernel_urls
-    
-    for kernel in list(kernels_required):
-        if kernel in heliosat._spice["kernels_loaded"]:
-            kernels_required.remove(kernel)
+                return kernels
+            
+            # generates a list of lists that might be of different lengths
+            resolved_urls = [url_regex_resolve(_) for _ in urls]  # type: ignore
 
-    if len(kernels_required) == 0:
-        return
+            sort_by_file = {}  # type: dict
 
-    download_files(kernels_required, kernels_path, force=force_download, logger=logger)
+            # re-group urls
+            for _g in resolved_urls:
+                for url in _g:
+                    file_name = os.path.basename(url)
+                    if file_name in sort_by_file:
+                        sort_by_file[file_name].append(url)
+                    else:
+                        sort_by_file[file_name] = [url]
 
-    for kernel_url in kernels_required:
-        kernel = os.path.join(kernels_path, kernel_url.split("/")[-1])
+            for _, v in sort_by_file.items():
+                kernel = SpiceKernel(v, self.data_path)
+                kernel.prepare(force_download=force_download)
 
-        logger.debug("loading kernel \"%s\"", kernel)
-        try:
-            spiceypy.furnsh(kernel)
-            heliosat._spice["kernels_loaded"].append(kernel_url)
-        except spiceypy.support_types.SpiceyError:
-            logger.exception("failed to load kernel \"%s\"", kernel_url)
+            return kernels
+        else:
+            kernel = SpiceKernel(urls, self.data_path)
+            kernel.prepare(force_download=force_download)
+
+            return kernel
+
+    def load_spacecraft(self) -> None:
+        for spc_k, spc_v in self.all_spcs.items():
+            aux_funcs: dict = {}
+
+            setattr(heliosat, spc_v["class_name"],
+                type(spc_v["class_name"], (Spacecraft, ), {
+                    "name": spc_v["class_name"],
+                    "name_naif": spc_v["body_name"],
+                    "kernel_group": spc_v["kernel_group"],
+                    "_json": spc_v,
+                    **aux_funcs
+            }))
+
+            # runpy
+            custompy = os.path.join(os.path.dirname(heliosat.__file__), "spacecraft", spc_k, "{}.py".format(spc_k))
+
+            if os.path.isfile(custompy):
+                run_path(custompy)
+
+    def reload(self) -> None:
+        logger = logging.getLogger(__name__)
+
+        # clear all kernels
+        spiceypy.kclear()
+
+        for kernel in self.kernel_list:
+            kernel.load()
+
+    def update_groups(self, path: str) -> None:
+        self.all_grps.update(load_json(path))
+
+    def update_spacecraft(self, path: str) -> None:
+        self.all_spcs.update(load_json(path))
