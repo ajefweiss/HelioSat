@@ -8,7 +8,7 @@ setup(
     packages=[
         "heliosat"
     ],
-    package_data={"heliosat": ["json/*.json"]},
+    package_data={"heliosat": ["spacecraft/*.json", "spacecraft/*/*.json"]},
     version="0.5.0",
     author="Andreas J. Weiss",
     author_email="andreas.weiss@oeaw.ac.at",

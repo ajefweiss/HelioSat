@@ -64,6 +64,8 @@ class SpiceKernel(object):
             # special case, clean up
             os.remove(self.file_path)
 
+        logger.exception("url: %s", self.file_path)
+
         logger.exception("failed to fetch kernel \"%s\" (%s)", self.file_name, exception_list)
         raise Exception("failed to fetch kernel \"%s\" (%s)", self.file_name, exception_list)
 
