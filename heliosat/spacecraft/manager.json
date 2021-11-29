@@ -1,7 +1,7 @@
 {
     "default_kernel_path": "kernels.json",
     "default_spacecraft_path": null,
-    "sub_folders" : [
+    "spacecraft" : [
         "bepi",
         "psp",
         "solo",

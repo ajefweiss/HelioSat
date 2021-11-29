@@ -1,0 +1,71 @@
+{
+    "spacecraft": {
+        "stereo_ahead": {
+            "body_name": "STEREO AHEAD",
+            "class_name": "STA",
+            "kernel_group": "stereo",
+            "keys": {
+                "sta_impact_l1": {
+                    "alt_keys": ["mag", "sta_mag", "impact", "sta_impact", "impact_l1"],
+                    "base_urls": [
+                        "https://stereo-ssc.nascom.nasa.gov/data/ins_data/impact/level1/ahead/mag/RTN/{YYYY}/{MM}/STA_L1_MAG_RTN_{YYYY}{MM}{DD}_{VER}.cdf"
+                    ],
+                    "versions": {
+                        "V06": {
+                            "data_columns": [
+                                {
+                                    "indices": [0, 1, 2],
+                                    "key": "BFIELD",
+                                    "load_by_default": true,
+                                    "names": ["BRTN", "B_RTN"],
+                                    "reference_frame": "STAHGRTN",
+                                    "valid_range": [-1e3, 1e3]
+                                },
+                                {
+                                    "indices": [3],
+                                    "key": "BFIELD",
+                                    "load_by_default": false,
+                                    "names": ["BT", "BTOT", "B_TOT"],
+                                    "valid_range": [-1e3, 1e3]
+                                },
+                                {
+                                    "key": "MAGFLAGUC",
+                                    "load_by_default": false,
+                                    "names": ["F", "FLAGS", "MAGFLAGUC"]
+                                }
+                            ],
+                            "time_column": {
+                                "key": "Epoch"
+                            }
+                        }
+                    },
+                    "version_default": "V06",
+                    "version_list": ["V06"],
+                    "format": "nasa_cdf"
+                }
+            }
+        }
+    },
+    "kernels": {
+        "stereo": [
+            [
+                "https://sohowww.nascom.nasa.gov/solarsoft/stereo/gen/data/spice/gen/stereo_rtn.tf"
+            ],
+            [
+                "$https://sohowww.nascom.nasa.gov/solarsoft/stereo/gen/data/spice/depm/ahead/ahead_20[\\d]{2}_[\\d]{3}_01.depm.bsp"
+            ],
+            [
+                "https://sohowww.nascom.nasa.gov/solarsoft/stereo/gen/data/spice/epm/ahead/ahead_2017_061_5295day_predict.epm.bsp"
+            ],
+            [
+                "$https://sohowww.nascom.nasa.gov/solarsoft/stereo/gen/data/spice/depm/behind/behind_20[\\d]{2}_[\\d]{3}_01.depm.bsp"
+            ],
+            [
+                "$https://sohowww.nascom.nasa.gov/solarsoft/stereo/gen/data/spice/sclk/ahead/ahead_science_[\\d]{2}.sclk"
+            ],
+            [
+                "$https://sohowww.nascom.nasa.gov/solarsoft/stereo/gen/data/spice/sclk/behind/behind_science_[\\d]{2}.sclk"
+            ]
+        ]
+    }
+}

@@ -109,22 +109,20 @@ class SpiceKernelManager(object):
         json_mang = load_json(json_file)
 
         if json_mang["default_kernel_path"]:
-            self.all_grps = load_json(os.path.join(base_path, json_mang["default_kernel_path"]))
+            self.all_grps = load_json(os.path.join(base_path, json_mang["default_kernel_path"]))["kernels"]
         else:
             self.all_grps = {}
 
         if json_mang["default_spacecraft_path"]:
-            self.all_spcs = load_json(os.path.join(base_path, json_mang["default_spacecraft_path"]))
+            self.all_spcs = load_json(os.path.join(base_path, json_mang["default_spacecraft_path"]))["spacecraft"]
         else:
             self.all_spcs = {}
 
         # update all groups and spacecraft
-        for sub_folder in json_mang["sub_folders"]:
-            if os.path.isfile(os.path.join(base_path, sub_folder, "kernels.json")):
-                self.update_groups(os.path.join(base_path, sub_folder, "kernels.json"))
-
-            if os.path.isfile(os.path.join(base_path, sub_folder, "{}.json".format(sub_folder))):
-                self.update_spacecraft(os.path.join(base_path, sub_folder, "{}.json".format(sub_folder)))
+        for spacecraft in json_mang["spacecraft"]:
+            if os.path.isfile(os.path.join(base_path, "{}.json".format(spacecraft))):
+                self.all_grps.update(load_json(os.path.join(base_path, "{}.json".format(spacecraft))).get("kernels", {}))
+                self.all_spcs.update(load_json(os.path.join(base_path, "{}.json".format(spacecraft))).get("spacecraft", {}))
 
         self.load_spacecraft()
     
@@ -219,7 +217,7 @@ class SpiceKernelManager(object):
             }))
 
             # runpy
-            custompy = os.path.join(os.path.dirname(heliosat.__file__), "spacecraft", spc_k, "{}.py".format(spc_k))
+            custompy = os.path.join(os.path.dirname(heliosat.__file__), "spacecraft", "{}.py".format(spc_k))
 
             if os.path.isfile(custompy):
                 run_path(custompy)
@@ -232,9 +230,3 @@ class SpiceKernelManager(object):
 
         for kernel in self.kernel_list:
             kernel.load()
-
-    def update_groups(self, path: str) -> None:
-        self.all_grps.update(load_json(path))
-
-    def update_spacecraft(self, path: str) -> None:
-        self.all_spcs.update(load_json(path))

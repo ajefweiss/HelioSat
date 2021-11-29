@@ -1,0 +1,50 @@
+{
+    "spacecraft": {
+        "bepi": {
+            "body_name": "BEPICOLOMBO MPO",
+            "class_name": "BEPI",
+            "kernel_group": "bepi",
+            "keys": {
+                "bepi_mag": {
+                    "alt_keys": ["mag"],
+                    "base_urls": [
+                        "http://BLANK.BLANK/mag_der_sc_ob_a001_e2k_00000_{YYYY}{MM}{DD}.tab"
+                    ],
+                    "versions": {
+                        "v01": {
+                            "data_columns": [
+                                {
+                                    "indices": [5, 6, 7],
+                                    "load_by_default": true,
+                                    "names": ["B_ECLIPJ2000", "BFIELD"],
+                                    "reference_frame": "ECLIPJ2000"
+                                }
+                            ],
+                            "text_formatting": {
+                                "delimiter": ",",
+                                "skip_columns": [1]
+                            },
+                            "time_column": {
+                                "index": 0,
+                                "format": "%Y-%m-%dT%H:%M:%S.%fZ"
+                            }
+                        }
+                    },
+                    "version_default": "v01",
+                    "version_list": ["v01"],
+                    "format": "tab"
+                }
+            }
+        }
+    },
+    "kernels": {
+        "bepi": [
+            [
+                "ftp://spiftp.esac.esa.int/data/SPICE/BEPICOLOMBO/kernels/spk/bc_mpo_fcp_00094_20181020_20251101_v01.bsp"
+            ],
+            [
+                "ftp://spiftp.esac.esa.int/data/SPICE/BEPICOLOMBO/kernels/fk/bc_sci_v08.tf"
+            ]
+        ]
+    } 
+}

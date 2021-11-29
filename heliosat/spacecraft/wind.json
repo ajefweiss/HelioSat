@@ -1,0 +1,88 @@
+{
+    "spacecraft": {
+        "wind": {
+            "body_name": "EARTH",
+            "class_name": "WIND",
+            "kernel_group": null,
+            "keys": {
+                "wind_mfi_h0": {
+                    "alt_keys": ["mag", "wind_mag", "wind_mfi", "mfi_h0", "wind_h0"],
+                    "base_urls": [
+                        "https://spdf.gsfc.nasa.gov/pub/data/wind/mfi/mfi_h0/{YYYY}/wi_h0_mfi_{YYYY}{MM}{DD}_{VER}.cdf"
+                    ],
+                    "versions": {
+                        "v05": {
+                            "data_columns": [
+                                {
+                                    "indices": [0, 1, 2],
+                                    "reference_frame": "GSE",
+                                    "key": "BGSE",
+                                    "load_by_default": true,
+                                    "names": ["BGSE", "B_GSE", "BFIELD"],
+                                    "valid_range": [-1e3, 1e3]
+                                }
+                            ],
+                            "time_column": {
+                                "key": "Epoch"
+                            }
+                        }
+                    },
+                    "version_default": "v05",
+                    "version_list": ["v05", "v04"],
+                    "format": "nasa_cdf"
+                },
+                "wind_mfi_k0": {
+                    "alt_keys": ["mfi_k0", "wind_k0"],
+                    "base_urls": [
+                        "https://spdf.gsfc.nasa.gov/pub/data/wind/mfi/mfi_k0/{YYYY}/wi_k0_mfi_{YYYY}{MM}{DD}_{VER}.cdf"
+                    ],
+                    "versions": {
+                        "v01": {
+                            "data_columns": [
+                                {
+                                    "indices": [0, 1, 2],
+                                    "reference_frame": "GSE",
+                                    "key": "BGSEc",
+                                    "load_by_default": true,
+                                    "names": ["BGSE", "B_GSE", "BFIELD"],
+                                    "valid_range": [-1e3, 1e3]
+                                }
+                            ],
+                            "time_column": {
+                                "key": "Epoch"
+                            }
+                        }
+                    },
+                    "version_default": "v01",
+                    "version_list": ["v03", "v02", "v01"],
+                    "format": "nasa_cdf"
+                },
+                "wind_trajectory": {
+                    "base_urls": [
+                        "https://cdaweb.gsfc.nasa.gov/pub/data/wind/orbit/pre_or/{YYYY}/wi_or_pre_{YYYY}{MM}{DD}_{VER}.cdf"
+                    ],
+                    "versions": {
+                        "v01": {
+                            "data_columns": [
+                                {
+                                    "indices": [0, 1, 2],
+                                    "reference_frame": "GSE",
+                                    "key": "GSE_POS",
+                                    "load_by_default": true,
+                                    "names": ["GSE", "POS"],
+                                    "valid_range": [-1e9, 1e9]
+                                }
+                            ],
+                            "time_column": {
+                                "key": "Epoch"
+                            }
+                        }
+                    },
+                    "version_default": "v01",
+                    "version_list": ["v12", "v11", "v10", "v09", "v08", "v07", "v06", "v05", "v04", "v03", "v02", "v01"],
+                    "format": "nasa_cdf"
+                }
+            }
+        }
+    }
+}

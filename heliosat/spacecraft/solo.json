@@ -1,0 +1,46 @@
+{
+    "spacecraft": {
+        "solo": {
+            "body_name": "SOLAR ORBITER",
+            "class_name": "SOLO",
+            "kernel_group": "solo",
+            "keys": {
+                "solo_mag": {
+                    "alt_keys": ["mag"],
+                    "base_urls": [
+                        "http://soar.esac.esa.int/soar-sl-tap/data?retrieval_type=LAST_PRODUCT&data_item_id=solo_L2_mag-rtn-normal-1-minute_{YYYY}{MM}{DD}&product_type=SCIENCE"
+                    ],
+                    "filename": "solo_L2_mag-rtn-normal-1-minute_{YYYY}{MM}{DD}_{VER}.cdf",
+                    "versions": {
+                        "VXX": {
+                            "data_columns": [
+                                {
+                                    "key": "B_RTN",
+                                    "load_by_default": true,
+                                    "names": ["BRTN", "B_RTN"],
+                                    "reference_frame": "SOLO_SUN_RTN"
+                                }
+                            ],
+                            "time_column": {
+                                "key": "EPOCH"
+                            }
+                        }
+                    },
+                    "version_default": "VXX",
+                    "version_list": ["VXX", "V03", "V02", "V01", "LL"],
+                    "format": "nasa_cdf"
+                }
+            }
+        }
+    },
+    "kernels": {
+        "solo": [
+            [
+                "ftp://spiftp.esac.esa.int/data/SPICE/SOLAR-ORBITER/kernels/spk/solo_ANC_soc-orbit_20200210-20301120_L004_V1_00062_V01.bsp"
+            ],
+            [
+                "ftp://spiftp.esac.esa.int/data/SPICE/SOLAR-ORBITER/kernels/fk/solo_ANC_soc-sci-fk_V07.tf"
+            ]
+        ]
+    }
+}

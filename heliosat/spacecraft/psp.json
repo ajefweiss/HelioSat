@@ -1,0 +1,57 @@
+{
+    "spacecraft": {
+        "psp": {
+            "body_name": "SPP",
+            "class_name": "PSP",
+            "kernel_group": "psp",
+            "keys": {
+                "psp_fields_l2": {
+                    "alt_keys": ["mag", "psp_mag", "psp_fields", "fields_l2"],
+                    "base_urls": [
+                        "https://spdf.gsfc.nasa.gov/pub/data/psp/fields/l2/mag_rtn_1min/{YYYY}/psp_fld_l2_mag_rtn_1min_{YYYY}{MM}{DD}_{VER}.cdf"
+                    ],
+                    "versions": {
+                        "v02": {
+                            "data_columns": [
+                                {
+                                    "key": "psp_fld_l2_mag_RTN_1min",
+                                    "load_by_default": true,
+                                    "names": ["BRTN", "B_RTN"],
+                                    "reference_frame": "SPP_RTN"
+                                }
+                            ],
+                            "time_column": {
+                                "key": "epoch_mag_RTN_1min"
+                            }
+                        }
+                    },
+                    "version_default": "v02",
+                    "version_list": ["v02", "v01"],
+                    "format": "nasa_cdf"
+                }
+            }
+        }
+    },
+    "kernels": {
+        "psp": [
+            [
+                "https://sppgway.jhuapl.edu/MOC/reconstructed_ephemeris/2018/spp_recon_20180812_20181008_v001.bsp"
+            ],
+            [
+                "https://sppgway.jhuapl.edu/MOC/reconstructed_ephemeris/2018/spp_recon_20181008_20190120_v001.bsp"
+            ],
+            [
+                "https://sppgway.jhuapl.edu/MOC/reconstructed_ephemeris/2019/spp_recon_20190120_20190416_v001.bsp"
+            ],
+            [
+                "https://sppgway.jhuapl.edu/MOC/reconstructed_ephemeris/2019/spp_recon_20190416_20190914_v001.bsp"
+            ],
+            [
+                "https://sppgway.jhuapl.edu/MOC/ephemerides//spp_nom_20180812_20250831_v037_RO4.bsp"
+            ],
+            [
+                "https://sppgway.jhuapl.edu/MOC/frame_kernel/spp_dyn_v201.tf"
+            ]
+        ]
+    }
+}

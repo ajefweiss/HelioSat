@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 """wind.py
+
+Custom trajectory function for Wind so that the trajectory is computed from the given CDF files.
 """
 
 import datetime
@@ -41,4 +43,5 @@ def wind_trajectory(self, dt: Union[datetime.datetime, Sequence[datetime.datetim
 
         return traj
 
+# overwrite class function
 heliosat.WIND.trajectory = wind_trajectory
