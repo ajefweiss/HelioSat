@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 
-"""coordinates.py
+"""transform.py
 
-Implements coordinate transformation functions requiring SPICE.
+Implements coordinate transformation functions requiring SPICE kernels.
 """
 
 import datetime
-import heliosat
 import numpy as np
 import spiceypy
 
@@ -20,7 +19,7 @@ def transform_reference_frame(dt: Union[datetime.datetime, Sequence[datetime.dat
     if isinstance(dt, datetime.datetime):
         dt = [dt] * len(vec_array)
     
-    # convert to datetimeobjects
+    # convert to datetime objects
     if not isinstance(dt[0], datetime.datetime):
         dt = [datetime.datetime.fromtimestamp(_t, datetime.timezone.utc) for _t in dt]
 

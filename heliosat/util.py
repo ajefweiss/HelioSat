@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 """util.py
+
+Implement basic utility functions such as datetime conversions. For internaly use only.
 """
 
 import datetime
@@ -16,9 +18,14 @@ from bs4 import BeautifulSoup
 from typing import Any, List, Optional, Sequence, Tuple, Union
 
 
-def configure_logging(debug: bool = False, logfile: Optional[str] = None, verbose: bool = False, disable_loggers: Optional[List[str]] = ["numba.byteflow", "numba.interpreter"]) -> None:
+def configure_logging(debug: bool = False, logfile: Optional[str] = None, verbose: bool = False, clear_root: bool = True, disable_loggers: Optional[List[str]] = ["numba.byteflow", "numba.interpreter"]) -> None:
     root = logging.getLogger()
     root.setLevel(logging.DEBUG)
+
+    # clear root of all old handlers
+    if clear_root:
+        while len(root.handlers) > 0:
+            root.removeHandler(root.handlers[0])
 
     stream = logging.StreamHandler(sys.stdout)
     if debug and verbose:
@@ -32,6 +39,7 @@ def configure_logging(debug: bool = False, logfile: Optional[str] = None, verbos
         "%(asctime)s - %(name)s - %(message)s"))
     root.addHandler(stream)
 
+    # add logfile handler, appends by default
     if logfile:
         file = logging.FileHandler(logfile, "a")
         if debug:
@@ -45,10 +53,10 @@ def configure_logging(debug: bool = False, logfile: Optional[str] = None, verbos
         )
         root.addHandler(file)
 
-    # disable annoying loggers
+    # disable annoying loggers (set to WARNING)
     if disable_loggers and hasattr(disable_loggers, "__len__"):
-        for muted_logger in disable_loggers:
-            logging.getLogger(muted_logger).setLevel("WARNING")
+        for disable_logger in disable_loggers:
+            logging.getLogger(disable_logger).setLevel("WARNING")
 
 
 def dt_utc(*args: Any) -> datetime.datetime:

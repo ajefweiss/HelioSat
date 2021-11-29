@@ -2,11 +2,11 @@
 
 """caching.py
 
-Implements simple caching functionality. For internal use only.
+Implements simple caching functionality. Designed for internal use only.
 
 Notes: All cached files are stored in a single folder located at either ~/.heliosat/cache or
 $HELIOSAT_DATAPATH/cache if the environment variable is set. The required disk space can grow to be
-very large if used extensively, but the folder can be deleted manually if required without the loss
+very large if used extensively. The folder can be deleted manually if required without the loss
 of any functionality.
 """
 
