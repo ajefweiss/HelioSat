@@ -3,6 +3,7 @@
     "default_spacecraft_path": null,
     "spacecraft" : [
         "bepi",
+        "dscovr",
         "psp",
         "solo",
         "stereo",

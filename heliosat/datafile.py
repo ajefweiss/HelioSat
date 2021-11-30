@@ -5,15 +5,17 @@
 
 import cdflib
 import datetime
+import gzip
 import heliosat
 import logging
 import numpy as np
 import os
-import spiceypy
+import shutil
 
 from .transform import transform_reference_frame
 from .util import dt_utc, dt_utc_from_str, dt_utc_from_ts, fetch_url, load_json, sanitize_dt, url_regex_files, url_regex_resolve
 from typing import Any, List, Optional, Sequence, Tuple, Union
+from netCDF4 import Dataset
 
 class DataFile(object):
     """DataFile class.
@@ -23,7 +25,6 @@ class DataFile(object):
     data_key: str
     file_path: Optional[str]
     file_url: str
-    filename: Optional[str]
     key_path: str
     version: str
 
@@ -31,12 +32,11 @@ class DataFile(object):
 
     _json: dict
 
-    def __init__(self, base_urls: List[str], filename: Optional[str], data_key: str, _json: dict) -> None:
+    def __init__(self, base_urls: List[str], data_key: str, _json: dict) -> None:
         self.base_urls = base_urls
         self.data_path = os.getenv('HELIOSAT_DATAPATH', os.path.join(os.path.expanduser("~"), ".heliosat"))
         self.data_key = data_key
         self.file_path = None
-        self.filename = filename
         self.key_path = os.path.join(self.data_path, "data", data_key)
         self._json = _json
 
@@ -59,19 +59,11 @@ class DataFile(object):
             # check each version for local file
             for version in version_list:
                 url = base_url.replace("{VER}", version)
-                
-                if self.filename:
-                    filename = self.filename.replace("{VER}", version)
-                else:
-                    filename = None  # type: ignore
 
                 try:
                     if url.startswith("$"):
                         # determine if any versions exist locally
-                        if filename:
-                            local_files = url_regex_files(filename, self.key_path)
-                        else:
-                            local_files = url_regex_files(url, self.key_path)
+                        local_files = url_regex_files(url, self.key_path)
 
                         if len(local_files) > 0 and not force_download:
                             self.file_path = local_files[-1]
@@ -80,10 +72,7 @@ class DataFile(object):
                             return
                     else:
                         # determine if any versions exist locally
-                        if filename:
-                            self.file_path = os.path.join(self.key_path, filename)
-                        else:
-                            self.file_path = os.path.join(self.key_path, os.path.basename(url))
+                        self.file_path = os.path.join(self.key_path, os.path.basename(url))
 
                         if os.path.isfile(self.file_path) and os.path.getsize(self.file_path) > 0:  # type: ignore
                             self.version = version
@@ -94,21 +83,21 @@ class DataFile(object):
                     exception_list.append(e)
                     continue
 
+            # add functionality for remote compressed files
+            if self._json["keys"][self.data_key].get("compression", None) == "gz":
+                base_url = base_url + ".gz"
+
             # check each version for remote file
             for version in version_list:
                     url = base_url.replace("{VER}", version)
-
-                    if self.filename:
-                        filename = self.filename.replace("{VER}", version)
-                        self.file_path = os.path.join(self.key_path, filename)
-                    else:
-                        self.file_path = os.path.join(self.key_path, os.path.basename(url))                       
 
                     try:
                         if url.startswith("$"):
                             url = str(url_regex_resolve(url, reduce=True))
 
                             file_data = fetch_url(url)
+
+                            self.file_path = os.path.join(self.key_path, os.path.basename(url)) 
 
                             with open(self.file_path, "wb") as fh:
                                 fh.write(file_data)
@@ -117,9 +106,21 @@ class DataFile(object):
                             self.version = version
                             self.ready = True
 
+                            # decompress
+                            if self._json["keys"][self.data_key].get("compression", None) == "gz":
+                                with gzip.open(self.file_path, "rb") as file_gz:
+                                    with open(".".join(self.file_path.split(".")[:-1]), "wb") as file_extracted:
+                                        shutil.copyfileobj(file_gz, file_extracted)
+
+                                os.remove(self.file_path)
+
+                                self.file_path = ".".join(self.file_path.split(".")[:-1])
+
                             return
                         else:
                             file_data = fetch_url(url)
+
+                            self.file_path = os.path.join(self.key_path, os.path.basename(url))
 
                             with open(self.file_path, "wb") as fh:  # type: ignore
                                 fh.write(file_data)
@@ -259,6 +260,28 @@ class DataFile(object):
                 if null_filter is not None:
                     for i in range(len(dk_r)):
                         dk_r[i] = dk_r[i][null_filter]
+            elif cdf_type == "net_cdf4":
+                file = Dataset(self.file_path, "r")
+
+                dt_r = np.array([t / 1000 for t in file.variables[version_dict["time_column"]["key"]][...]])
+                dk_r = []
+
+                for column in column_dicts:
+                    key = column["key"]
+
+                    if isinstance(key, str):
+                        indices = column.get("indices", None)
+
+                        if indices is not None:
+                            indices = np.array(indices)
+                            dk_r.append(np.array(file[key][:, indices]))
+                        else:
+                            dk_r.append(np.array(file[key][:]))
+                    elif isinstance(key, list):
+                        dk_r.append(np.stack(arrays=[np.array(file[k][:])
+                                                    for k in key], axis=1))
+                    else:
+                        raise NotImplementedError
             else:
                 raise ValueError("CDF type \"%s\" is not supported", cdf_type)
 

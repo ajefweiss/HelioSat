@@ -1,0 +1,74 @@
+{
+    "spacecraft": {
+        "dscovr": {
+            "body_name": "EARTH",
+            "class_name": "DSCOVR",
+            "kernel_group": null,
+            "keys": {
+                "dscovr_mag": {
+                    "alt_keys": ["mag"],
+                    "base_urls": [
+                        "$https://www.ngdc.noaa.gov/dscovr/data/{YYYY}/{MM}/oe_m1m_dscovr_s{YYYY}{MM}{DD}000000_e{YYYY}{MM}{DD}235959_p[0-9]{14}_pub.nc"
+                    ],
+                    "compression": "gz",
+                    "versions": {
+                        "v01": {
+                            "data_columns": [
+                                {
+                                    "key": ["bx_gse", "by_gse", "bz_gse"],
+                                    "load_by_default": true,
+                                    "names": ["BGSE", "B_GSE", "BFIELD"],
+                                    "reference_frame": "GSE",
+                                    "valid_range": [-1e3, 1e3]
+                                }
+                            ],
+                            "time_column": {
+                                "key": "time"
+                            }
+                        }
+                    },
+                    "version_default": "v01",
+                    "version_list": ["v01"],
+                    "format": "net_cdf4"
+                }
+            },
+            "dscovr_plas": {
+                "alt_keys": ["dscovr_pla", "proton"],
+                "base_urls": [
+                    "$https://www.ngdc.noaa.gov/dscovr/data/{YYYY}/{MM}/oe_f1m_dscovr_s{YYYY}{MM}{DD}000000_e{YYYY}{MM}{DD}235959_p[0-9]{14}_pub.nc"
+                ],
+                "compression": "gz",
+                "versions": {
+                    "v01": {
+                        "data_columns": [
+                            {
+                                "load_by_default": true,
+                                "key": "proton_density",
+                                "names": ["density", "proton_density", "hplus_density"],
+                                "valid_range": [1, 1e6]
+                            },
+                            {
+                                "load_by_default": true,
+                                "key": "proton_speed",
+                                "names": ["speed", "proton_speed", "hplus_speed"],
+                                "valid_range": [1, 1e6]
+                            },
+                            {
+                                "load_by_default": true,
+                                "key": "proton_temperature",
+                                "names": ["temperature", "proton_temp", "proton_temperature", "hplus_temp", "hplus_temperature"],
+                                "valid_range": [1, 1e6]
+                            }
+                        ],
+                        "time_column": {
+                            "key": "time"
+                        }
+                    }
+                },
+                "version_default": "v01",
+                "version_list": ["v01"],
+                "format": "net_cdf4"
+            }
+        }
+    }
+}
