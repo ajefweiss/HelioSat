@@ -40,7 +40,7 @@ def cache_delete_entry(key: str) -> None:
 
     if not cache_entry_exists(key):
         logger.exception("cache entry \"%s\" does not exist", key)
-        raise KeyError("cache entry \"%s\" does not exist", key)
+        raise KeyError("cache entry \"{0!s}\" does not exist".format(key))
 
     logger.debug("deleting cache entry \"%s\"", key)
     os.remove(os.path.join(cache_path, "{0}.cache".format(key)))
@@ -66,7 +66,7 @@ def cache_get_entry(key: str) -> Any:
 
     if not cache_entry_exists(key):
         logger.exception("cache key \"%s\" does not exist", key)
-        raise KeyError("cache key \"%s\" does not exist", key)
+        raise KeyError("cache key \"{0!s}\" does not exist".format(key))
 
     with open(os.path.join(cache_path, "{0}.cache".format(key)), "rb") as pickle_file:
         logger.debug("loading cache entry \"%s\"", key)

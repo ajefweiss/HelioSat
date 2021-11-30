@@ -58,7 +58,7 @@ class Body(object):
             pass
         else:
             logger.exception("unit \"%s\" is not supported", units)
-            raise ValueError("unit \"%s\" is not supported", units)
+            raise ValueError("unit \"{0!s}\" is not supported".format(units))
 
         return traj
 
@@ -232,7 +232,28 @@ class Spacecraft(Body):
 
                 base_urls.append(url)
 
-            files.append(self.data_file_class(base_urls, data_key, self._json))
+            filename = self._json["keys"][data_key].get("filename", None)
+
+            if filename:
+                filename = filename.replace("{YYYY}", str(day.year))
+                filename = filename.replace("{YY}", "{0:02d}".format(day.year % 100))
+                filename = filename.replace("{MM}", "{:02d}".format(day.month))
+                filename = filename.replace("{MONTH}", day.strftime("%B")[:3].upper())
+                filename = filename.replace("{DD}", "{:02d}".format(day.day))
+
+                filename = filename.replace("{DOY}", "{:03d}".format(day.timetuple().tm_yday))
+
+                doym1 = dt_utc(day.year, day.month, 1)
+
+                if day.month == 12:
+                    doym2 = dt_utc(day.year + 1, 1, 1) - datetime.timedelta(days=1)
+                else:
+                    doym2 = dt_utc(day.year, day.month + 1, 1) - datetime.timedelta(days=1)
+
+                filename = filename.replace("{DOYM1}", "{:03d}".format(doym1.timetuple().tm_yday))
+                filename = filename.replace("{DOYM2}", "{:03d}".format(doym2.timetuple().tm_yday))
+
+            files.append(self.data_file_class(base_urls, filename, data_key, self._json))
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=25) as executor:
             futures = [executor.submit(file.prepare, force_download) for file in files]
@@ -264,6 +285,6 @@ class Spacecraft(Body):
 
             if not resolved:
                 logger.exception("data_key \"%s\" not found", data_key)
-                raise KeyError("data_key \"%s\" not found", data_key)
+                raise KeyError("data_key \"{0!s}\" not found".format(data_key))
             
         return data_key

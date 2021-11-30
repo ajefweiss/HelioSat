@@ -32,8 +32,7 @@ def smooth_data(dt: Sequence[datetime.datetime], dt_r: np.ndarray, dk_r: np.ndar
         time_smooth, data_smooth = _smoothing_closest(time_smooth, dt_r, dk_r, data_smooth)
     else:
         logger.exception("smoothing method \"%s\" is not implemented", kwargs.get("smoothing"))
-        raise NotImplementedError("smoothing method \"%s\" is not implemented",
-                                  kwargs.get("smoothing"))
+        raise NotImplementedError("smoothing method \"{0!s}\" is not implemented".format(kwargs.get("smoothing")))
 
     return time_smooth, data_smooth
 

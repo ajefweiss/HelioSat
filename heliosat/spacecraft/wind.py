@@ -39,7 +39,7 @@ def wind_trajectory(self, dt: Union[datetime.datetime, Sequence[datetime.datetim
             pass
         else:
             logger.exception("unit \"%s\" is not supported", units)
-            raise ValueError("unit \"%s\" is not supported", units)
+            raise ValueError("unit \"{0!s}\" is not supported".format(units))
 
         return traj
 

@@ -65,7 +65,7 @@ class SpiceKernel(object):
         logger.exception("url: %s", self.file_path)
 
         logger.exception("failed to fetch kernel \"%s\" (%s)", self.file_name, exception_list)
-        raise Exception("failed to fetch kernel \"%s\" (%s)", self.file_name, exception_list)
+        raise Exception("failed to fetch kernel \"{0!s}\" ({1!s})".format(self.file_name, exception_list))
 
     @property
     def is_available(self) -> bool:
@@ -159,7 +159,7 @@ class SpiceKernelManager(object):
 
         if len(urls) == 0:
             logger.exception("an entry in the kernel group \"%s\" has no urls", group)
-            raise Exception("an entry in the kernel group \"%s\" has no urls", group)
+            raise Exception("an entry in the kernel group \"{0!s}\" has no urls".format(group))
 
         # check for regex
         if urls[0].startswith("$"):

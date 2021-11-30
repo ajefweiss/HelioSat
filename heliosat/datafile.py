@@ -32,11 +32,12 @@ class DataFile(object):
 
     _json: dict
 
-    def __init__(self, base_urls: List[str], data_key: str, _json: dict) -> None:
+    def __init__(self, base_urls: List[str], filename: Optional[str], data_key: str, _json: dict) -> None:
         self.base_urls = base_urls
         self.data_path = os.getenv('HELIOSAT_DATAPATH', os.path.join(os.path.expanduser("~"), ".heliosat"))
         self.data_key = data_key
         self.file_path = None
+        self.filename = filename
         self.key_path = os.path.join(self.data_path, "data", data_key)
         self._json = _json
 
@@ -60,10 +61,18 @@ class DataFile(object):
             for version in version_list:
                 url = base_url.replace("{VER}", version)
 
+                if self.filename:
+                    filename = self.filename.replace("{VER}", version)
+                else:
+                    filename = None  # type: ignore
+
                 try:
                     if url.startswith("$"):
                         # determine if any versions exist locally
-                        local_files = url_regex_files(url, self.key_path)
+                        if filename:
+                            local_files = url_regex_files(filename, self.key_path)
+                        else:
+                            local_files = url_regex_files(url, self.key_path)
 
                         if len(local_files) > 0 and not force_download:
                             self.file_path = local_files[-1]
@@ -72,7 +81,10 @@ class DataFile(object):
                             return
                     else:
                         # determine if any versions exist locally
-                        self.file_path = os.path.join(self.key_path, os.path.basename(url))
+                        if filename:
+                             self.file_path = os.path.join(self.key_path, filename)
+                        else:
+                            self.file_path = os.path.join(self.key_path, os.path.basename(url))
 
                         if os.path.isfile(self.file_path) and os.path.getsize(self.file_path) > 0:  # type: ignore
                             self.version = version
@@ -88,8 +100,23 @@ class DataFile(object):
                 base_url = base_url + ".gz"
 
             # check each version for remote file
+            _url_pre = None
+
             for version in version_list:
                     url = base_url.replace("{VER}", version)
+
+                    # skip if url does not change with version
+                    if url == _url_pre:
+                        exception_list.append(version)
+                        continue
+
+                    _url_pre = url
+
+                    if self.filename:
+                        filename = self.filename.replace("{VER}", version)
+                        self.file_path = os.path.join(self.key_path, filename)
+                    else:
+                        self.file_path = os.path.join(self.key_path, os.path.basename(url))  
 
                     try:
                         if url.startswith("$"):
@@ -129,12 +156,12 @@ class DataFile(object):
                             self.version = version
                             self.ready = True
 
-                            return 
+                            return
                     except Exception as e:
-                        exception_list.append(e)
+                        exception_list.append(version)
                         continue
         
-        logger.exception("failed to fetch data file \"%s\" (%s)", os.path.basename(self.base_urls[0]), exception_list)
+        logger.exception("failed to fetch data file \"%s\" (versions: %s)", os.path.basename(self.base_urls[0]), exception_list)
         self.ready = False
         
 
@@ -175,14 +202,14 @@ class DataFile(object):
                     break
 
             if not valid_column:
-                raise KeyError("data column \"%s\" is invalid (%s)", columns[i], self.file_path)
+                raise KeyError("data column \"{0!s}\" is invalid ({1!s})".format(columns[i], self.file_path))
 
         if "_cdf" in file_format:
             dt_r, dk_r = self._read_cdf(dt_start, dt_end, version_dict, column_dicts, cdf_type=file_format)
         elif file_format == "tab":
             dt_r, dk_r = self._read_tab(dt_start, dt_end, version_dict, column_dicts)
         else:
-            raise NotImplementedError("format \"%s\" is not implemented", file_format)
+            raise NotImplementedError("format \"{0!s}\" is not implemented".format(file_format))
 
         if dt_start == dt_end:
             dt_sel = np.argmin(np.abs(dt_r - dt_start.timestamp()))
@@ -283,12 +310,12 @@ class DataFile(object):
                     else:
                         raise NotImplementedError
             else:
-                raise ValueError("CDF type \"%s\" is not supported", cdf_type)
+                raise ValueError("CDF type \"{0!r}\" is not supported".format(cdf_type))
 
             return dt_r, dk_r
         except Exception as e:
             logger.exception("failed to read file \"%s\" (%s)", self.file_path, e)
-            raise Exception
+            raise Exception("failed to read file \"{0!s}\" ({1!r})".format(self.file_path, e))
 
     def _read_tab(self, dt_start: datetime.datetime, dt_end: datetime.datetime, version_dict: dict, column_dicts: List[dict]) -> Tuple[np.ndarray, np.ndarray]:
         logger = logging.getLogger(__name__)
@@ -329,7 +356,7 @@ class DataFile(object):
                 dt_r = tab_file[:, time_index] + time_format
             else:
                 logger.exception("time_format \"%s\" is not implemented", type(time_format))
-                raise NotImplementedError("time_format \"%s\" is not implemented", time_format)
+                raise NotImplementedError("time_format \"{0!r}\" is not implemented".format(time_format))
 
             dk_r = []
 
@@ -350,4 +377,4 @@ class DataFile(object):
             return dt_r, dk_r
         except Exception as e:
             logger.exception("failed to read file \"%s\" (%s)", self.file_path, e)
-            raise Exception
+            raise Exception("failed to read file \"{0!s}\" ({1!r})".format(self.file_path, e))

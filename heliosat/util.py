@@ -95,7 +95,7 @@ def dt_utc_from_str(string: str, string_format: Optional[str] = None) -> datetim
             dt = dt.replace(tzinfo=datetime.timezone.utc)
         return dt
 
-    raise ValueError("could not convert \"%s\", unkown format", string)
+    raise ValueError("could not convert \"{0!s}\", unkown format".format(string))
 
 
 def dt_utc_from_ts(ts: float) -> datetime.datetime:
@@ -115,7 +115,7 @@ def fetch_url(url: str) -> bytes:
         s.close()
     else:
         logger.exception("invalid url \"%s\"", url)
-        raise requests.HTTPError("invalid url \"%s\"", url)
+        raise requests.HTTPError("invalid url \"{0!s}\"".format(url))
 
     if response.ok:
         # fix for url's that return 200 instead of a 404
@@ -128,7 +128,7 @@ def fetch_url(url: str) -> bytes:
         return response.content
     else:
         logger.exception("failed to fetch url \"%s\" (%i)", url, response.status_code)
-        raise requests.HTTPError("failed to fetch url \"%s\" (%i)", url, response.status_code)
+        raise requests.HTTPError("failed to fetch url \"{0!s}\" ({1})".format(url, response.status_code))
 
 
 def load_json(path: str) -> dict:
@@ -191,7 +191,7 @@ def url_regex_resolve(url: str, reduce: bool = False) -> Union[str, List[str]]:
             response_text = response.text
     else:
         logger.exception("failed to fetch url \"%s\" (%i)", url_parent, response.status_code)
-        raise requests.HTTPError("failed to fetch url \"%s\" (%i)", url_parent, response.status_code)
+        raise requests.HTTPError("failed to fetch url \"{0!s}\" ({1})".format(url_parent, response.status_code))
 
     # match all url's with regex pattern
     soup = BeautifulSoup(response_text, "html.parser")
