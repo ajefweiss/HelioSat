@@ -13,8 +13,8 @@ import os
 import shutil
 
 from .transform import transform_reference_frame
-from .util import dt_utc, dt_utc_from_str, dt_utc_from_ts, fetch_url, load_json, sanitize_dt, url_regex_files, url_regex_resolve
-from typing import Any, List, Optional, Sequence, Tuple, Union
+from .util import dt_utc_from_str, fetch_url, url_regex_files, url_regex_resolve
+from typing import List, Optional, Tuple
 from netCDF4 import Dataset
 
 class DataFile(object):

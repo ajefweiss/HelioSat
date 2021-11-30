@@ -9,13 +9,12 @@ import heliosat
 import logging
 import multiprocessing
 import numpy as np
-import os
 import spiceypy
 
 from .caching import cache_add_entry, cache_entry_exists, cache_generate_key, cache_get_entry
 from .datafile import DataFile
 from .smoothing import smooth_data
-from .util import dt_utc, dt_utc_from_ts, fetch_url, load_json, sanitize_dt
+from .util import dt_utc, dt_utc_from_ts, sanitize_dt
 from typing import Any, List, Optional, Sequence, Tuple, Union
 
 

@@ -15,7 +15,7 @@ import requests_ftp
 import sys
 
 from bs4 import BeautifulSoup
-from typing import Any, List, Optional, Sequence, Tuple, Union
+from typing import Any, List, Optional, Sequence, Union
 
 
 def configure_logging(debug: bool = False, logfile: Optional[str] = None, verbose: bool = False, clear_root: bool = True, disable_loggers: Optional[List[str]] = ["numba.byteflow", "numba.interpreter"]) -> None:

@@ -11,7 +11,6 @@ of any functionality.
 """
 
 import hashlib
-import heliosat
 import json
 import logging
 import os

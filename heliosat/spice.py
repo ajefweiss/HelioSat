@@ -4,9 +4,7 @@
 """
 
 import concurrent.futures
-import datetime
 import heliosat
-import json
 import logging
 import numpy as np
 import os
@@ -15,7 +13,7 @@ import spiceypy
 from .spacecraft import Spacecraft
 from .util import fetch_url, load_json, url_regex_files, url_regex_resolve
 from runpy import run_path
-from typing import Any, List, Optional, Sequence, Tuple, Union
+from typing import List, Optional, Union
 
 
 class SpiceKernel(object):

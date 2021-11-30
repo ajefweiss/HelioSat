@@ -8,7 +8,7 @@ import logging
 import numba
 import numpy as np
 
-from typing import Any, Sequence, Tuple, Sized
+from typing import Any, Sequence, Tuple
 
 
 def smooth_data(dt: Sequence[datetime.datetime], dt_r: np.ndarray, dk_r: np.ndarray, **kwargs: Any) -> Tuple[np.ndarray, np.ndarray]:
@@ -38,7 +38,7 @@ def smooth_data(dt: Sequence[datetime.datetime], dt_r: np.ndarray, dk_r: np.ndar
     return time_smooth, data_smooth
 
 
-@numba.njit(parallel=False)
+@numba.njit(parallel=True)
 def _smoothing_closest(dt: np.ndarray, dt_r: np.ndarray, dk_r: np.ndarray, data_smooth: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     t_actual = np.zeros_like(dt)
 
