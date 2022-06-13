@@ -18,7 +18,13 @@ from bs4 import BeautifulSoup
 from typing import Any, List, Optional, Sequence, Union
 
 
-def configure_logging(debug: bool = False, logfile: Optional[str] = None, verbose: bool = False, clear_root: bool = True, disable_loggers: Optional[List[str]] = ["numba.byteflow", "numba.interpreter"]) -> None:
+_LOG_IGNORE_LIST = [
+    "numba.core.byteflow",
+    "numba.core.interpreter",
+    "numba.core.ssa"
+]
+
+def configure_logging(debug: bool = False, logfile: Optional[str] = None, verbose: bool = False, clear_root: bool = True, disable_loggers: Optional[List[str]] = _LOG_IGNORE_LIST) -> None:
     root = logging.getLogger()
     root.setLevel(logging.DEBUG)
 
