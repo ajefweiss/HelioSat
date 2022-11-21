@@ -1,4 +1,4 @@
-HelioSat (ver 0.6)
+HelioSat (ver 0.8)
 ========
 
 A simple and small python package for handling and processing heliospheric satellite data. The current primary features are automatic data downloading & crude processing for Bepi, DSCOVR, PSP, SolO, STA, STB, and Wind data. Furthermore all related and required SPICE kernels are downloaded automatically.
