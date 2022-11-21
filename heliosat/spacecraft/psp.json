@@ -6,10 +6,8 @@
             "kernel_group": "psp",
             "keys": {
                 "psp_fields_l2": {
-                    "alt_keys": ["mag", "psp_mag", "psp_fields", "fields_l2"],
-                    "base_urls": [
-                        "https://spdf.gsfc.nasa.gov/pub/data/psp/fields/l2/mag_rtn_1min/{YYYY}/psp_fld_l2_mag_rtn_1min_{YYYY}{MM}{DD}_{VER}.cdf"
-                    ],
+                    "alt_keys": ["mag", "fields_l2"],
+                    "base_url": "https://spdf.gsfc.nasa.gov/pub/data/psp/fields/l2/mag_rtn_1min/{YYYY}/psp_fld_l2_mag_rtn_1min_{YYYY}{MM}{DD}_{VER}.cdf",
                     "versions": {
                         "v02": {
                             "data_columns": [
@@ -22,6 +20,41 @@
                             ],
                             "time_column": {
                                 "key": "epoch_mag_RTN_1min"
+                            }
+                        }
+                    },
+                    "version_default": "v02",
+                    "version_list": ["v02", "v01"],
+                    "format": "nasa_cdf"
+                },
+                "psp_spc_l3": {
+                    "alt_keys": ["proton", "spc_l3"],
+                    "base_url": "https://spdf.gsfc.nasa.gov/pub/data/psp/sweap/spc/l3/l3i/{YYYY}/psp_swp_spc_l3i_{YYYY}{MM}{DD}_{VER}.cdf",
+                    "versions": {
+                        "v02": {
+                            "data_columns": [
+                                {
+                                    "key": "np_moment",
+                                    "load_by_default": true,
+                                    "names": ["density"],
+                                    "valid_range": [-1e6, 1e6]
+                                },
+                                {
+                                    "key": "vp_moment_RTN",
+                                    "load_by_default": true,
+                                    "names": ["velocity"],
+                                    "reference_frame": "SPP_RTN",
+                                    "valid_range": [-1e6, 1e6]
+                                },
+                                {
+                                    "key": "wp_moment",
+                                    "load_by_default": true,
+                                    "names": ["temperature"],
+                                    "valid_range": [-1e6, 1e9]
+                                }
+                            ],
+                            "time_column": {
+                                "key": "Epoch"
                             }
                         }
                     },

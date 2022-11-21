@@ -6,10 +6,8 @@
             "kernel_group": "stereo",
             "keys": {
                 "sta_impact_l1": {
-                    "alt_keys": ["mag", "sta_mag", "impact", "sta_impact", "impact_l1"],
-                    "base_urls": [
-                        "https://stereo-ssc.nascom.nasa.gov/data/ins_data/impact/level1/ahead/mag/RTN/{YYYY}/{MM}/STA_L1_MAG_RTN_{YYYY}{MM}{DD}_{VER}.cdf"
-                    ],
+                    "alt_keys": ["mag", "impact_l1"],
+                    "base_url": "https://stereo-ssc.nascom.nasa.gov/data/ins_data/impact/level1/ahead/mag/RTN/{YYYY}/{MM}/STA_L1_MAG_RTN_{YYYY}{MM}{DD}_{VER}.cdf",
                     "versions": {
                         "V06": {
                             "data_columns": [

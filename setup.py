@@ -9,7 +9,7 @@ setup(
         "heliosat"
     ],
     package_data={"heliosat": ["spacecraft/*.json"]},
-    version="0.6.2",
+    version="0.8.0",
     author="Andreas J. Weiss",
     author_email="andreas.weiss@oeaw.ac.at",
     keywords=["astrophysics", "solar physics", "space weather"],
@@ -17,14 +17,14 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/ajefweiss/HelioSat",
     install_requires=[
-        "bs4",
+        "beautifulsoup4>=4.11.1",
         "cdflib>=0.3.19",
-        "netcdf4",
-        "numba",
-        "numpy",
-        "requests",
-        "requests-ftp",
-        "spiceypy"
+        "netcdf4>=1.6.2",
+        "numba>=0.56.4",
+        "numpy>=1.23.5",
+        "requests>=2.28.1",
+        "requests-ftp>=0.3.1",
+        "spiceypy>=5.1.2"
     ],
     classifiers=[
         "Development Status :: 4 - Beta",

@@ -2,7 +2,7 @@
 
 """util.py
 
-Implement basic utility functions such as datetime conversions. For internaly use only.
+Implement basic utility functions such as datetime conversions. Designed for internal use only.
 """
 
 import datetime
@@ -16,53 +16,6 @@ import sys
 
 from bs4 import BeautifulSoup
 from typing import Any, List, Optional, Sequence, Union
-
-
-_LOG_IGNORE_LIST = [
-    "numba.core.byteflow",
-    "numba.core.interpreter",
-    "numba.core.ssa"
-]
-
-def configure_logging(debug: bool = False, logfile: Optional[str] = None, verbose: bool = False, clear_root: bool = True, disable_loggers: Optional[List[str]] = _LOG_IGNORE_LIST) -> None:
-    root = logging.getLogger()
-    root.setLevel(logging.DEBUG)
-
-    # clear root of all old handlers
-    if clear_root:
-        while len(root.handlers) > 0:
-            root.removeHandler(root.handlers[0])
-
-    stream = logging.StreamHandler(sys.stdout)
-    if debug and verbose:
-        stream.setLevel(logging.DEBUG)
-    elif verbose:
-        stream.setLevel(logging.INFO)
-    else:
-        stream.setLevel(logging.WARNING)
-
-    stream.setFormatter(logging.Formatter(
-        "%(asctime)s - %(name)s - %(message)s"))
-    root.addHandler(stream)
-
-    # add logfile handler, appends by default
-    if logfile:
-        file = logging.FileHandler(logfile, "a")
-        if debug:
-            file.setLevel(logging.DEBUG)
-        else:
-            file.setLevel(logging.INFO)
-
-        file.setFormatter(
-            logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-        )
-        root.addHandler(file)
-
-    # disable annoying loggers (set to WARNING)
-    if disable_loggers and hasattr(disable_loggers, "__len__"):
-        for disable_logger in disable_loggers:
-            logging.getLogger(disable_logger).setLevel("WARNING")
 
 
 def dt_utc(*args: Any) -> datetime.datetime:
@@ -107,6 +60,7 @@ def dt_utc_from_str(string: str, string_format: Optional[str] = None) -> datetim
 def dt_utc_from_ts(ts: float) -> datetime.datetime:
     return datetime.datetime.fromtimestamp(ts, datetime.timezone.utc)
 
+
 def fetch_url(url: str) -> bytes:
     logger = logging.getLogger(__name__)
 
@@ -120,21 +74,27 @@ def fetch_url(url: str) -> bytes:
         response = s.get(url)
         s.close()
     else:
-        logger.exception("invalid url \"%s\"", url)
         raise requests.HTTPError("invalid url \"{0!s}\"".format(url))
 
     if response.ok:
         # fix for url's that return 200 instead of a 404
         if int(response.headers.get("Content-Length", 0)) < 1000:
-            logger.exception("Content-Length is very small"
-                             "(url is most likely not a valid file)")
             raise requests.HTTPError("Content-Length is very small"
                                      "(url is most likely not a valid file)")
 
         return response.content
     else:
-        logger.exception("failed to fetch url \"%s\" (%i)", url, response.status_code)
         raise requests.HTTPError("failed to fetch url \"{0!s}\" ({1})".format(url, response.status_code))
+
+
+def get_any(kwargs: dict, keys: Sequence[str], default: Any = None) -> Any:
+    while len(keys) > 0:
+        if keys[0] in kwargs:
+            return kwargs.get(keys[0])
+
+        keys = keys[1:]
+
+    return default
 
 
 def load_json(path: str) -> dict:
@@ -156,16 +116,16 @@ def sanitize_dt(dt: Union[str, datetime.datetime, Sequence[str], Sequence[dateti
 
         if isinstance(_dt[0], datetime.datetime):
             for i in range(len(_dt)):
-                if _dt[i].tzinfo is None:  # type: ignore
-                    _dt[i] = _dt[i].replace(tzinfo=datetime.timezone.utc)  # type: ignore
+                if _dt[i].tzinfo is None:  
+                    _dt[i] = _dt[i].replace(tzinfo=datetime.timezone.utc)  
                 else:
-                    _dt[i] = _dt[i].astimezone(datetime.timezone.utc)  # type: ignore
+                    _dt[i] = _dt[i].astimezone(datetime.timezone.utc)  
         elif isinstance(_dt[0], str):
             _dt = [dt_utc_from_str(_) for _ in _dt]
 
-        return _dt  # type: ignore
+        return _dt  
     else:
-        return dt  # type: ignore
+        return dt  
 
 
 def url_regex_files(url: str, folder: str) -> List[str]:
@@ -184,8 +144,6 @@ def url_regex_files(url: str, folder: str) -> List[str]:
 
 
 def url_regex_resolve(url: str, reduce: bool = False) -> Union[str, List[str]]:
-    logger = logging.getLogger(__name__)
-
     url_parent = os.path.dirname(url[1:])
     url_regex = os.path.basename(url[1:])
 
@@ -196,7 +154,6 @@ def url_regex_resolve(url: str, reduce: bool = False) -> Union[str, List[str]]:
     if response.ok:
             response_text = response.text
     else:
-        logger.exception("failed to fetch url \"%s\" (%i)", url_parent, response.status_code)
         raise requests.HTTPError("failed to fetch url \"{0!s}\" ({1})".format(url_parent, response.status_code))
 
     # match all url's with regex pattern

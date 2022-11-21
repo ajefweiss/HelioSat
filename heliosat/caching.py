@@ -39,7 +39,6 @@ def cache_delete_entry(key: str) -> None:
     cache_path = os.path.join(os.getenv('HELIOSAT_DATAPATH', os.path.join(os.path.expanduser("~"), ".heliosat")), "cache")
 
     if not cache_entry_exists(key):
-        logger.exception("cache entry \"%s\" does not exist", key)
         raise KeyError("cache entry \"{0!s}\" does not exist".format(key))
 
     logger.debug("deleting cache entry \"%s\"", key)
@@ -65,7 +64,6 @@ def cache_get_entry(key: str) -> Any:
     cache_path = os.path.join(os.getenv('HELIOSAT_DATAPATH', os.path.join(os.path.expanduser("~"), ".heliosat")), "cache")
 
     if not cache_entry_exists(key):
-        logger.exception("cache key \"%s\" does not exist", key)
         raise KeyError("cache key \"{0!s}\" does not exist".format(key))
 
     with open(os.path.join(cache_path, "{0}.cache".format(key)), "rb") as pickle_file:

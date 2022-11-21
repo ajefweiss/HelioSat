@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
 """smoothing.py
+
+Implements simple smoothing functions. Designed for internal use only.
 """
 
 import datetime
-import logging
 import numba
 import numpy as np
 
@@ -12,8 +13,6 @@ from typing import Any, Sequence, Tuple
 
 
 def smooth_data(dt: Sequence[datetime.datetime], dt_r: np.ndarray, dk_r: np.ndarray, **kwargs: Any) -> Tuple[np.ndarray, np.ndarray]:
-    logger = logging.getLogger(__name__)
-
     time_smooth = np.array([_t.timestamp() for _t in dt])
     data_smooth = np.zeros((len(dt), dk_r.shape[1]))
 
@@ -31,13 +30,12 @@ def smooth_data(dt: Sequence[datetime.datetime], dt_r: np.ndarray, dk_r: np.ndar
     elif smoothing in ["closest"]:
         time_smooth, data_smooth = _smoothing_closest(time_smooth, dt_r, dk_r, data_smooth)
     else:
-        logger.exception("smoothing method \"%s\" is not implemented", kwargs.get("smoothing"))
         raise NotImplementedError("smoothing method \"{0!s}\" is not implemented".format(kwargs.get("smoothing")))
 
     return time_smooth, data_smooth
 
 
-@numba.njit(parallel=True)
+@numba.njit
 def _smoothing_closest(dt: np.ndarray, dt_r: np.ndarray, dk_r: np.ndarray, data_smooth: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     t_actual = np.zeros_like(dt)
 
@@ -50,7 +48,7 @@ def _smoothing_closest(dt: np.ndarray, dt_r: np.ndarray, dk_r: np.ndarray, data_
     return t_actual, data_smooth
 
 
-@numba.njit(parallel=True)
+@numba.njit
 def _smoothing_mean(dt: np.ndarray, dt_r: np.ndarray, dk_r: np.ndarray, data_smooth: np.ndarray, smoothing_scale: np.ndarray) -> None:
     for i in numba.prange(len(dt)):
         total = 0
@@ -71,7 +69,7 @@ def _smoothing_mean(dt: np.ndarray, dt_r: np.ndarray, dk_r: np.ndarray, data_smo
                 data_smooth[i, k] = vector[k] / total
 
 
-@numba.njit(parallel=True)
+@numba.njit
 def _smoothing_gaussian_kernel(dt: np.ndarray, dt_r: np.ndarray, dk_r: np.ndarray, data_smooth: np.ndarray, smoothing_scale: np.ndarray) -> None:
     for i in numba.prange(len(dt)):
         total = 0

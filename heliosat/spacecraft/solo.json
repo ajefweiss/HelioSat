@@ -7,9 +7,7 @@
             "keys": {
                 "solo_mag": {
                     "alt_keys": ["mag"],
-                    "base_urls": [
-                        "http://soar.esac.esa.int/soar-sl-tap/data?retrieval_type=LAST_PRODUCT&data_item_id=solo_L2_mag-rtn-normal-1-minute_{YYYY}{MM}{DD}&product_type=SCIENCE"
-                    ],
+                    "base_url": "http://soar.esac.esa.int/soar-sl-tap/data?retrieval_type=LAST_PRODUCT&data_item_id=solo_L2_mag-rtn-normal-1-minute_{YYYY}{MM}{DD}&product_type=SCIENCE",
                     "filename": "solo_L2_mag-rtn-normal-1-minute_{YYYY}{MM}{DD}_{VER}.cdf",
                     "versions": {
                         "VXX": {

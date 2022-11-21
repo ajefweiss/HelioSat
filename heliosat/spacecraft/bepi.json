@@ -7,9 +7,7 @@
             "keys": {
                 "bepi_mag": {
                     "alt_keys": ["mag"],
-                    "base_urls": [
-                        "http://BLANK.BLANK/mag_der_sc_ob_a001_e2k_00000_{YYYY}{MM}{DD}.tab"
-                    ],
+                    "base_url": "http://BLANK.BLANK/mag_der_sc_ob_a001_e2k_00000_{YYYY}{MM}{DD}.tab",
                     "versions": {
                         "v01": {
                             "data_columns": [

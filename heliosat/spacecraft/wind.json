@@ -6,10 +6,8 @@
             "kernel_group": null,
             "keys": {
                 "wind_mfi_h0": {
-                    "alt_keys": ["mag", "wind_mag", "wind_mfi", "mfi_h0", "wind_h0"],
-                    "base_urls": [
-                        "https://spdf.gsfc.nasa.gov/pub/data/wind/mfi/mfi_h0/{YYYY}/wi_h0_mfi_{YYYY}{MM}{DD}_{VER}.cdf"
-                    ],
+                    "alt_keys": ["mag", "mfi_h0"],
+                    "base_url": "https://spdf.gsfc.nasa.gov/pub/data/wind/mfi/mfi_h0/{YYYY}/wi_h0_mfi_{YYYY}{MM}{DD}_{VER}.cdf",
                     "versions": {
                         "v05": {
                             "data_columns": [
@@ -32,10 +30,8 @@
                     "format": "nasa_cdf"
                 },
                 "wind_mfi_k0": {
-                    "alt_keys": ["mfi_k0", "wind_k0"],
-                    "base_urls": [
-                        "https://spdf.gsfc.nasa.gov/pub/data/wind/mfi/mfi_k0/{YYYY}/wi_k0_mfi_{YYYY}{MM}{DD}_{VER}.cdf"
-                    ],
+                    "alt_keys": ["mfi_k0"],
+                    "base_url": "https://spdf.gsfc.nasa.gov/pub/data/wind/mfi/mfi_k0/{YYYY}/wi_k0_mfi_{YYYY}{MM}{DD}_{VER}.cdf",
                     "versions": {
                         "v01": {
                             "data_columns": [
@@ -54,13 +50,11 @@
                         }
                     },
                     "version_default": "v01",
-                    "version_list": ["v03", "v02", "v01"],
+                    "version_list": ["v04", "v03", "v02", "v01"],
                     "format": "nasa_cdf"
                 },
                 "wind_trajectory": {
-                    "base_urls": [
-                        "https://cdaweb.gsfc.nasa.gov/pub/data/wind/orbit/pre_or/{YYYY}/wi_or_pre_{YYYY}{MM}{DD}_{VER}.cdf"
-                    ],
+                    "base_url": "https://cdaweb.gsfc.nasa.gov/pub/data/wind/orbit/pre_or/{YYYY}/wi_or_pre_{YYYY}{MM}{DD}_{VER}.cdf",
                     "versions": {
                         "v01": {
                             "data_columns": [

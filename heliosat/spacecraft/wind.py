@@ -12,17 +12,16 @@ import numpy as  np
 import spiceypy
 
 from heliosat.transform import transform_reference_frame
-from heliosat.util import sanitize_dt
-from typing import Sequence, Union
+from heliosat.util import get_any, sanitize_dt
+from typing import Any, Sequence, Union
 
 
 def wind_trajectory(self, dt: Union[datetime.datetime, Sequence[datetime.datetime]],
-                   reference_frame: str = "J2000", observer: str = "SUN", units: str = "AU") -> np.ndarray:  # type: ignore
-        logger = logging.getLogger(__name__)
-
+                    observer: str = "SUN", units: str = "AU", **kwargs: Any) -> np.ndarray:  # type: ignore
         dt = sanitize_dt(dt)
 
         traj_t, traj_p = self.get(dt, "wind_trajectory", use_cache=True)
+        reference_frame = get_any(kwargs, ["reference_frame", "frame"], "J2000")
 
         traj_p[:, 0] *= -1
         traj_p[:, 1] *= -1
@@ -38,7 +37,6 @@ def wind_trajectory(self, dt: Union[datetime.datetime, Sequence[datetime.datetim
         elif units == "km":
             pass
         else:
-            logger.exception("unit \"%s\" is not supported", units)
             raise ValueError("unit \"{0!s}\" is not supported".format(units))
 
         return traj

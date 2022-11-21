@@ -62,9 +62,6 @@ class SpiceKernel(object):
             # special case, clean up
             os.remove(self.file_path)
 
-        logger.exception("url: %s", self.file_path)
-
-        logger.exception("failed to fetch kernel \"%s\" (%s)", self.file_name, exception_list)
         raise Exception("failed to fetch kernel \"{0!s}\" ({1!s})".format(self.file_name, exception_list))
 
     @property
@@ -158,7 +155,6 @@ class SpiceKernelManager(object):
         logger = logging.getLogger(__name__)
 
         if len(urls) == 0:
-            logger.exception("an entry in the kernel group \"%s\" has no urls", group)
             raise Exception("an entry in the kernel group \"{0!s}\" has no urls".format(group))
 
         # check for regex
@@ -177,7 +173,7 @@ class SpiceKernelManager(object):
                 return kernels
             
             # generates a list of lists that might be of different lengths
-            resolved_urls = [url_regex_resolve(_) for _ in urls]  # type: ignore
+            resolved_urls = [url_regex_resolve(_) for _ in urls]
 
             sort_by_file = {}  # type: dict
 
@@ -221,8 +217,6 @@ class SpiceKernelManager(object):
                 run_path(custompy)
 
     def reload(self) -> None:
-        logger = logging.getLogger(__name__)
-
         # clear all kernels
         spiceypy.kclear()
 
