@@ -40,6 +40,41 @@
                     "version_default": "V06",
                     "version_list": ["V06"],
                     "format": "nasa_cdf"
+                },
+                "sta_plastic_l2_proton": {
+                    "alt_keys": ["proton", "plastic_l2_proton"],
+                    "base_url": "https://stereo-ssc.nascom.nasa.gov/data/ins_data/plastic/level2/Protons/Derived_from_1D_Maxwellian/ahead/1min/{YYYY}/STA_L2_PLA_1DMax_1min_{YYYY}{MM}{DD}_{VER}.cdf",
+                    "versions": {
+                        "V10": {
+                            "data_columns": [
+                                {
+                                    "key": "proton_number_density",
+                                    "load_by_default": true,
+                                    "names": ["density"],
+                                    "valid_range": [-1e6, 1e6]
+                                },
+                                {
+                                    "key": "proton_bulk_speed",
+                                    "load_by_default": true,
+                                    "names": ["velocity"],
+                                    "reference_frame": "SPP_RTN",
+                                    "valid_range": [-1e6, 1e6]
+                                },
+                                {
+                                    "key": "proton_temperature",
+                                    "load_by_default": true,
+                                    "names": ["temperature"],
+                                    "valid_range": [-1e6, 1e9]
+                                }
+                            ],
+                            "time_column": {
+                                "key": "epoch"
+                            }
+                        }
+                    },
+                    "version_default": "V10",
+                    "version_list": ["V11", "V10"],
+                    "format": "nasa_cdf"
                 }
             }
         }
