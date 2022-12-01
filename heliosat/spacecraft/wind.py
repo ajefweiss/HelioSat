@@ -5,9 +5,9 @@
 Custom trajectory function for Wind so that the trajectory is computed from the given CDF files.
 """
 
-import datetime
+import datetime as dt
 import heliosat
-import logging
+import logging as lg
 import numpy as  np
 import spiceypy
 
@@ -16,7 +16,7 @@ from heliosat.util import get_any, sanitize_dt
 from typing import Any, Sequence, Union
 
 
-def wind_trajectory(self, dt: Union[datetime.datetime, Sequence[datetime.datetime]],
+def wind_trajectory(self, dt: Union[dt.datetime, Sequence[dt.datetime]],
                     observer: str = "SUN", units: str = "AU", **kwargs: Any) -> np.ndarray:  # type: ignore
         dt = sanitize_dt(dt)
 

@@ -4,10 +4,10 @@
 """
 
 import cdflib
-import datetime
+import datetime as dt
 import gzip
 import heliosat
-import logging
+import logging as lg
 import numpy as np
 import os
 import spiceypy
@@ -44,8 +44,8 @@ class DataFile(object):
         if not os.path.isdir(self.key_path):
             os.makedirs(self.key_path)
  
-    def read(self, dt_start: datetime.datetime, dt_end: datetime.datetime, data_key: str, columns: List[str], kernel_group: str, reference_frame: str) -> Tuple[np.ndarray, np.ndarray]:
-        logger = logging.getLogger(__name__)
+    def read(self, dt_start: dt.datetime, dt_end: dt.datetime, data_key: str, columns: List[str], kernel_group: str, reference_frame: str) -> Tuple[np.ndarray, np.ndarray]:
+        logger = lg.getLogger(__name__)
 
         column_dicts = []
 
@@ -132,8 +132,8 @@ class DataFile(object):
 
         return dt_r, np.concatenate(dk_r, axis=1)
         
-    def _read_cdf(self, dt_start: datetime.datetime, dt_end: datetime.datetime, version_dict: dict, column_dicts: List[dict], cdf_type: str) -> Tuple[np.ndarray, np.ndarray]:
-        logger = logging.getLogger(__name__)
+    def _read_cdf(self, dt_start: dt.datetime, dt_end: dt.datetime, version_dict: dict, column_dicts: List[dict], cdf_type: str) -> Tuple[np.ndarray, np.ndarray]:
+        logger = lg.getLogger(__name__)
 
         try:
             if cdf_type == "nasa_cdf":
@@ -199,8 +199,8 @@ class DataFile(object):
         except Exception as e:
             raise Exception("failed to read file \"{0!s}\" ({1!r})".format(self.file_path, e))
 
-    def _read_tab(self, dt_start: datetime.datetime, dt_end: datetime.datetime, version_dict: dict, column_dicts: List[dict]) -> Tuple[np.ndarray, np.ndarray]:
-        logger = logging.getLogger(__name__)
+    def _read_tab(self, dt_start: dt.datetime, dt_end: dt.datetime, version_dict: dict, column_dicts: List[dict]) -> Tuple[np.ndarray, np.ndarray]:
+        logger = lg.getLogger(__name__)
 
         try:
             delimiter = version_dict["text_formatting"].get("delimiter", None)

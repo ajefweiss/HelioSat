@@ -5,7 +5,7 @@
 
 import concurrent.futures
 import heliosat
-import logging
+import logging as lg
 import numpy as np
 import os
 import spiceypy
@@ -31,7 +31,7 @@ class SpiceKernel(object):
         self.file_path = os.path.join(data_path, "kernels", self.file_name)
 
     def prepare(self, force_download: bool = False) -> None:
-        logger = logging.getLogger(__name__)
+        logger = lg.getLogger(__name__)
 
         # check local availability
         if self.is_available and not force_download:
@@ -84,7 +84,7 @@ class SpiceKernelManager(object):
     group_list: List[str]
 
     def __init__(self, json_file: str = None) -> None:
-        logger = logging.getLogger(__name__)
+        logger = lg.getLogger(__name__)
 
         # clear all kernels
         spiceypy.kclear()
@@ -122,7 +122,7 @@ class SpiceKernelManager(object):
         self.load_spacecraft()
     
     def load_group(self, kernel_group: str, force_download: bool = False) -> None:
-        logger = logging.getLogger(__name__)
+        logger = lg.getLogger(__name__)
         
         logger.debug("loading kernel group \"%s\"", kernel_group)
 
@@ -152,7 +152,7 @@ class SpiceKernelManager(object):
             self.load_group(kernel_group, force_download)
 
     def load_kernel(self, urls: List[str], group: str, force_download: bool = False) -> Union[SpiceKernel, List[SpiceKernel]]:
-        logger = logging.getLogger(__name__)
+        logger = lg.getLogger(__name__)
 
         if len(urls) == 0:
             raise Exception("an entry in the kernel group \"{0!s}\" has no urls".format(group))

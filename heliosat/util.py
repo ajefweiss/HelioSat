@@ -5,9 +5,9 @@
 Implement basic utility functions such as datetime conversions. Designed for internal use only.
 """
 
-import datetime
+import datetime as dt
 import json
-import logging
+import logging as lg
 import os
 import re
 import requests
@@ -18,51 +18,51 @@ from bs4 import BeautifulSoup
 from typing import Any, List, Optional, Sequence, Union
 
 
-def dt_utc(*args: Any) -> datetime.datetime:
-    return datetime.datetime(*args).replace(tzinfo=datetime.timezone.utc)
+_strptime_formats = [
+    "%Y-%m-%dT%H:%M:%S.%f",
+    "%Y-%m-%dT%H:%M:%S",
+    "%Y-%m-%dT%H:%M",
+    "%Y-%m-%d"
+]
 
 
-def dt_utc_from_str(string: str, string_format: Optional[str] = None) -> datetime.datetime:
-    formats = [
-        "%Y-%m-%dT%H:%M:%S.%f",
-        "%Y-%m-%dT%H:%M:%S",
-        "%Y-%m-%dT%H:%MZ",
-        "%Y-%m-%dT%H:%M",
-        "%Y-%m-%d"
-    ]
+def dt_utc(*args: Any) -> dt.datetime:
+    return dt.datetime(*args).replace(tzinfo=dt.timezone.utc)
 
-    dt = None
+
+def dt_utc_from_str(string: str, string_format: Optional[str] = None) -> dt.datetime:
+    dtp = None
 
     if string_format:
         try:
-            dt = datetime.datetime.strptime(string, string_format)
+            dtp = dt.datetime.strptime(string, string_format)
         except ValueError:
-            for fmt in formats:
+            for fmt in _strptime_formats:
                 try:
-                    dt = datetime.datetime.strptime(string, fmt)
+                    dtp = dt.datetime.strptime(string, fmt)
                 except ValueError:
                     pass
     else:
-        for fmt in formats:
+        for fmt in _strptime_formats:
             try:
-                dt = datetime.datetime.strptime(string, fmt)
+                dtp = dt.datetime.strptime(string, fmt)
             except ValueError:
                 pass
 
-    if dt:
-        if not dt.tzinfo:
-            dt = dt.replace(tzinfo=datetime.timezone.utc)
-        return dt
+    if dtp:
+        if not dtp.tzinfo:
+            dtp = dtp.replace(tzinfo=dt.timezone.utc)
+        return dtp
 
     raise ValueError("could not convert \"{0!s}\", unkown format".format(string))
 
 
-def dt_utc_from_ts(ts: float) -> datetime.datetime:
-    return datetime.datetime.fromtimestamp(ts, datetime.timezone.utc)
+def dt_utc_from_ts(ts: float) -> dt.datetime:
+    return dt.datetime.fromtimestamp(ts, dt.timezone.utc)
 
 
 def fetch_url(url: str) -> bytes:
-    logger = logging.getLogger(__name__)
+    logger = lg.getLogger(__name__)
 
     if url.startswith("http"):
         logger.debug("fetching url (http) \"%s\"", url)
@@ -104,32 +104,32 @@ def load_json(path: str) -> dict:
     return json_dict
 
 
-def sanitize_dt(dt: Union[str, datetime.datetime, Sequence[str], Sequence[datetime.datetime]]) -> Union[datetime.datetime, Sequence[datetime.datetime]]:
-    if isinstance(dt, datetime.datetime) and dt.tzinfo is None:
-        return dt.replace(tzinfo=datetime.timezone.utc)
-    elif isinstance(dt, datetime.datetime):
-        return dt.astimezone(datetime.timezone.utc)
-    elif isinstance(dt, str):
-        return dt_utc_from_str(dt)
-    elif hasattr(dt, "__iter__"):
-        _dt = list(dt)
+def sanitize_dt(dtp: Union[str, dt.datetime, Sequence[str], Sequence[dt.datetime]]) -> Union[dt.datetime, Sequence[dt.datetime]]:
+    if isinstance(dtp, dt.datetime) and dtp.tzinfo is None:
+        return dtp.replace(tzinfo=dt.timezone.utc)
+    elif isinstance(dtp, dt.datetime) and dtp.tzinfo != dt.timezone.utc:
+        return dtp.astimezone(dt.timezone.utc)
+    elif isinstance(dtp, str):
+        return dt_utc_from_str(dtp)
+    elif hasattr(dtp, "__iter__"):
+        _dt = list(dtp)
 
-        if isinstance(_dt[0], datetime.datetime):
+        if isinstance(_dt[0], dt.datetime):
             for i in range(len(_dt)):
                 if _dt[i].tzinfo is None:  
-                    _dt[i] = _dt[i].replace(tzinfo=datetime.timezone.utc)  
+                    _dt[i] = _dt[i].replace(tzinfo=dt.timezone.utc)  
                 else:
-                    _dt[i] = _dt[i].astimezone(datetime.timezone.utc)  
+                    _dt[i] = _dt[i].astimezone(dt.timezone.utc)  
         elif isinstance(_dt[0], str):
             _dt = [dt_utc_from_str(_) for _ in _dt]
 
         return _dt  
     else:
-        return dt  
+        return dtp  
 
 
 def url_regex_files(url: str, folder: str) -> List[str]:
-    logger = logging.getLogger(__name__)
+    logger = lg.getLogger(__name__)
 
     local_files = os.listdir(folder)
     url_pattern = os.path.basename(url)

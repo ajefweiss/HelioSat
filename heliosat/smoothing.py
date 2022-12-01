@@ -5,14 +5,23 @@
 Implements simple smoothing functions. Designed for internal use only.
 """
 
-import datetime
-import numba
+import datetime as dt
+import logging as lg
 import numpy as np
 
 from typing import Any, Sequence, Tuple
 
+# import numba if available, otherwise define custom decorator
+try:
+    import numba as nb
+except:
+    class nb(object):
+        def njit(fn):
+            lg.info("function %s: numba package not installed, function may be slow", fn)
+            return fn
 
-def smooth_data(dt: Sequence[datetime.datetime], dt_r: np.ndarray, dk_r: np.ndarray, **kwargs: Any) -> Tuple[np.ndarray, np.ndarray]:
+
+def smooth_data(dt: Sequence[dt.datetime], dt_r: np.ndarray, dk_r: np.ndarray, **kwargs: Any) -> Tuple[np.ndarray, np.ndarray]:
     time_smooth = np.array([_t.timestamp() for _t in dt])
     data_smooth = np.zeros((len(dt), dk_r.shape[1]))
 
@@ -35,11 +44,11 @@ def smooth_data(dt: Sequence[datetime.datetime], dt_r: np.ndarray, dk_r: np.ndar
     return time_smooth, data_smooth
 
 
-@numba.njit
+@nb.njit
 def _smoothing_closest(dt: np.ndarray, dt_r: np.ndarray, dk_r: np.ndarray, data_smooth: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     t_actual = np.zeros_like(dt)
 
-    for i in numba.prange(len(dt)):
+    for i in range(len(dt)):
         index = np.argmin(np.abs(dt[i] - dt_r))
 
         t_actual[i] = dt_r[index]
@@ -48,9 +57,9 @@ def _smoothing_closest(dt: np.ndarray, dt_r: np.ndarray, dk_r: np.ndarray, data_
     return t_actual, data_smooth
 
 
-@numba.njit
+@nb.njit
 def _smoothing_mean(dt: np.ndarray, dt_r: np.ndarray, dk_r: np.ndarray, data_smooth: np.ndarray, smoothing_scale: np.ndarray) -> None:
-    for i in numba.prange(len(dt)):
+    for i in range(len(dt)):
         total = 0
         dims = dk_r.shape[1]
         vector = np.zeros((dims,))
@@ -69,9 +78,9 @@ def _smoothing_mean(dt: np.ndarray, dt_r: np.ndarray, dk_r: np.ndarray, data_smo
                 data_smooth[i, k] = vector[k] / total
 
 
-@numba.njit
+@nb.njit
 def _smoothing_gaussian_kernel(dt: np.ndarray, dt_r: np.ndarray, dk_r: np.ndarray, data_smooth: np.ndarray, smoothing_scale: np.ndarray) -> None:
-    for i in numba.prange(len(dt)):
+    for i in range(len(dt)):
         total = 0
         dims = dk_r.shape[1]
         vector = np.zeros((dims,))

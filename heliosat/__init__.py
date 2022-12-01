@@ -6,7 +6,7 @@ from .spice import SpiceKernelManager as _SpiceKernelManager
 __author__ = "Andreas J. Weiss"
 __copyright__ = "Copyright (C) 2019 Andreas J. Weiss"
 __license__ = "MIT"
-__version__ = "0.8.0"
+__version__ = "0.8.1"
 
 
 _skm = _SpiceKernelManager()

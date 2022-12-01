@@ -4,10 +4,10 @@
 """
 
 import concurrent.futures
-import datetime
+import datetime as dt
 import heliosat
-import logging
-import multiprocessing
+import logging as lg
+import multiprocessing as mp
 import numpy as np
 import os
 import shutil
@@ -36,18 +36,16 @@ class Body(object):
         if kernel_group:
             heliosat._skm.load_group(kernel_group, **kwargs)
 
-    def trajectory(self, dt: Union[datetime.datetime, Sequence[datetime.datetime]], observer: str = "SUN",
+    def trajectory(self, dtp: Union[dt.datetime, Sequence[dt.datetime]], observer: str = "SUN",
                    units: str = "AU", **kwargs: Any) -> np.ndarray:
-        logger = logging.getLogger(__name__)
-
-        dt = sanitize_dt(dt)
+        dtp = sanitize_dt(dtp)
 
         reference_frame = get_any(kwargs, ["reference_frame", "frame"], "J2000")
 
         traj = np.array(
             spiceypy.spkpos(
                 self.name_naif,
-                spiceypy.datetime2et(dt),
+                spiceypy.datetime2et(dtp),
                 reference_frame,
                 "NONE",
                 observer
@@ -78,28 +76,28 @@ class Spacecraft(Body):
     data_file_class = DataFile
 
     def __init__(self, **kwargs: Any) -> None:
-        logger = logging.getLogger(__name__)
+        logger = lg.getLogger(__name__)
 
         super(Spacecraft, self).__init__(self.name, self.name_naif, self.kernel_group, **kwargs)
 
         # legacy support
         self.get_data = self.get
 
-    def get(self, dt: Union[str, datetime.datetime, Sequence[str], Sequence[datetime.datetime]], data_key: str, **kwargs: Any) -> Tuple[np.ndarray, np.ndarray]:
-        logger = logging.getLogger(__name__)
+    def get(self, dtp: Union[str, dt.datetime, Sequence[str], Sequence[dt.datetime]], data_key: str, **kwargs: Any) -> Tuple[np.ndarray, np.ndarray]:
+        logger = lg.getLogger(__name__)
 
         data_key = self.data_key_resolve(data_key)
 
-        if isinstance(dt, datetime.datetime):
-            dt = [dt]
+        if isinstance(dtp, dt.datetime):
+            dtp = [dtp]
 
-        dt = sanitize_dt(dt)  
+        dtp = sanitize_dt(dtp)  
 
         # caching identifier
         identifiers = {
             "data_key": data_key,
             "spacecraft": self.name,
-            "times": [_t.timestamp() for _t in dt],  
+            "times": [_t.timestamp() for _t in dtp],  
             "version": heliosat.__version__,
             **kwargs
         }
@@ -130,16 +128,16 @@ class Spacecraft(Body):
 
         # use dt list as endpoints 
         if kwargs.pop("as_endpoints", False):
-            if len(dt) < 2:
+            if len(dtp) < 2:
                 raise ValueError("datetime list must be of length larger of 2 to use endpoints")
 
-            _ = np.linspace(dt[0].timestamp(), dt[-1].timestamp(), int((dt[-1].timestamp() - dt[0].timestamp()) // sampling_freq))  
-            dt = [datetime.datetime.fromtimestamp(_, datetime.timezone.utc) for _ in _]
+            _ = np.linspace(dtp[0].timestamp(), dtp[-1].timestamp(), int((dtp[-1].timestamp() - dtp[0].timestamp()) // sampling_freq))  
+            dtp = [dt.datetime.fromtimestamp(_, dt.timezone.utc) for _ in _]
 
-        dt_r, dk_r = self._get_data(dt[0], dt[-1], data_key, **kwargs)
+        dt_r, dk_r = self._get_data(dtp[0], dtp[-1], data_key, **kwargs)
 
         if smoothing_kwargs["smoothing"]:
-            dt_r, dk_r = smooth_data(dt, dt_r, dk_r, **smoothing_kwargs)
+            dt_r, dk_r = smooth_data(dtp, dt_r, dk_r, **smoothing_kwargs)
 
         if return_datetimes:
             _dt = list(dt_r)
@@ -162,8 +160,8 @@ class Spacecraft(Body):
 
         return dt_r, dk_r
 
-    def _get_data(self, dt_start: datetime.datetime, dt_end: datetime.datetime, data_key: str, **kwargs: Any) -> Tuple[np.ndarray, np.ndarray]:
-        logger = logging.getLogger(__name__)
+    def _get_data(self, dt_start: dt.datetime, dt_end: dt.datetime, data_key: str, **kwargs: Any) -> Tuple[np.ndarray, np.ndarray]:
+        logger = lg.getLogger(__name__)
 
         data_key = self.data_key_resolve(data_key)
 
@@ -189,7 +187,7 @@ class Spacecraft(Body):
         columns.extend(kwargs.get("extra_columns", []))
         reference_frame = get_any(kwargs, ["reference_frame", "frame"], None)
 
-        max_workers = min([multiprocessing.cpu_count(), len(files)])
+        max_workers = min([mp.cpu_count(), len(files)])
 
         with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
             futures = [executor.submit(file.read, dt_start, dt_end, data_key, columns, self.kernel_group, reference_frame) for file in files]
@@ -201,19 +199,19 @@ class Spacecraft(Body):
 
         return dt_r, dk_r
 
-    def _get_files(self, dt_start: datetime.datetime, dt_end: datetime.datetime, data_key: str,
+    def _get_files(self, dt_start: dt.datetime, dt_end: dt.datetime, data_key: str,
                    force_download: bool = False, skip_download: bool = False) -> List[DataFile]:
         # adjust ranges slightly
         if (dt_end - dt_start).days > 1:
-            dt_start -= datetime.timedelta(hours=dt_start.hour, minutes=dt_start.minute,
+            dt_start -= dt.timedelta(hours=dt_start.hour, minutes=dt_start.minute,
                                             seconds=dt_start.second)
             if dt_end.hour == 0 and dt_end.minute == 0 and dt_end.second == 0:
-                dt_end -= datetime.timedelta(seconds=1)
+                dt_end -= dt.timedelta(seconds=1)
 
         files = []
 
         # prepare urls
-        for day in [dt_start + datetime.timedelta(days=i) for i in range((dt_end - dt_start).days + 1)]:
+        for day in [dt_start + dt.timedelta(days=i) for i in range((dt_end - dt_start).days + 1)]:
             url = self._json["keys"][data_key]["base_url"]
 
             url = url.replace("{YYYY}", str(day.year))
@@ -226,9 +224,9 @@ class Spacecraft(Body):
             doym1 = dt_utc(day.year, day.month, 1)
 
             if day.month == 12:
-                doym2 = dt_utc(day.year + 1, 1, 1) - datetime.timedelta(days=1)
+                doym2 = dt_utc(day.year + 1, 1, 1) - dt.timedelta(days=1)
             else:
-                doym2 = dt_utc(day.year, day.month + 1, 1) - datetime.timedelta(days=1)
+                doym2 = dt_utc(day.year, day.month + 1, 1) - dt.timedelta(days=1)
 
             url = url.replace("{DOYM1}", "{:03d}".format(doym1.timetuple().tm_yday))
             url = url.replace("{DOYM2}", "{:03d}".format(doym2.timetuple().tm_yday))
@@ -247,9 +245,9 @@ class Spacecraft(Body):
                 doym1 = dt_utc(day.year, day.month, 1)
 
                 if day.month == 12:
-                    doym2 = dt_utc(day.year + 1, 1, 1) - datetime.timedelta(days=1)
+                    doym2 = dt_utc(day.year + 1, 1, 1) - dt.timedelta(days=1)
                 else:
-                    doym2 = dt_utc(day.year, day.month + 1, 1) - datetime.timedelta(days=1)
+                    doym2 = dt_utc(day.year, day.month + 1, 1) - dt.timedelta(days=1)
 
                 filename = filename.replace("{DOYM1}", "{:03d}".format(doym1.timetuple().tm_yday))
                 filename = filename.replace("{DOYM2}", "{:03d}".format(doym2.timetuple().tm_yday))
@@ -291,7 +289,7 @@ class Spacecraft(Body):
 
 
 def prepare_file(file_obj, force_download: bool = False, skip_download: bool = False) -> None:
-    logger = logging.getLogger(__name__)
+    logger = lg.getLogger(__name__)
 
     _version_list = list(file_obj._json["keys"][file_obj.data_key]["version_list"])
     _version_list.remove(file_obj._json["keys"][file_obj.data_key]["version_default"])

@@ -12,7 +12,7 @@ of any functionality.
 
 import hashlib
 import json
-import logging
+import logging as lg
 import os
 import pickle
 
@@ -20,7 +20,7 @@ from typing import Any
 
 
 def cache_add_entry(key: str, obj: object) -> None:
-    logger = logging.getLogger(__name__)
+    logger = lg.getLogger(__name__)
 
     cache_path = os.path.join(os.getenv('HELIOSAT_DATAPATH', os.path.join(os.path.expanduser("~"), ".heliosat")), "cache")
 
@@ -28,13 +28,17 @@ def cache_add_entry(key: str, obj: object) -> None:
         logger.debug("cache path does not exist, creating \"%s\"", cache_path)
         os.makedirs(cache_path)
 
-    with open(os.path.join(cache_path, "{}.cache".format(key)), "wb") as pickle_file:
+    cache_path = os.path.join(cache_path, "{}.cache".format(key))
+
+    with open(cache_path, "wb") as pickle_file:
         logger.debug("creating cache entry \"%s\"", key)
         pickle.dump(obj, pickle_file)
 
+    return cache_path
+
 
 def cache_delete_entry(key: str) -> None:
-    logger = logging.getLogger(__name__)
+    logger = lg.getLogger(__name__)
 
     cache_path = os.path.join(os.getenv('HELIOSAT_DATAPATH', os.path.join(os.path.expanduser("~"), ".heliosat")), "cache")
 
@@ -59,7 +63,7 @@ def cache_generate_key(identifiers: dict) -> str:
 
 
 def cache_get_entry(key: str) -> Any:
-    logger = logging.getLogger(__name__)
+    logger = lg.getLogger(__name__)
 
     cache_path = os.path.join(os.getenv('HELIOSAT_DATAPATH', os.path.join(os.path.expanduser("~"), ".heliosat")), "cache")
 
