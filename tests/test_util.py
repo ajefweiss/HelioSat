@@ -34,30 +34,39 @@ def test_dt_utc_from_str():
         util.dt_utc_from_str("2022-01-01V345f")
     except ValueError:
         assert True
-    except:
+    except Exception:
         assert False
+
 
 def test_dt_utc_from_ts():
     assert util.dt_utc_from_ts(1669737000).tzinfo == dt.timezone.utc
 
+
 def test_fetch_url():
-    google_fetch = util.fetch_url("https://en.wikipedia.org/wiki/Solar_physics")
+    _ = util.fetch_url("https://en.wikipedia.org/wiki/Solar_physics")
+
+    # raise content error
+    with pytest.raises(requests.HTTPError):
+        util.fetch_url("https://google.com")
 
     with pytest.raises(requests.HTTPError):
         util.fetch_url("https://en.wikipedia.org/wiki/Solar_physics_bad")
+
 
 def test_get_any():
     td = dict({"c": 1})
 
     assert util.get_any(td, ["a", "b", "c"]) == 1
 
+
 def test_load_json():
     raise NotImplementedError
+
 
 def test_sanitize_dt():
     dtp_a = dt.datetime(2020, 1, 1)
 
-    dtp_list_a = [dt.datetime(2020, 1, 1), dt.datetime(2020, 1, 2) ,dt.datetime(2020, 1, 3)]
+    dtp_list_a = [dt.datetime(2020, 1, 1), dt.datetime(2020, 1, 2), dt.datetime(2020, 1, 3)]
     dtp_list_b = ["2022-01-01T06:23:07", "2022-01-01T07:00:07", "2022-01-01T07:01:07"]
 
     assert util.sanitize_dt(dtp_a).tzinfo == dt.timezone.utc

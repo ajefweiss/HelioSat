@@ -5,17 +5,15 @@
 
 import cdflib
 import datetime as dt
-import gzip
 import heliosat
-import logging as lg
 import numpy as np
 import os
-import spiceypy
 
 from .transform import transform_reference_frame
 from .util import dt_utc_from_str
 from typing import List, Optional, Tuple
 from netCDF4 import Dataset
+
 
 class DataFile(object):
     """DataFile class.
@@ -43,15 +41,15 @@ class DataFile(object):
 
         if not os.path.isdir(self.key_path):
             os.makedirs(self.key_path)
- 
-    def read(self, dt_start: dt.datetime, dt_end: dt.datetime, data_key: str, columns: List[str], kernel_group: str, reference_frame: str) -> Tuple[np.ndarray, np.ndarray]:
-        logger = lg.getLogger(__name__)
 
+    def read(self, dt_start: dt.datetime, dt_end: dt.datetime, data_key: str, columns: List[str],
+             kernel_group: str, reference_frame: str) -> Tuple[np.ndarray, np.ndarray]:
         column_dicts = []
 
         # get version dict
         file_format = self._json["keys"][data_key]["format"]
-        version_dict = self._json["keys"][data_key]["versions"].get(self.version, self._json["keys"][data_key]["versions"][self._json["keys"][data_key]["version_default"]])
+        version_dict = self._json["keys"][data_key]["versions"].get(
+            self.version, self._json["keys"][data_key]["versions"][self._json["keys"][data_key]["version_default"]])
 
         # resolve default columns
         if columns[0] == "~":
@@ -84,19 +82,19 @@ class DataFile(object):
                 raise KeyError("data column \"{0!s}\" is invalid ({1!s})".format(columns[i], self.file_path))
 
         if "_cdf" in file_format:
-            dt_r, dk_r = self._read_cdf(dt_start, dt_end, version_dict, column_dicts, cdf_type=file_format)
+            dtp_r, dk_r = self._read_cdf(dt_start, dt_end, version_dict, column_dicts, cdf_type=file_format)
         elif file_format == "tab":
-            dt_r, dk_r = self._read_tab(dt_start, dt_end, version_dict, column_dicts)
+            dtp_r, dk_r = self._read_tab(dt_start, dt_end, version_dict, column_dicts)
         else:
             raise NotImplementedError("format \"{0!s}\" is not implemented".format(file_format))
 
         if dt_start == dt_end:
-            dt_sel = np.argmin(np.abs(dt_r - dt_start.timestamp()))
-            dt_mask = dt_r == dt_r[dt_sel]
+            dt_sel = np.argmin(np.abs(dtp_r - dt_start.timestamp()))
+            dt_mask = dtp_r == dtp_r[dt_sel]
         else:
-            dt_mask = ((dt_r > dt_start.timestamp()) & (dt_r < dt_end.timestamp()))
+            dt_mask = ((dtp_r > dt_start.timestamp()) & (dtp_r < dt_end.timestamp()))
 
-        dt_r = dt_r[dt_mask]
+        dtp_r = dtp_r[dt_mask]
 
         # process data columns
         for i in range(len(dk_r)):
@@ -109,32 +107,31 @@ class DataFile(object):
 
             if valid_range:
                 data_entry = np.where((data_entry > valid_range[0]) & (data_entry < valid_range[1]),
-                                    data_entry, np.nan)
+                                      data_entry, np.nan)
 
             # some data files aren't sorted by time
-            sort_mask = np.argsort(dt_r)
-            dt_r = dt_r[sort_mask]
+            sort_mask = np.argsort(dtp_r)
+            dtp_r = dtp_r[sort_mask]
             data_entry = data_entry[sort_mask]
 
             if data_entry.ndim == 1:
                 data_entry = data_entry.reshape((-1, 1))
 
             # transform reference frame
-            if len(dt_r) > 0 and reference_frame and "reference_frame" in column and reference_frame != column.get("reference_frame", None):
+            if len(dtp_r) > 0 and reference_frame and reference_frame != column.get("reference_frame", None):
                 heliosat._skm.load_group("default")
 
                 if kernel_group:
                     heliosat._skm.load_group(kernel_group)
 
-                data_entry = transform_reference_frame(dt_r, data_entry, column["reference_frame"], reference_frame)
+                data_entry = transform_reference_frame(dtp_r, data_entry, column["reference_frame"], reference_frame)
 
             dk_r[i] = data_entry
 
-        return dt_r, np.concatenate(dk_r, axis=1)
-        
-    def _read_cdf(self, dt_start: dt.datetime, dt_end: dt.datetime, version_dict: dict, column_dicts: List[dict], cdf_type: str) -> Tuple[np.ndarray, np.ndarray]:
-        logger = lg.getLogger(__name__)
+        return dtp_r, np.concatenate(dk_r, axis=1)
 
+    def _read_cdf(self, dt_start: dt.datetime, dt_end: dt.datetime, version_dict: dict,
+                  column_dicts: List[dict], cdf_type: str) -> Tuple[np.ndarray, np.ndarray]:
         try:
             if cdf_type == "nasa_cdf":
                 cdf_file = cdflib.CDF(self.file_path)
@@ -147,7 +144,7 @@ class DataFile(object):
                 else:
                     null_filter = None
 
-                dt_r = cdflib.epochs.CDFepoch.unixtime(epochs, to_np=True)
+                dtp_r = cdflib.epochs.CDFepoch.unixtime(epochs, to_np=True)
                 dk_r = []
 
                 for column in column_dicts:
@@ -173,7 +170,7 @@ class DataFile(object):
             elif cdf_type == "net_cdf4":
                 file = Dataset(self.file_path, "r")
 
-                dt_r = np.array([t / 1000 for t in file.variables[version_dict["time_column"]["key"]][...]])
+                dtp_r = np.array([t / 1000 for t in file.variables[version_dict["time_column"]["key"]][...]])
                 dk_r = []
 
                 for column in column_dicts:
@@ -189,19 +186,18 @@ class DataFile(object):
                             dk_r.append(np.array(file[key][:]))
                     elif isinstance(key, list):
                         dk_r.append(np.stack(arrays=[np.array(file[k][:])
-                                                    for k in key], axis=1))
+                                    for k in key], axis=1))
                     else:
                         raise NotImplementedError
             else:
                 raise ValueError("CDF type \"{0!r}\" is not supported".format(cdf_type))
 
-            return dt_r, dk_r
+            return dtp_r, dk_r
         except Exception as e:
             raise Exception("failed to read file \"{0!s}\" ({1!r})".format(self.file_path, e))
 
-    def _read_tab(self, dt_start: dt.datetime, dt_end: dt.datetime, version_dict: dict, column_dicts: List[dict]) -> Tuple[np.ndarray, np.ndarray]:
-        logger = lg.getLogger(__name__)
-
+    def _read_tab(self, dt_start: dt.datetime, dt_end: dt.datetime, version_dict: dict,
+                  column_dicts: List[dict]) -> Tuple[np.ndarray, np.ndarray]:
         try:
             delimiter = version_dict["text_formatting"].get("delimiter", None)
 
@@ -226,16 +222,16 @@ class DataFile(object):
                     return dt_utc_from_str(string, format).timestamp()
 
             if isinstance(time_format, str):
-                converters[time_index] = lambda string: decode(string, time_format)   
+                converters[time_index] = lambda string: decode(string, time_format)
 
                 tab_file = np.loadtxt(self.file_path, skiprows=skip_rows, encoding="latin1", delimiter=delimiter,
                                       converters=converters)
 
-                dt_r = tab_file[:, time_index]
+                dtp_r = tab_file[:, time_index]
             elif isinstance(time_format, int):
                 tab_file = np.loadtxt(self.file_path, skiprows=skip_rows, converters=converters)
 
-                dt_r = tab_file[:, time_index] + time_format
+                dtp_r = tab_file[:, time_index] + time_format
             else:
                 raise NotImplementedError("time_format \"{0!r}\" is not implemented".format(time_format))
 
@@ -255,6 +251,6 @@ class DataFile(object):
                 else:
                     raise NotImplementedError
 
-            return dt_r, dk_r
+            return dtp_r, dk_r
         except Exception as e:
             raise Exception("failed to read file \"{0!s}\" ({1!r})".format(self.file_path, e))

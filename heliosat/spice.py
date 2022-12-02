@@ -6,7 +6,6 @@
 import concurrent.futures
 import heliosat
 import logging as lg
-import numpy as np
 import os
 import spiceypy
 
@@ -120,15 +119,16 @@ class SpiceKernelManager(object):
                 self.all_spcs.update(load_json(os.path.join(base_path, "{}.json".format(spacecraft))).get("spacecraft", {}))
 
         self.load_spacecraft()
-    
+
     def load_group(self, kernel_group: str, force_download: bool = False) -> None:
         logger = lg.getLogger(__name__)
-        
+
         logger.debug("loading kernel group \"%s\"", kernel_group)
 
         # load groups in parallel (quicker downloads)
         with concurrent.futures.ThreadPoolExecutor(max_workers=25) as executor:
-            futures = [executor.submit(self.load_kernel, urls, kernel_group, force_download) for urls in self.all_grps[kernel_group]]
+            futures = [executor.submit(self.load_kernel, urls, kernel_group, force_download)
+                       for urls in self.all_grps[kernel_group]]
 
             for future in concurrent.futures.as_completed(futures):
                 kernels = future.result()
@@ -143,7 +143,7 @@ class SpiceKernelManager(object):
                         if kernel.file_name not in [_.file_name for _ in self.kernel_list]:
                             self.kernel_list.append(kernel)
                             self.kernel_list[-1].load()
-        
+
         if kernel_group not in self.group_list:
             self.group_list.append(kernel_group)
 
@@ -152,8 +152,6 @@ class SpiceKernelManager(object):
             self.load_group(kernel_group, force_download)
 
     def load_kernel(self, urls: List[str], group: str, force_download: bool = False) -> Union[SpiceKernel, List[SpiceKernel]]:
-        logger = lg.getLogger(__name__)
-
         if len(urls) == 0:
             raise Exception("an entry in the kernel group \"{0!s}\" has no urls".format(group))
 
@@ -166,12 +164,12 @@ class SpiceKernelManager(object):
             if len(local_files) > 0 and not force_download:
                 for local_file in local_files:
                     resolved_urls = [os.path.join(os.path.dirname(_), os.path.basename(local_file)) for _ in urls]
-                    
+
                     kernel = SpiceKernel(resolved_urls, self.data_path)
                     kernels.append(kernel)
 
                 return kernels
-            
+
             # generates a list of lists that might be of different lengths
             resolved_urls = [url_regex_resolve(_) for _ in urls]
 
@@ -202,13 +200,12 @@ class SpiceKernelManager(object):
             aux_funcs: dict = {}
 
             setattr(heliosat, spc_v["class_name"],
-                type(spc_v["class_name"], (Spacecraft, ), {
-                    "name": spc_v["class_name"],
-                    "name_naif": spc_v["body_name"],
-                    "kernel_group": spc_v["kernel_group"],
-                    "_json": spc_v,
-                    **aux_funcs
-            }))
+                    type(spc_v["class_name"], (Spacecraft,),
+                         {"name": spc_v["class_name"],
+                          "name_naif": spc_v["body_name"],
+                          "kernel_group": spc_v["kernel_group"],
+                          "_json": spc_v,
+                          **aux_funcs}))
 
             # runpy
             custompy = os.path.join(os.path.dirname(heliosat.__file__), "spacecraft", "{}.py".format(spc_k))

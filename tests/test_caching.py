@@ -5,7 +5,6 @@
 Unit tests for caching functionality.
 """
 
-import datetime as dt
 import os
 import pickle
 import pytest

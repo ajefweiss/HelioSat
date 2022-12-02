@@ -5,6 +5,7 @@
 
 import concurrent.futures
 import datetime as dt
+import gzip
 import heliosat
 import logging as lg
 import multiprocessing as mp
@@ -16,7 +17,7 @@ import spiceypy
 from .caching import cache_add_entry, cache_entry_exists, cache_generate_key, cache_get_entry
 from .datafile import DataFile
 from .smoothing import smooth_data
-from .util import dt_utc, dt_utc_from_str, dt_utc_from_ts, fetch_url, get_any, sanitize_dt, url_regex_files, url_regex_resolve
+from .util import dt_utc, dt_utc_from_ts, fetch_url, get_any, sanitize_dt, url_regex_files, url_regex_resolve
 from typing import Any, List, Optional, Sequence, Tuple, Union
 
 
@@ -76,14 +77,13 @@ class Spacecraft(Body):
     data_file_class = DataFile
 
     def __init__(self, **kwargs: Any) -> None:
-        logger = lg.getLogger(__name__)
-
         super(Spacecraft, self).__init__(self.name, self.name_naif, self.kernel_group, **kwargs)
 
         # legacy support
         self.get_data = self.get
 
-    def get(self, dtp: Union[str, dt.datetime, Sequence[str], Sequence[dt.datetime]], data_key: str, **kwargs: Any) -> Tuple[np.ndarray, np.ndarray]:
+    def get(self, dtp: Union[str, dt.datetime, Sequence[str], Sequence[dt.datetime]],
+            data_key: str, **kwargs: Any) -> Tuple[np.ndarray, np.ndarray]:
         logger = lg.getLogger(__name__)
 
         data_key = self.data_key_resolve(data_key)
@@ -91,13 +91,13 @@ class Spacecraft(Body):
         if isinstance(dtp, dt.datetime):
             dtp = [dtp]
 
-        dtp = sanitize_dt(dtp)  
+        dtp = sanitize_dt(dtp)
 
         # caching identifier
         identifiers = {
             "data_key": data_key,
             "spacecraft": self.name,
-            "times": [_t.timestamp() for _t in dtp],  
+            "times": [_t.timestamp() for _t in dtp],
             "version": heliosat.__version__,
             **kwargs
         }
@@ -120,53 +120,55 @@ class Spacecraft(Body):
             cache_key = cache_generate_key(identifiers)
 
             if cache_entry_exists(cache_key):
-                dt_r, dk_r = cache_get_entry(cache_key)
+                dtp_r, dk_r = cache_get_entry(cache_key)
 
-                return dt_r, dk_r
+                return dtp_r, dk_r
             else:
                 logger.info("cache entry \"%s\" not found", cache_key)
 
-        # use dt list as endpoints 
+        # use dt list as endpoints
         if kwargs.pop("as_endpoints", False):
             if len(dtp) < 2:
                 raise ValueError("datetime list must be of length larger of 2 to use endpoints")
 
-            _ = np.linspace(dtp[0].timestamp(), dtp[-1].timestamp(), int((dtp[-1].timestamp() - dtp[0].timestamp()) // sampling_freq))  
+            n_dtp = int((dtp[-1].timestamp() - dtp[0].timestamp()) // sampling_freq)
+            _ = np.linspace(dtp[0].timestamp(), dtp[-1].timestamp(), n_dtp)
             dtp = [dt.datetime.fromtimestamp(_, dt.timezone.utc) for _ in _]
 
-        dt_r, dk_r = self._get_data(dtp[0], dtp[-1], data_key, **kwargs)
+        dtp_r, dk_r = self._get_data(dtp[0], dtp[-1], data_key, **kwargs)
 
         if smoothing_kwargs["smoothing"]:
-            dt_r, dk_r = smooth_data(dtp, dt_r, dk_r, **smoothing_kwargs)
+            dtp_r, dk_r = smooth_data(dtp, dtp_r, dk_r, **smoothing_kwargs)
 
         if return_datetimes:
-            _dt = list(dt_r)
+            _dtp = list(dtp_r)
 
-            for i in range(len(_dt)):
-                if _dt[i] != np.nan:
-                    _dt[i] = dt_utc_from_ts(dt_r[i])
+            for i in range(len(_dtp)):
+                if _dtp[i] != np.nan:
+                    _dtp[i] = dt_utc_from_ts(dtp_r[i])
 
-            dt_r = np.array(_dt)
+            dtp_r = np.array(_dtp)
 
         if remove_nans:
             nanfilter = np.invert(np.any(np.isnan(dk_r[:, :]), axis=1))
 
-            dt_r = dt_r[nanfilter]
+            dtp_r = dtp_r[nanfilter]
             dk_r = dk_r[nanfilter]
 
         if use_cache:
             logger.info("generating cache entry \"%s\"", cache_key)
-            cache_add_entry(cache_key, (dt_r, dk_r))
+            cache_add_entry(cache_key, (dtp_r, dk_r))
 
-        return dt_r, dk_r
+        return dtp_r, dk_r
 
-    def _get_data(self, dt_start: dt.datetime, dt_end: dt.datetime, data_key: str, **kwargs: Any) -> Tuple[np.ndarray, np.ndarray]:
+    def _get_data(self, dt_start: dt.datetime, dt_end: dt.datetime, data_key: str,
+                  **kwargs: Any) -> Tuple[np.ndarray, np.ndarray]:
         logger = lg.getLogger(__name__)
 
         data_key = self.data_key_resolve(data_key)
 
-        dt_start = sanitize_dt(dt_start)  
-        dt_end = sanitize_dt(dt_end)  
+        dt_start = sanitize_dt(dt_start)
+        dt_end = sanitize_dt(dt_end)
 
         if dt_start > dt_end:
             raise ValueError("starting date must be before final date")
@@ -190,21 +192,22 @@ class Spacecraft(Body):
         max_workers = min([mp.cpu_count(), len(files)])
 
         with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
-            futures = [executor.submit(file.read, dt_start, dt_end, data_key, columns, self.kernel_group, reference_frame) for file in files]
+            futures = [executor.submit(file.read, dt_start, dt_end, data_key,
+                                       columns, self.kernel_group, reference_frame) for file in files]
 
         result = [_ for _ in [future.result() for future in futures] if _]
 
-        dt_r = np.concatenate([_[0] for _ in result])
+        dtp_r = np.concatenate([_[0] for _ in result])
         dk_r = np.concatenate([_[1] for _ in result])
 
-        return dt_r, dk_r
+        return dtp_r, dk_r
 
     def _get_files(self, dt_start: dt.datetime, dt_end: dt.datetime, data_key: str,
                    force_download: bool = False, skip_download: bool = False) -> List[DataFile]:
         # adjust ranges slightly
         if (dt_end - dt_start).days > 1:
             dt_start -= dt.timedelta(hours=dt_start.hour, minutes=dt_start.minute,
-                                            seconds=dt_start.second)
+                                     seconds=dt_start.second)
             if dt_end.hour == 0 and dt_end.minute == 0 and dt_end.second == 0:
                 dt_end -= dt.timedelta(seconds=1)
 
@@ -231,7 +234,8 @@ class Spacecraft(Body):
             url = url.replace("{DOYM1}", "{:03d}".format(doym1.timetuple().tm_yday))
             url = url.replace("{DOYM2}", "{:03d}".format(doym2.timetuple().tm_yday))
 
-            filename = self._json["keys"][data_key].get("filename", os.path.basename(self._json["keys"][data_key].get("base_url")))
+            filebasepath = os.path.basename(self._json["keys"][data_key].get("base_url"))
+            filename = self._json["keys"][data_key].get("filename", filebasepath)
 
             if filename:
                 filename = filename.replace("{YYYY}", str(day.year))
@@ -284,7 +288,7 @@ class Spacecraft(Body):
 
             if not resolved:
                 raise KeyError("data_key \"{0!s}\" not found".format(data_key))
-            
+
         return data_key
 
 
@@ -305,7 +309,7 @@ def prepare_file(file_obj, force_download: bool = False, skip_download: bool = F
         if file_obj.filename:
             filename = file_obj.filename.replace("{VER}", version)
         else:
-            filename = None  
+            filename = None
 
         try:
             if url.startswith("$"):
@@ -324,11 +328,11 @@ def prepare_file(file_obj, force_download: bool = False, skip_download: bool = F
             else:
                 # determine if any versions exist locally
                 if filename:
-                     file_obj.file_path = os.path.join(file_obj.key_path, filename)
+                    file_obj.file_path = os.path.join(file_obj.key_path, filename)
                 else:
                     file_obj.file_path = os.path.join(file_obj.key_path, os.path.basename(file_obj.base_url))
 
-                if os.path.isfile(file_obj.file_path) and os.path.getsize(file_obj.file_path) > 0:  
+                if os.path.isfile(file_obj.file_path) and os.path.getsize(file_obj.file_path) > 0:
                     file_obj.version = version
                     file_obj.ready = True
 
@@ -361,7 +365,7 @@ def prepare_file(file_obj, force_download: bool = False, skip_download: bool = F
             filename = file_obj.filename.replace("{VER}", version)
             file_obj.file_path = os.path.join(file_obj.key_path, filename)
         else:
-            file_obj.file_path = os.path.join(file_obj.key_path, os.path.basename(url))  
+            file_obj.file_path = os.path.join(file_obj.key_path, os.path.basename(url))
 
         try:
             if url.startswith("$"):
@@ -370,7 +374,7 @@ def prepare_file(file_obj, force_download: bool = False, skip_download: bool = F
                 logger.info("fetch \"%s\"", url)
                 file_data = fetch_url(url)
 
-                file_obj.file_path = os.path.join(file_obj.key_path, os.path.basename(url)) 
+                file_obj.file_path = os.path.join(file_obj.key_path, os.path.basename(url))
 
                 with open(file_obj.file_path, "wb") as fh:
                     fh.write(file_data)
@@ -396,7 +400,7 @@ def prepare_file(file_obj, force_download: bool = False, skip_download: bool = F
 
                 file_obj.file_path = os.path.join(file_obj.key_path, os.path.basename(url))
 
-                with open(file_obj.file_path, "wb") as fh:  
+                with open(file_obj.file_path, "wb") as fh:
                     fh.write(file_data)
 
                 file_obj.file_url = url

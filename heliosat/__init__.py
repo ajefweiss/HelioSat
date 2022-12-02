@@ -11,14 +11,43 @@ __version__ = "0.8.1"
 
 _skm = _SpiceKernelManager()
 
+
 # common solar system objects
-Sun = lambda: Body("Sun", "SUN")
-Mercury = lambda: Body("Mercury", "MERCURY")
-Venus = lambda: Body("Venus", "VENUS")
-Earth = lambda: Body("Earth", "EARTH")
-Moon = lambda: Body("Moon", "MOON")
-Mars = lambda: Body("Mars", "MARS BARYCENTER")
-Jupiter = lambda: Body("Jupiter", "JUPITER BARYCENTER")
-Saturn = lambda: Body("Saturn", "SATURN BARYCENTER")
-Uranus = lambda: Body("Uranus", "URANUS BARYCENTER")
-Neptune = lambda: Body("Neptune", "NEPTUNE BARYCENTER")
+def Sun():
+    return Body("Sun", "SUN")
+
+
+def Mercury():
+    return Body("Mercury", "MERCURY")
+
+
+def Venus():
+    return Body("Venus", "VENUS")
+
+
+def Earth():
+    return Body("Earth", "EARTH")
+
+
+def Moon():
+    return Body("Moon", "MOON")
+
+
+def Mars():
+    return Body("Mars", "MARS BARYCENTER")
+
+
+def Jupiter():
+    return Body("Jupiter", "JUPITER BARYCENTER")
+
+
+def Saturn():
+    return Body("Saturn", "SATURN BARYCENTER")
+
+
+def Uranus():
+    return Body("Uranus", "URANUS BARYCENTER")
+
+
+def Neptune():
+    return Body("Neptune", "NEPTUNE BARYCENTER")

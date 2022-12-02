@@ -12,7 +12,6 @@ import os
 import re
 import requests
 import requests_ftp
-import sys
 
 from bs4 import BeautifulSoup
 from typing import Any, List, Optional, Sequence, Union
@@ -104,7 +103,8 @@ def load_json(path: str) -> dict:
     return json_dict
 
 
-def sanitize_dt(dtp: Union[str, dt.datetime, Sequence[str], Sequence[dt.datetime]]) -> Union[dt.datetime, Sequence[dt.datetime]]:
+def sanitize_dt(dtp: Union[str, dt.datetime, Sequence[str], Sequence[dt.datetime]]
+                ) -> Union[dt.datetime, Sequence[dt.datetime]]:
     if isinstance(dtp, dt.datetime) and dtp.tzinfo is None:
         return dtp.replace(tzinfo=dt.timezone.utc)
     elif isinstance(dtp, dt.datetime) and dtp.tzinfo != dt.timezone.utc:
@@ -112,25 +112,23 @@ def sanitize_dt(dtp: Union[str, dt.datetime, Sequence[str], Sequence[dt.datetime
     elif isinstance(dtp, str):
         return dt_utc_from_str(dtp)
     elif hasattr(dtp, "__iter__"):
-        _dt = list(dtp)
+        _dtp = list(dtp)
 
-        if isinstance(_dt[0], dt.datetime):
-            for i in range(len(_dt)):
-                if _dt[i].tzinfo is None:  
-                    _dt[i] = _dt[i].replace(tzinfo=dt.timezone.utc)  
+        if isinstance(_dtp[0], dt.datetime):
+            for i in range(len(_dtp)):
+                if _dtp[i].tzinfo is None:
+                    _dtp[i] = _dtp[i].replace(tzinfo=dt.timezone.utc)
                 else:
-                    _dt[i] = _dt[i].astimezone(dt.timezone.utc)  
-        elif isinstance(_dt[0], str):
-            _dt = [dt_utc_from_str(_) for _ in _dt]
+                    _dtp[i] = _dtp[i].astimezone(dt.timezone.utc)
+        elif isinstance(_dtp[0], str):
+            _dtp = [dt_utc_from_str(_) for _ in _dtp]
 
-        return _dt  
+        return _dtp
     else:
-        return dtp  
+        return dtp
 
 
 def url_regex_files(url: str, folder: str) -> List[str]:
-    logger = lg.getLogger(__name__)
-
     local_files = os.listdir(folder)
     url_pattern = os.path.basename(url)
 
@@ -139,7 +137,7 @@ def url_regex_files(url: str, folder: str) -> List[str]:
     for local_file in local_files:
         if re.match(url_pattern, local_file):
             matched_files.append(os.path.join(folder, local_file))
-    
+
     return matched_files
 
 
@@ -148,17 +146,16 @@ def url_regex_resolve(url: str, reduce: bool = False) -> Union[str, List[str]]:
     url_regex = os.path.basename(url[1:])
 
     urls_expanded = []
-    
+
     response = requests.get(url_parent, timeout=20)
 
     if response.ok:
-            response_text = response.text
+        response_text = response.text
     else:
         raise requests.HTTPError("failed to fetch url \"{0!s}\" ({1})".format(url_parent, response.status_code))
 
     # match all url's with regex pattern
     soup = BeautifulSoup(response_text, "html.parser")
-    hrefs = [_.get("href") for _ in soup.find_all("a")]
 
     for url_child in [_.get("href") for _ in soup.find_all("a")]:
         if url_child and re.match(url_regex, url_child):
