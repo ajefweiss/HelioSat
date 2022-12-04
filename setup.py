@@ -2,14 +2,11 @@
 
 from setuptools import setup
 
-
 setup(
     name="HelioSat",
-    packages=[
-        "heliosat"
-    ],
+    packages=["heliosat"],
     package_data={"heliosat": ["spacecraft/*.json"]},
-    version="0.8.1",
+    version="0.8.2",
     author="Andreas J. Weiss",
     author_email="ajefweiss@gmail.com",
     keywords=["astrophysics", "solar physics", "space weather"],
@@ -23,7 +20,7 @@ setup(
         "numpy",
         "requests",
         "requests-ftp>=0.3.1",
-        "spiceypy>=5.1.2"
+        "spiceypy>=5.1.2",
     ],
     classifiers=[
         "Development Status :: 4 - Beta",

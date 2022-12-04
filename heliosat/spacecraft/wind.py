@@ -6,16 +6,22 @@ Custom trajectory function for Wind so that the trajectory is computed from the 
 """
 
 import datetime as dt
-import heliosat
-import numpy as np
-
-from heliosat.transform import transform_reference_frame
-from heliosat.util import get_any, sanitize_dt
 from typing import Any, Sequence, Union
 
+import numpy as np
 
-def wind_trajectory(self, dtp: Union[dt.datetime, Sequence[dt.datetime]],
-                    observer: str = "SUN", units: str = "AU", **kwargs: Any) -> np.ndarray:  # type: ignore
+import heliosat
+from heliosat.transform import transform_reference_frame
+from heliosat.util import get_any, sanitize_dt
+
+
+def wind_trajectory(
+    self,
+    dtp: Union[dt.datetime, Sequence[dt.datetime]],
+    observer: str = "SUN",
+    units: str = "AU",
+    **kwargs: Any
+) -> np.ndarray:  # type: ignore
     dtp = sanitize_dt(dtp)
 
     traj_t, traj_p = self.get(dtp, "wind_trajectory", use_cache=True)
@@ -35,7 +41,7 @@ def wind_trajectory(self, dtp: Union[dt.datetime, Sequence[dt.datetime]],
     elif units == "km":
         pass
     else:
-        raise ValueError("unit \"{0!s}\" is not supported".format(units))
+        raise ValueError('unit "{0!s}" is not supported'.format(units))
 
     return traj
 

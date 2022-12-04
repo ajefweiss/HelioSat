@@ -10,18 +10,17 @@ import json
 import logging as lg
 import os
 import re
-import requests
-import requests_ftp
-
-from bs4 import BeautifulSoup
 from typing import Any, List, Optional, Sequence, Union
 
+import requests
+import requests_ftp
+from bs4 import BeautifulSoup
 
 _strptime_formats = [
     "%Y-%m-%dT%H:%M:%S.%f",
     "%Y-%m-%dT%H:%M:%S",
     "%Y-%m-%dT%H:%M",
-    "%Y-%m-%d"
+    "%Y-%m-%d",
 ]
 
 
@@ -53,7 +52,7 @@ def dt_utc_from_str(string: str, string_format: Optional[str] = None) -> dt.date
             dtp = dtp.replace(tzinfo=dt.timezone.utc)
         return dtp
 
-    raise ValueError("could not convert \"{0!s}\", unkown format".format(string))
+    raise ValueError('could not convert "{0!s}", unkown format'.format(string))
 
 
 def dt_utc_from_ts(ts: float) -> dt.datetime:
@@ -64,26 +63,29 @@ def fetch_url(url: str) -> bytes:
     logger = lg.getLogger(__name__)
 
     if url.startswith("http"):
-        logger.debug("fetching url (http) \"%s\"", url)
+        logger.debug('fetching url (http) "%s"', url)
         response = requests.get(url)
     elif url.startswith("ftp"):
-        logger.debug("fetching url (ftp) \"%s\"", url)
+        logger.debug('fetching url (ftp) "%s"', url)
         requests_ftp.monkeypatch_session()
         s = requests.Session()
         response = s.get(url)
         s.close()
     else:
-        raise requests.HTTPError("invalid url \"{0!s}\"".format(url))
+        raise requests.HTTPError('invalid url "{0!s}"'.format(url))
 
     if response.ok:
         # fix for url's that return 200 instead of a 404
         if int(response.headers.get("Content-Length", 0)) < 1000:
-            raise requests.HTTPError("Content-Length is very small"
-                                     "(url is most likely not a valid file)")
+            raise requests.HTTPError(
+                "Content-Length is very small" "(url is most likely not a valid file)"
+            )
 
         return response.content
     else:
-        raise requests.HTTPError("failed to fetch url \"{0!s}\" ({1})".format(url, response.status_code))
+        raise requests.HTTPError(
+            'failed to fetch url "{0!s}" ({1})'.format(url, response.status_code)
+        )
 
 
 def get_any(kwargs: dict, keys: Sequence[str], default: Any = None) -> Any:
@@ -103,8 +105,9 @@ def load_json(path: str) -> dict:
     return json_dict
 
 
-def sanitize_dt(dtp: Union[str, dt.datetime, Sequence[str], Sequence[dt.datetime]]
-                ) -> Union[dt.datetime, Sequence[dt.datetime]]:
+def sanitize_dt(
+    dtp: Union[str, dt.datetime, Sequence[str], Sequence[dt.datetime]]
+) -> Union[dt.datetime, Sequence[dt.datetime]]:
     if isinstance(dtp, dt.datetime) and dtp.tzinfo is None:
         return dtp.replace(tzinfo=dt.timezone.utc)
     elif isinstance(dtp, dt.datetime) and dtp.tzinfo != dt.timezone.utc:
@@ -152,7 +155,9 @@ def url_regex_resolve(url: str, reduce: bool = False) -> Union[str, List[str]]:
     if response.ok:
         response_text = response.text
     else:
-        raise requests.HTTPError("failed to fetch url \"{0!s}\" ({1})".format(url_parent, response.status_code))
+        raise requests.HTTPError(
+            'failed to fetch url "{0!s}" ({1})'.format(url_parent, response.status_code)
+        )
 
     # match all url's with regex pattern
     soup = BeautifulSoup(response_text, "html.parser")

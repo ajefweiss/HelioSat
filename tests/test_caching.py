@@ -7,6 +7,7 @@ Unit tests for caching functionality.
 
 import os
 import pickle
+
 import pytest
 
 from heliosat import caching
@@ -20,6 +21,7 @@ def test_cache_all():
 
     cache_path = caching.cache_add_entry(test_cache_key, dict({"TEST_KEY": 1}))
 
+    assert os.path.exists(caching.cache_get_path())
     assert isinstance(cache_path, str)
     assert caching.cache_entry_exists(test_cache_key)
     assert os.path.exists(cache_path)

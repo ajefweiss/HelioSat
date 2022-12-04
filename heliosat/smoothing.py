@@ -7,21 +7,24 @@ Implements simple smoothing functions. Designed for internal use only.
 
 import datetime as dt
 import logging as lg
-import numpy as np
-
 from typing import Any, Sequence, Tuple
+
+import numpy as np
 
 # import numba if available, otherwise define custom decorator
 try:
     import numba as nb
 except ImportError:
+
     class nb(object):
         def njit(fn):
             lg.info("function %s: numba package not installed, function may be slow", fn)
             return fn
 
 
-def smooth_data(dtp: Sequence[dt.datetime], dtp_r: np.ndarray, dk_r: np.ndarray, **kwargs: Any) -> Tuple[np.ndarray, np.ndarray]:
+def smooth_data(
+    dtp: Sequence[dt.datetime], dtp_r: np.ndarray, dk_r: np.ndarray, **kwargs: Any
+) -> Tuple[np.ndarray, np.ndarray]:
     time_smooth = np.array([_t.timestamp() for _t in dtp])
     data_smooth = np.zeros((len(dtp), dk_r.shape[1]))
 
@@ -33,20 +36,24 @@ def smooth_data(dtp: Sequence[dt.datetime], dtp_r: np.ndarray, dk_r: np.ndarray,
     elif smoothing in ["kernel", "kernel_gaussian", "gaussian"]:
         _smoothing_gaussian_kernel(time_smooth, dtp_r, dk_r, data_smooth, smoothing_scale)
     elif smoothing in ["linear", "linear_interpolation"]:
-        data_smooth = np.array([np.interp(time_smooth, dtp_r, dk_r[:, i])
-                                for i in range(dk_r.shape[1])])
+        data_smooth = np.array(
+            [np.interp(time_smooth, dtp_r, dk_r[:, i]) for i in range(dk_r.shape[1])]
+        )
         data_smooth = data_smooth.T
     elif smoothing in ["closest"]:
         time_smooth, data_smooth = _smoothing_closest(time_smooth, dtp_r, dk_r, data_smooth)
     else:
-        raise NotImplementedError("smoothing method \"{0!s}\" is not implemented".format(kwargs.get("smoothing")))
+        raise NotImplementedError(
+            'smoothing method "{0!s}" is not implemented'.format(kwargs.get("smoothing"))
+        )
 
     return time_smooth, data_smooth
 
 
 @nb.njit
-def _smoothing_closest(dtp: np.ndarray, dtp_r: np.ndarray, dk_r: np.ndarray,
-                       data_smooth: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+def _smoothing_closest(
+    dtp: np.ndarray, dtp_r: np.ndarray, dk_r: np.ndarray, data_smooth: np.ndarray
+) -> Tuple[np.ndarray, np.ndarray]:
     t_actual = np.zeros_like(dtp)
 
     for i in range(len(dtp)):
@@ -59,8 +66,13 @@ def _smoothing_closest(dtp: np.ndarray, dtp_r: np.ndarray, dk_r: np.ndarray,
 
 
 @nb.njit
-def _smoothing_mean(dtp: np.ndarray, dtp_r: np.ndarray, dk_r: np.ndarray,
-                    data_smooth: np.ndarray, smoothing_scale: np.ndarray) -> None:
+def _smoothing_mean(
+    dtp: np.ndarray,
+    dtp_r: np.ndarray,
+    dk_r: np.ndarray,
+    data_smooth: np.ndarray,
+    smoothing_scale: np.ndarray,
+) -> None:
     for i in range(len(dtp)):
         total = 0
         dims = dk_r.shape[1]
@@ -81,8 +93,13 @@ def _smoothing_mean(dtp: np.ndarray, dtp_r: np.ndarray, dk_r: np.ndarray,
 
 
 @nb.njit
-def _smoothing_gaussian_kernel(dtp: np.ndarray, dtp_r: np.ndarray, dk_r: np.ndarray,
-                               data_smooth: np.ndarray, smoothing_scale: np.ndarray) -> None:
+def _smoothing_gaussian_kernel(
+    dtp: np.ndarray,
+    dtp_r: np.ndarray,
+    dk_r: np.ndarray,
+    data_smooth: np.ndarray,
+    smoothing_scale: np.ndarray,
+) -> None:
     for i in range(len(dtp)):
         total = 0
         dims = dk_r.shape[1]
@@ -90,7 +107,7 @@ def _smoothing_gaussian_kernel(dtp: np.ndarray, dtp_r: np.ndarray, dk_r: np.ndar
 
         for j in range(0, len(dk_r)):
             if np.abs(dtp_r[j] - dtp[i]) < 3 * smoothing_scale and not np.isnan(dk_r[j, 0]):
-                kernel = np.exp(-(dtp_r[j] - dtp[i]) ** 2 / 2 / smoothing_scale ** 2)
+                kernel = np.exp(-((dtp_r[j] - dtp[i]) ** 2) / 2 / smoothing_scale**2)
 
                 total += kernel
 

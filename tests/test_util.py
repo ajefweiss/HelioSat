@@ -6,6 +6,7 @@ Unit tests for utility functions.
 """
 
 import datetime as dt
+
 import pytest
 import requests
 
@@ -60,20 +61,26 @@ def test_get_any():
 
 
 def test_load_json():
-    raise NotImplementedError
+    kfile = util.load_json("./heliosat/spacecraft/kernels.json")
+
+    assert len(kfile["kernels"]) > 0
 
 
 def test_sanitize_dt():
     dtp_a = dt.datetime(2020, 1, 1)
 
-    dtp_list_a = [dt.datetime(2020, 1, 1), dt.datetime(2020, 1, 2), dt.datetime(2020, 1, 3)]
+    dtp_list_a = [
+        dt.datetime(2020, 1, 1),
+        dt.datetime(2020, 1, 2),
+        dt.datetime(2020, 1, 3),
+    ]
     dtp_list_b = ["2022-01-01T06:23:07", "2022-01-01T07:00:07", "2022-01-01T07:01:07"]
 
     assert util.sanitize_dt(dtp_a).tzinfo == dt.timezone.utc
     # missing test for proper tz conversion
     assert util.sanitize_dt("2022-01-01T06:23:07").tzinfo == dt.timezone.utc
 
-    # test w/ list of dts
+    # test w/ list of dtp
     dtp_list_a_r = util.sanitize_dt(dtp_list_a)
     dtp_list_b_r = util.sanitize_dt(dtp_list_b)
 

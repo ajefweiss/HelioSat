@@ -6,28 +6,40 @@
 import concurrent.futures
 import datetime as dt
 import gzip
-import heliosat
 import logging as lg
 import multiprocessing as mp
-import numpy as np
 import os
 import shutil
+from typing import Any, List, Optional, Sequence, Tuple, Union
+
+import numpy as np
 import spiceypy
+
+import heliosat
 
 from .caching import cache_add_entry, cache_entry_exists, cache_generate_key, cache_get_entry
 from .datafile import DataFile
 from .smoothing import smooth_data
-from .util import dt_utc, dt_utc_from_ts, fetch_url, get_any, sanitize_dt, url_regex_files, url_regex_resolve
-from typing import Any, List, Optional, Sequence, Tuple, Union
+from .util import (
+    dt_utc,
+    dt_utc_from_ts,
+    fetch_url,
+    get_any,
+    sanitize_dt,
+    url_regex_files,
+    url_regex_resolve,
+)
 
 
 class Body(object):
-    """Body class.
-    """
+    """Body class."""
+
     name: str
     name_naif: str
 
-    def __init__(self, name: str, name_naif: str, kernel_group: Optional[str] = None, **kwargs: Any) -> None:
+    def __init__(
+        self, name: str, name_naif: str, kernel_group: Optional[str] = None, **kwargs: Any
+    ) -> None:
         self.name = name
         self.name_naif = name_naif
 
@@ -37,8 +49,13 @@ class Body(object):
         if kernel_group:
             heliosat._skm.load_group(kernel_group, **kwargs)
 
-    def trajectory(self, dtp: Union[dt.datetime, Sequence[dt.datetime]], observer: str = "SUN",
-                   units: str = "AU", **kwargs: Any) -> np.ndarray:
+    def trajectory(
+        self,
+        dtp: Union[dt.datetime, Sequence[dt.datetime]],
+        observer: str = "SUN",
+        units: str = "AU",
+        **kwargs: Any
+    ) -> np.ndarray:
         dtp = sanitize_dt(dtp)
 
         reference_frame = get_any(kwargs, ["reference_frame", "frame"], "J2000")
@@ -49,7 +66,7 @@ class Body(object):
                 spiceypy.datetime2et(dtp),
                 reference_frame,
                 "NONE",
-                observer
+                observer,
             )[0]
         )
 
@@ -60,14 +77,14 @@ class Body(object):
         elif units == "km":
             pass
         else:
-            raise ValueError("unit \"{0!s}\" is not supported".format(units))
+            raise ValueError('unit "{0!s}" is not supported'.format(units))
 
         return traj
 
 
 class Spacecraft(Body):
-    """Spacecraft class.
-    """
+    """Spacecraft class."""
+
     name: str
     name_naif: str
     kernel_group: str
@@ -82,8 +99,12 @@ class Spacecraft(Body):
         # legacy support
         self.get_data = self.get
 
-    def get(self, dtp: Union[str, dt.datetime, Sequence[str], Sequence[dt.datetime]],
-            data_key: str, **kwargs: Any) -> Tuple[np.ndarray, np.ndarray]:
+    def get(
+        self,
+        dtp: Union[str, dt.datetime, Sequence[str], Sequence[dt.datetime]],
+        data_key: str,
+        **kwargs: Any
+    ) -> Tuple[np.ndarray, np.ndarray]:
         logger = lg.getLogger(__name__)
 
         data_key = self.data_key_resolve(data_key)
@@ -99,7 +120,7 @@ class Spacecraft(Body):
             "spacecraft": self.name,
             "times": [_t.timestamp() for _t in dtp],
             "version": heliosat.__version__,
-            **kwargs
+            **kwargs,
         }
 
         # extract (pop) relevant kwargs
@@ -124,7 +145,7 @@ class Spacecraft(Body):
 
                 return dtp_r, dk_r
             else:
-                logger.info("cache entry \"%s\" not found", cache_key)
+                logger.info('cache entry "%s" not found', cache_key)
 
         # use dt list as endpoints
         if kwargs.pop("as_endpoints", False):
@@ -156,13 +177,14 @@ class Spacecraft(Body):
             dk_r = dk_r[nanfilter]
 
         if use_cache:
-            logger.info("generating cache entry \"%s\"", cache_key)
+            logger.info('generating cache entry "%s"', cache_key)
             cache_add_entry(cache_key, (dtp_r, dk_r))
 
         return dtp_r, dk_r
 
-    def _get_data(self, dt_start: dt.datetime, dt_end: dt.datetime, data_key: str,
-                  **kwargs: Any) -> Tuple[np.ndarray, np.ndarray]:
+    def _get_data(
+        self, dt_start: dt.datetime, dt_end: dt.datetime, data_key: str, **kwargs: Any
+    ) -> Tuple[np.ndarray, np.ndarray]:
         logger = lg.getLogger(__name__)
 
         data_key = self.data_key_resolve(data_key)
@@ -177,13 +199,23 @@ class Spacecraft(Body):
         skip_download = kwargs.get("skip_download", False)
 
         # get necessary files
-        files = self._get_files(dt_start, dt_end, data_key, force_download=force_download, skip_download=skip_download)
+        files = self._get_files(
+            dt_start,
+            dt_end,
+            data_key,
+            force_download=force_download,
+            skip_download=skip_download,
+        )
 
         if len(files) == 0:
             raise Exception("no valid files to continue with")
 
-        logger.info("using %s files to generate "
-                    "data in between %s - %s", len(files), dt_start, dt_end)
+        logger.info(
+            "using %s files to generate " "data in between %s - %s",
+            len(files),
+            dt_start,
+            dt_end,
+        )
 
         columns = kwargs.get("columns", ["~"])
         columns.extend(kwargs.get("extra_columns", []))
@@ -192,8 +224,18 @@ class Spacecraft(Body):
         max_workers = min([mp.cpu_count(), len(files)])
 
         with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
-            futures = [executor.submit(file.read, dt_start, dt_end, data_key,
-                                       columns, self.kernel_group, reference_frame) for file in files]
+            futures = [
+                executor.submit(
+                    file.read,
+                    dt_start,
+                    dt_end,
+                    data_key,
+                    columns,
+                    self.kernel_group,
+                    reference_frame,
+                )
+                for file in files
+            ]
 
         result = [_ for _ in [future.result() for future in futures] if _]
 
@@ -202,12 +244,19 @@ class Spacecraft(Body):
 
         return dtp_r, dk_r
 
-    def _get_files(self, dt_start: dt.datetime, dt_end: dt.datetime, data_key: str,
-                   force_download: bool = False, skip_download: bool = False) -> List[DataFile]:
+    def _get_files(
+        self,
+        dt_start: dt.datetime,
+        dt_end: dt.datetime,
+        data_key: str,
+        force_download: bool = False,
+        skip_download: bool = False,
+    ) -> List[DataFile]:
         # adjust ranges slightly
         if (dt_end - dt_start).days > 1:
-            dt_start -= dt.timedelta(hours=dt_start.hour, minutes=dt_start.minute,
-                                     seconds=dt_start.second)
+            dt_start -= dt.timedelta(
+                hours=dt_start.hour, minutes=dt_start.minute, seconds=dt_start.second
+            )
             if dt_end.hour == 0 and dt_end.minute == 0 and dt_end.second == 0:
                 dt_end -= dt.timedelta(seconds=1)
 
@@ -259,7 +308,9 @@ class Spacecraft(Body):
             files.append(self.data_file_class(url, filename, data_key, self._json))
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=25) as executor:
-            futures = [executor.submit(prepare_file, file, force_download, skip_download) for file in files]
+            futures = [
+                executor.submit(prepare_file, file, force_download, skip_download) for file in files
+            ]
 
             for future in concurrent.futures.as_completed(futures):
                 _ = future.result()
@@ -287,7 +338,7 @@ class Spacecraft(Body):
                     break
 
             if not resolved:
-                raise KeyError("data_key \"{0!s}\" not found".format(data_key))
+                raise KeyError('data_key "{0!s}" not found'.format(data_key))
 
         return data_key
 
@@ -330,7 +381,9 @@ def prepare_file(file_obj, force_download: bool = False, skip_download: bool = F
                 if filename:
                     file_obj.file_path = os.path.join(file_obj.key_path, filename)
                 else:
-                    file_obj.file_path = os.path.join(file_obj.key_path, os.path.basename(file_obj.base_url))
+                    file_obj.file_path = os.path.join(
+                        file_obj.key_path, os.path.basename(file_obj.base_url)
+                    )
 
                 if os.path.isfile(file_obj.file_path) and os.path.getsize(file_obj.file_path) > 0:
                     file_obj.version = version
@@ -342,11 +395,12 @@ def prepare_file(file_obj, force_download: bool = False, skip_download: bool = F
             continue
 
     if skip_download:
-        logger.error("skipping data file \"%s\"", os.path.basename(file_obj.base_url))
+        logger.error('skipping data file "%s"', os.path.basename(file_obj.base_url))
         return
 
     # add functionality for remote compressed files
-    if file_obj._json["keys"][file_obj.data_key].get("compression", None) == "gz" and not file_obj.base_url.endswith("gz"):
+    compression = file_obj._json["keys"][file_obj.data_key].get("compression", None)
+    if compression == "gz" and not file_obj.base_url.endswith("gz"):
         file_obj.base_url = file_obj.base_url + ".gz"
 
     # check each version for remote file
@@ -371,7 +425,7 @@ def prepare_file(file_obj, force_download: bool = False, skip_download: bool = F
             if url.startswith("$"):
                 url = str(url_regex_resolve(url, reduce=True))
 
-                logger.info("fetch \"%s\"", url)
+                logger.info('fetch "%s"', url)
                 file_data = fetch_url(url)
 
                 file_obj.file_path = os.path.join(file_obj.key_path, os.path.basename(url))
@@ -386,7 +440,9 @@ def prepare_file(file_obj, force_download: bool = False, skip_download: bool = F
                 # decompress
                 if file_obj._json["keys"][file_obj.data_key].get("compression", None) == "gz":
                     with gzip.open(file_obj.file_path, "rb") as file_gz:
-                        with open(".".join(file_obj.file_path.split(".")[:-1]), "wb") as file_extracted:
+                        with open(
+                            ".".join(file_obj.file_path.split(".")[:-1]), "wb"
+                        ) as file_extracted:
                             shutil.copyfileobj(file_gz, file_extracted)
 
                     os.remove(file_obj.file_path)
@@ -395,7 +451,7 @@ def prepare_file(file_obj, force_download: bool = False, skip_download: bool = F
 
                 return
             else:
-                logger.info("fetch \"%s\"", url)
+                logger.info('fetch "%s"', url)
                 file_data = fetch_url(url)
 
                 file_obj.file_path = os.path.join(file_obj.key_path, os.path.basename(url))
@@ -409,7 +465,7 @@ def prepare_file(file_obj, force_download: bool = False, skip_download: bool = F
 
                 return
         except Exception as e:
-            logger.info("failed to fetch data file (\"%s\")", e)
+            logger.info('failed to fetch data file ("%s")', e)
             continue
 
-    logger.error("failed to fetch data file \"%s\"", os.path.basename(file_obj.base_url))
+    logger.error('failed to fetch data file "%s"', os.path.basename(file_obj.base_url))

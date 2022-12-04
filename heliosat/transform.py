@@ -6,14 +6,18 @@ Implements coordinate transformation functions requiring SPICE kernels.
 """
 
 import datetime as dt
+from typing import Sequence, Union
+
 import numpy as np
 import spiceypy
 
-from typing import Sequence, Union
 
-
-def transform_reference_frame(dtp: Union[dt.datetime, Sequence[dt.datetime]], vec_array: np.ndarray,
-                              reference_frame_from: str, reference_frame_to: str) -> np.ndarray:
+def transform_reference_frame(
+    dtp: Union[dt.datetime, Sequence[dt.datetime]],
+    vec_array: np.ndarray,
+    reference_frame_from: str,
+    reference_frame_to: str,
+) -> np.ndarray:
     if reference_frame_from == reference_frame_to:
         return vec_array
 
@@ -33,6 +37,11 @@ def transform_reference_frame(dtp: Union[dt.datetime, Sequence[dt.datetime]], ve
         for i in range(0, len(dtp)):
             vec_array_new[i] = spiceypy.mxv(
                 spiceypy.pxform(
-                    reference_frame_from, reference_frame_to, spiceypy.datetime2et(dtp[i])), vec_array[i])
+                    reference_frame_from,
+                    reference_frame_to,
+                    spiceypy.datetime2et(dtp[i]),
+                ),
+                vec_array[i],
+            )
 
     return vec_array_new
