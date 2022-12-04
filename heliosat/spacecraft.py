@@ -17,18 +17,12 @@ import spiceypy
 
 import heliosat
 
-from .caching import cache_add_entry, cache_entry_exists, cache_generate_key, cache_get_entry
+from .caching import (cache_add_entry, cache_entry_exists, cache_generate_key,
+                      cache_get_entry)
 from .datafile import DataFile
 from .smoothing import smooth_data
-from .util import (
-    dt_utc,
-    dt_utc_from_ts,
-    fetch_url,
-    get_any,
-    sanitize_dt,
-    url_regex_files,
-    url_regex_resolve,
-)
+from .util import (dt_utc, dt_utc_from_ts, fetch_url, get_any, sanitize_dt,
+                   url_regex_files, url_regex_resolve)
 
 
 class Body(object):

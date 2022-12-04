@@ -96,9 +96,11 @@ def test_sanitize_dt():
         assert _.tzinfo == dt.timezone.utc
 
 
+@pytest.mark.skip(reason="wip")
 def test_url_regex_files():
     raise NotImplementedError
 
 
+@pytest.mark.skip(reason="wip")
 def test_regex_resolve():
     raise NotImplementedError

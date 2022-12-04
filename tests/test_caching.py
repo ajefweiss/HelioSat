@@ -14,7 +14,6 @@ from heliosat import caching
 
 
 def test_cache_all():
-    # test
     test_cache_key = caching.cache_generate_key(dict({"prop": True}))
 
     assert test_cache_key == "52c3fee076fd00dc6e6e5ecfea7b19a5be15215ce955ca6f201ce527dba348fa"
