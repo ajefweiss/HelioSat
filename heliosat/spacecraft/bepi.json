@@ -2,14 +2,14 @@
     "spacecraft": {
         "bepi": {
             "body_name": "BEPICOLOMBO MPO",
-            "class_name": "BEPI",
+            "class_name": "Bepi",
             "kernel_group": "bepi",
             "keys": {
                 "bepi_mag": {
                     "alt_keys": ["mag"],
                     "base_url": "http://BLANK.BLANK/mag_der_sc_ob_a001_e2k_00000_{YYYY}{MM}{DD}.tab",
                     "versions": {
-                        "v01": {
+                        "01": {
                             "data_columns": [
                                 {
                                     "indices": [5, 6, 7],
@@ -28,8 +28,6 @@
                             }
                         }
                     },
-                    "version_default": "v01",
-                    "version_list": ["v01"],
                     "format": "tab"
                 }
             }
@@ -37,12 +35,8 @@
     },
     "kernels": {
         "bepi": [
-            [
-                "ftp://spiftp.esac.esa.int/data/SPICE/BEPICOLOMBO/kernels/spk/bc_mpo_fcp_00094_20181020_20251101_v01.bsp"
-            ],
-            [
-                "ftp://spiftp.esac.esa.int/data/SPICE/BEPICOLOMBO/kernels/fk/bc_sci_v08.tf"
-            ]
+            "ftp://spiftp.esac.esa.int/data/SPICE/BEPICOLOMBO/kernels/spk/bc_mpo_fcp_00094_20181020_20251101_v01.bsp",
+            "ftp://spiftp.esac.esa.int/data/SPICE/BEPICOLOMBO/kernels/fk/bc_sci_v08.tf"
         ]
     }
 }

@@ -59,7 +59,7 @@ def dt_utc_from_ts(ts: float) -> dt.datetime:
     return dt.datetime.fromtimestamp(ts, dt.timezone.utc)
 
 
-def fetch_url(url: str) -> bytes:
+def fetch_url(url: str, return_headers: bool = False) -> bytes:
     logger = lg.getLogger(__name__)
 
     if url.startswith("http"):
@@ -76,16 +76,18 @@ def fetch_url(url: str) -> bytes:
 
     if response.ok:
         # fix for url's that return 200 instead of a 404
-        if int(response.headers.get("Content-Length", 0)) < 1000:
+        if int(response.headers.get("Content-Length", 1000)) < 1000:
             raise requests.HTTPError(
-                "Content-Length is very small" "(url is most likely not a valid file)"
+                "Content-Length is very small l=%i" "(url is most likely not a valid file)",
+                int(response.headers.get("Content-Length", 0)),
             )
 
-        return response.content
+        if return_headers:
+            return response.content, response.headers
+        else:
+            return response.content
     else:
-        raise requests.HTTPError(
-            'failed to fetch url "{0!s}" ({1})'.format(url, response.status_code)
-        )
+        raise requests.HTTPError('failed to fetch url "{0!s}" ({1})'.format(url, response.status_code))
 
 
 def get_any(kwargs: dict, keys: Sequence[str], default: Any = None) -> Any:
@@ -136,12 +138,20 @@ def url_regex_files(url: str, folder: str) -> List[str]:
     url_pattern = os.path.basename(url)
 
     matched_files = []
+    matched_groups = []
 
     for local_file in local_files:
-        if re.match(url_pattern, local_file):
+        match = re.match(url_pattern, local_file)
+
+        if match:
             matched_files.append(os.path.join(folder, local_file))
 
-    return matched_files
+            groups = match.groups()
+
+            if len(groups) >= 1:
+                matched_groups.append(groups[-1])
+
+    return matched_files, matched_groups
 
 
 def url_regex_resolve(url: str, reduce: bool = False) -> Union[str, List[str]]:
@@ -149,24 +159,30 @@ def url_regex_resolve(url: str, reduce: bool = False) -> Union[str, List[str]]:
     url_regex = os.path.basename(url[1:])
 
     urls_expanded = []
+    urls_groups = []
 
     response = requests.get(url_parent, timeout=20)
 
     if response.ok:
         response_text = response.text
     else:
-        raise requests.HTTPError(
-            'failed to fetch url "{0!s}" ({1})'.format(url_parent, response.status_code)
-        )
+        raise requests.HTTPError('failed to fetch url "{0!s}" ({1})'.format(url_parent, response.status_code))
 
     # match all url's with regex pattern
     soup = BeautifulSoup(response_text, "html.parser")
 
     for url_child in [_.get("href") for _ in soup.find_all("a")]:
-        if url_child and re.match(url_regex, url_child):
+        match = re.match(url_regex, url_child)
+
+        if url_child and match:
             urls_expanded.append("/".join([url_parent, url_child]))
+
+            groups = match.groups()
+
+            if len(groups) >= 1:
+                urls_groups.append(groups[-1])
 
     if reduce:
         return urls_expanded[-1]
     else:
-        return urls_expanded
+        return urls_expanded, urls_groups

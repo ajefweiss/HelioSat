@@ -7,9 +7,9 @@
             "keys": {
                 "psp_fields_l2": {
                     "alt_keys": ["mag", "fields_l2"],
-                    "base_url": "https://spdf.gsfc.nasa.gov/pub/data/psp/fields/l2/mag_rtn_1min/{YYYY}/psp_fld_l2_mag_rtn_1min_{YYYY}{MM}{DD}_{VER}.cdf",
+                    "base_url": "$https://spdf.gsfc.nasa.gov/pub/data/psp/fields/l2/mag_rtn_1min/{YYYY}/psp_fld_l2_mag_rtn_1min_{YYYY}{MM}{DD}_v([0-9]{2}).cdf",
                     "versions": {
-                        "v02": {
+                        "01": {
                             "data_columns": [
                                 {
                                     "key": "psp_fld_l2_mag_RTN_1min",
@@ -23,15 +23,13 @@
                             }
                         }
                     },
-                    "version_default": "v02",
-                    "version_list": ["v02", "v01"],
                     "format": "nasa_cdf"
                 },
                 "psp_spc_l3": {
                     "alt_keys": ["proton", "spc_l3"],
-                    "base_url": "https://spdf.gsfc.nasa.gov/pub/data/psp/sweap/spc/l3/l3i/{YYYY}/psp_swp_spc_l3i_{YYYY}{MM}{DD}_{VER}.cdf",
+                    "base_url": "https://spdf.gsfc.nasa.gov/pub/data/psp/sweap/spc/l3/l3i/{YYYY}/psp_swp_spc_l3i_{YYYY}{MM}{DD}_v([0-9]{2}).cdf",
                     "versions": {
-                        "v02": {
+                        "01": {
                             "data_columns": [
                                 {
                                     "key": "np_moment",
@@ -58,8 +56,6 @@
                             }
                         }
                     },
-                    "version_default": "v02",
-                    "version_list": ["v02", "v01"],
                     "format": "nasa_cdf"
                 }
             }
@@ -67,24 +63,12 @@
     },
     "kernels": {
         "psp": [
-            [
-                "https://sppgway.jhuapl.edu/MOC/reconstructed_ephemeris/2018/spp_recon_20180812_20181008_v001.bsp"
-            ],
-            [
-                "https://sppgway.jhuapl.edu/MOC/reconstructed_ephemeris/2018/spp_recon_20181008_20190120_v001.bsp"
-            ],
-            [
-                "https://sppgway.jhuapl.edu/MOC/reconstructed_ephemeris/2019/spp_recon_20190120_20190416_v001.bsp"
-            ],
-            [
-                "https://sppgway.jhuapl.edu/MOC/reconstructed_ephemeris/2019/spp_recon_20190416_20190914_v001.bsp"
-            ],
-            [
-                "https://sppgway.jhuapl.edu/MOC/ephemerides//spp_nom_20180812_20250831_v037_RO4.bsp"
-            ],
-            [
-                "https://sppgway.jhuapl.edu/MOC/frame_kernel/spp_dyn_v201.tf"
-            ]
+            "https://sppgway.jhuapl.edu/MOC/reconstructed_ephemeris/2018/spp_recon_20180812_20181008_v001.bsp",
+            "https://sppgway.jhuapl.edu/MOC/reconstructed_ephemeris/2018/spp_recon_20181008_20190120_v001.bsp",
+            "https://sppgway.jhuapl.edu/MOC/reconstructed_ephemeris/2019/spp_recon_20190120_20190416_v001.bsp",
+            "https://sppgway.jhuapl.edu/MOC/reconstructed_ephemeris/2019/spp_recon_20190416_20190914_v001.bsp",
+            "https://sppgway.jhuapl.edu/MOC/ephemerides//spp_nom_20180812_20250831_v037_RO4.bsp",
+            "https://sppgway.jhuapl.edu/MOC/frame_kernel/spp_dyn_v201.tf"
         ]
     }
 }

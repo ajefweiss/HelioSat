@@ -7,9 +7,9 @@
             "keys": {
                 "sta_impact_l1": {
                     "alt_keys": ["mag", "impact_l1"],
-                    "base_url": "https://stereo-ssc.nascom.nasa.gov/data/ins_data/impact/level1/ahead/mag/RTN/{YYYY}/{MM}/STA_L1_MAG_RTN_{YYYY}{MM}{DD}_{VER}.cdf",
+                    "base_url": "$https://stereo-ssc.nascom.nasa.gov/data/ins_data/impact/level1/ahead/mag/RTN/{YYYY}/{MM}/STA_L1_MAG_RTN_{YYYY}{MM}{DD}_V([0-9]{2}).cdf",
                     "versions": {
-                        "V06": {
+                        "01": {
                             "data_columns": [
                                 {
                                     "indices": [0, 1, 2],
@@ -37,15 +37,13 @@
                             }
                         }
                     },
-                    "version_default": "V06",
-                    "version_list": ["V06"],
                     "format": "nasa_cdf"
                 },
                 "sta_plastic_l2_proton": {
                     "alt_keys": ["proton", "plastic_l2_proton"],
-                    "base_url": "https://stereo-ssc.nascom.nasa.gov/data/ins_data/plastic/level2/Protons/Derived_from_1D_Maxwellian/ahead/1min/{YYYY}/STA_L2_PLA_1DMax_1min_{YYYY}{MM}{DD}_{VER}.cdf",
+                    "base_url": "$https://stereo-ssc.nascom.nasa.gov/data/ins_data/plastic/level2/Protons/Derived_from_1D_Maxwellian/ahead/1min/{YYYY}/STA_L2_PLA_1DMax_1min_{YYYY}{MM}{DD}_V([0-9]{2}).cdf",
                     "versions": {
-                        "V10": {
+                        "01": {
                             "data_columns": [
                                 {
                                     "key": "proton_number_density",
@@ -72,8 +70,6 @@
                             }
                         }
                     },
-                    "version_default": "V10",
-                    "version_list": ["V11", "V10"],
                     "format": "nasa_cdf"
                 }
             }
@@ -81,24 +77,12 @@
     },
     "kernels": {
         "stereo": [
-            [
-                "https://sohowww.nascom.nasa.gov/solarsoft/stereo/gen/data/spice/gen/stereo_rtn.tf"
-            ],
-            [
-                "$https://sohowww.nascom.nasa.gov/solarsoft/stereo/gen/data/spice/depm/ahead/ahead_20[\\d]{2}_[\\d]{3}_01.depm.bsp"
-            ],
-            [
-                "https://sohowww.nascom.nasa.gov/solarsoft/stereo/gen/data/spice/epm/ahead/ahead_2017_061_5295day_predict.epm.bsp"
-            ],
-            [
-                "$https://sohowww.nascom.nasa.gov/solarsoft/stereo/gen/data/spice/depm/behind/behind_20[\\d]{2}_[\\d]{3}_01.depm.bsp"
-            ],
-            [
-                "$https://sohowww.nascom.nasa.gov/solarsoft/stereo/gen/data/spice/sclk/ahead/ahead_science_[\\d]{2}.sclk"
-            ],
-            [
-                "$https://sohowww.nascom.nasa.gov/solarsoft/stereo/gen/data/spice/sclk/behind/behind_science_[\\d]{2}.sclk"
-            ]
+            "https://sohowww.nascom.nasa.gov/solarsoft/stereo/gen/data/spice/gen/stereo_rtn.tf",
+            "$https://sohowww.nascom.nasa.gov/solarsoft/stereo/gen/data/spice/depm/ahead/ahead_20[\\d]{2}_[\\d]{3}_01.depm.bsp",
+            "https://sohowww.nascom.nasa.gov/solarsoft/stereo/gen/data/spice/epm/ahead/ahead_2017_061_5295day_predict.epm.bsp",
+            "$https://sohowww.nascom.nasa.gov/solarsoft/stereo/gen/data/spice/depm/behind/behind_20[\\d]{2}_[\\d]{3}_01.depm.bsp",
+            "$https://sohowww.nascom.nasa.gov/solarsoft/stereo/gen/data/spice/sclk/ahead/ahead_science_[\\d]{2}.sclk",
+            "$https://sohowww.nascom.nasa.gov/solarsoft/stereo/gen/data/spice/sclk/behind/behind_science_[\\d]{2}.sclk"
         ]
     }
 }

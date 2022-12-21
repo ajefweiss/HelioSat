@@ -6,6 +6,7 @@ Unit tests for utility functions.
 """
 
 import datetime as dt
+import os
 
 import pytest
 import requests
@@ -52,6 +53,9 @@ def test_fetch_url():
 
     with pytest.raises(requests.HTTPError):
         util.fetch_url("https://en.wikipedia.org/wiki/Solar_physics_bad")
+
+    # test ftp
+    _ = util.fetch_url("ftp://spiftp.esac.esa.int/data/SPICE/BEPICOLOMBO/kernels/fk/bc_sci_v08.tf")
 
 
 def test_get_any():
@@ -101,6 +105,19 @@ def test_url_regex_files():
     raise NotImplementedError
 
 
-@pytest.mark.skip(reason="wip")
-def test_regex_resolve():
-    raise NotImplementedError
+def test_url_regex_resolve():
+    test_url = "$https://www.ngdc.noaa.gov/dscovr/data/2020/01/oe_m1m_dscovr_s20200101000000_e20200101235959_p(\\d{14})_pub.nc.gz"
+
+    test_url_2 = "$https://www.ngdc.noaa.gov/dscovr/data/2020/01/oe_m1m_dscovr_s\\d{14}_e\\d{14}_p\\d{14}_pub.nc.gz"
+
+    result, groups = util.url_regex_resolve(test_url, reduce=False)
+
+    assert os.path.basename(result[0]) == "oe_m1m_dscovr_s20200101000000_e20200101235959_p20200102022225_pub.nc.gz"
+    assert groups[0] == "20200102022225"
+
+    result_2 = util.url_regex_resolve(test_url_2, reduce=True)
+
+    assert (
+        result_2
+        == "https://www.ngdc.noaa.gov/dscovr/data/2020/01/oe_m1m_dscovr_s20200131000000_e20200131235959_p20200201020023_pub.nc.gz"
+    )

@@ -1,4 +1,4 @@
 [flake8]
 max-line-length = 120
 max_complexity = 12
-exclude = .git,__pycache__,.eggs/,doc/,docs/,build/,dist/,archive/
+exclude = .git,__pycache__,.eggs/,doc/,docs/,build/,dist/,archive/,.scripts

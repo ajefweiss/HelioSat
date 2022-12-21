@@ -7,10 +7,10 @@
             "keys": {
                 "dscovr_mag": {
                     "alt_keys": ["mag"],
-                    "base_url": "$https://www.ngdc.noaa.gov/dscovr/data/{YYYY}/{MM}/oe_m1m_dscovr_s{YYYY}{MM}{DD}000000_e{YYYY}{MM}{DD}235959_p[0-9]{14}_pub.nc",
+                    "base_url": "$https://www.ngdc.noaa.gov/dscovr/data/{YYYY}/{MM}/oe_m1m_dscovr_s{YYYY}{MM}{DD}000000_e{YYYY}{MM}{DD}235959_p(\\d{14})_pub.nc",
                     "compression": "gz",
                     "versions": {
-                        "v01": {
+                        "01": {
                             "data_columns": [
                                 {
                                     "key": ["bx_gse", "by_gse", "bz_gse"],
@@ -25,16 +25,14 @@
                             }
                         }
                     },
-                    "version_default": "v01",
-                    "version_list": ["v01"],
                     "format": "net_cdf4"
                 },
                 "dscovr_plas": {
                     "alt_keys": ["proton", "dscovr_plas"],
-                    "base_url": "$https://www.ngdc.noaa.gov/dscovr/data/{YYYY}/{MM}/oe_f1m_dscovr_s{YYYY}{MM}{DD}000000_e{YYYY}{MM}{DD}235959_p[0-9]{14}_pub.nc",
+                    "base_url": "$https://www.ngdc.noaa.gov/dscovr/data/{YYYY}/{MM}/oe_f1m_dscovr_s{YYYY}{MM}{DD}000000_e{YYYY}{MM}{DD}235959_p(\\d{14})_pub.nc",
                     "compression": "gz",
                     "versions": {
-                        "v01": {
+                        "01": {
                             "data_columns": [
                                 {
                                     "load_by_default": true,
@@ -60,8 +58,6 @@
                             }
                         }
                     },
-                    "version_default": "v01",
-                    "version_list": ["v01"],
                     "format": "net_cdf4"
                 }
             }

@@ -15,10 +15,11 @@ import numpy as np
 try:
     import numba as nb
 except ImportError:
+    logger = lg.getLogger("__name__")
 
     class nb(object):
         def njit(fn):
-            lg.info("function %s: numba package not installed, function may be slow", fn)
+            logger.info("function %s: numba package not installed, function may be slow", fn)
             return fn
 
 
@@ -36,16 +37,12 @@ def smooth_data(
     elif smoothing in ["kernel", "kernel_gaussian", "gaussian"]:
         _smoothing_gaussian_kernel(time_smooth, dtp_r, dk_r, data_smooth, smoothing_scale)
     elif smoothing in ["linear", "linear_interpolation"]:
-        data_smooth = np.array(
-            [np.interp(time_smooth, dtp_r, dk_r[:, i]) for i in range(dk_r.shape[1])]
-        )
+        data_smooth = np.array([np.interp(time_smooth, dtp_r, dk_r[:, i]) for i in range(dk_r.shape[1])])
         data_smooth = data_smooth.T
     elif smoothing in ["closest"]:
         time_smooth, data_smooth = _smoothing_closest(time_smooth, dtp_r, dk_r, data_smooth)
     else:
-        raise NotImplementedError(
-            'smoothing method "{0!s}" is not implemented'.format(kwargs.get("smoothing"))
-        )
+        raise NotImplementedError('smoothing method "{0!s}" is not implemented'.format(kwargs.get("smoothing")))
 
     return time_smooth, data_smooth
 

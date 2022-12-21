@@ -5,11 +5,9 @@
 
 import concurrent.futures
 import datetime as dt
-import gzip
 import logging as lg
 import multiprocessing as mp
 import os
-import shutil
 from typing import Any, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
@@ -21,8 +19,7 @@ from .caching import (cache_add_entry, cache_entry_exists, cache_generate_key,
                       cache_get_entry)
 from .datafile import DataFile
 from .smoothing import smooth_data
-from .util import (dt_utc, dt_utc_from_ts, fetch_url, get_any, sanitize_dt,
-                   url_regex_files, url_regex_resolve)
+from .util import dt_utc, dt_utc_from_ts, get_any, sanitize_dt
 
 
 class Body(object):
@@ -31,9 +28,7 @@ class Body(object):
     name: str
     name_naif: str
 
-    def __init__(
-        self, name: str, name_naif: str, kernel_group: Optional[str] = None, **kwargs: Any
-    ) -> None:
+    def __init__(self, name: str, name_naif: str, kernel_group: Optional[str] = None, **kwargs: Any) -> None:
         self.name = name
         self.name_naif = name_naif
 
@@ -44,11 +39,7 @@ class Body(object):
             heliosat._skm.load_group(kernel_group, **kwargs)
 
     def trajectory(
-        self,
-        dtp: Union[dt.datetime, Sequence[dt.datetime]],
-        observer: str = "SUN",
-        units: str = "AU",
-        **kwargs: Any
+        self, dtp: Union[dt.datetime, Sequence[dt.datetime]], observer: str = "SUN", units: str = "AU", **kwargs: Any
     ) -> np.ndarray:
         dtp = sanitize_dt(dtp)
 
@@ -94,10 +85,7 @@ class Spacecraft(Body):
         self.get_data = self.get
 
     def get(
-        self,
-        dtp: Union[str, dt.datetime, Sequence[str], Sequence[dt.datetime]],
-        data_key: str,
-        **kwargs: Any
+        self, dtp: Union[str, dt.datetime, Sequence[str], Sequence[dt.datetime]], data_key: str, **kwargs: Any
     ) -> Tuple[np.ndarray, np.ndarray]:
         logger = lg.getLogger(__name__)
 
@@ -220,7 +208,8 @@ class Spacecraft(Body):
         with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
             futures = [
                 executor.submit(
-                    file.read,
+                    read_file,
+                    file,
                     dt_start,
                     dt_end,
                     data_key,
@@ -248,9 +237,7 @@ class Spacecraft(Body):
     ) -> List[DataFile]:
         # adjust ranges slightly
         if (dt_end - dt_start).days > 1:
-            dt_start -= dt.timedelta(
-                hours=dt_start.hour, minutes=dt_start.minute, seconds=dt_start.second
-            )
+            dt_start -= dt.timedelta(hours=dt_start.hour, minutes=dt_start.minute, seconds=dt_start.second)
             if dt_end.hour == 0 and dt_end.minute == 0 and dt_end.second == 0:
                 dt_end -= dt.timedelta(seconds=1)
 
@@ -258,53 +245,17 @@ class Spacecraft(Body):
 
         # prepare urls
         for day in [dt_start + dt.timedelta(days=i) for i in range((dt_end - dt_start).days + 1)]:
-            url = self._json["keys"][data_key]["base_url"]
+            url = replace_date_string(self._json["keys"][data_key]["base_url"], day)
 
-            url = url.replace("{YYYY}", str(day.year))
-            url = url.replace("{YY}", "{0:02d}".format(day.year % 100))
-            url = url.replace("{MM}", "{:02d}".format(day.month))
-            url = url.replace("{MONTH}", day.strftime("%B")[:3].upper())
-            url = url.replace("{DD}", "{:02d}".format(day.day))
-            url = url.replace("{DOY}", "{:03d}".format(day.timetuple().tm_yday))
-
-            doym1 = dt_utc(day.year, day.month, 1)
-
-            if day.month == 12:
-                doym2 = dt_utc(day.year + 1, 1, 1) - dt.timedelta(days=1)
+            if self._json["keys"][data_key].get("file_expr", None):
+                file_expr = replace_date_string(self._json["keys"][data_key]["file_expr"], day)
             else:
-                doym2 = dt_utc(day.year, day.month + 1, 1) - dt.timedelta(days=1)
+                file_expr = None
 
-            url = url.replace("{DOYM1}", "{:03d}".format(doym1.timetuple().tm_yday))
-            url = url.replace("{DOYM2}", "{:03d}".format(doym2.timetuple().tm_yday))
-
-            filebasepath = os.path.basename(self._json["keys"][data_key].get("base_url"))
-            filename = self._json["keys"][data_key].get("filename", filebasepath)
-
-            if filename:
-                filename = filename.replace("{YYYY}", str(day.year))
-                filename = filename.replace("{YY}", "{0:02d}".format(day.year % 100))
-                filename = filename.replace("{MM}", "{:02d}".format(day.month))
-                filename = filename.replace("{MONTH}", day.strftime("%B")[:3].upper())
-                filename = filename.replace("{DD}", "{:02d}".format(day.day))
-
-                filename = filename.replace("{DOY}", "{:03d}".format(day.timetuple().tm_yday))
-
-                doym1 = dt_utc(day.year, day.month, 1)
-
-                if day.month == 12:
-                    doym2 = dt_utc(day.year + 1, 1, 1) - dt.timedelta(days=1)
-                else:
-                    doym2 = dt_utc(day.year, day.month + 1, 1) - dt.timedelta(days=1)
-
-                filename = filename.replace("{DOYM1}", "{:03d}".format(doym1.timetuple().tm_yday))
-                filename = filename.replace("{DOYM2}", "{:03d}".format(doym2.timetuple().tm_yday))
-
-            files.append(self.data_file_class(url, filename, data_key, self._json))
+            files.append(self.data_file_class(url, file_expr, data_key, self._json))
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=25) as executor:
-            futures = [
-                executor.submit(prepare_file, file, force_download, skip_download) for file in files
-            ]
+            futures = [executor.submit(prepare_file, file, force_download, skip_download) for file in files]
 
             for future in concurrent.futures.as_completed(futures):
                 _ = future.result()
@@ -337,56 +288,14 @@ class Spacecraft(Body):
         return data_key
 
 
-def prepare_file(file_obj, force_download: bool = False, skip_download: bool = False) -> None:
+def prepare_file(file_obj: DataFile, force_download: bool = False, skip_download: bool = False) -> None:
     logger = lg.getLogger(__name__)
-
-    _version_list = list(file_obj._json["keys"][file_obj.data_key]["version_list"])
-    _version_list.remove(file_obj._json["keys"][file_obj.data_key]["version_default"])
-
-    version_list = [file_obj._json["keys"][file_obj.data_key]["version_default"]] + _version_list
 
     file_obj.ready = False
 
-    # check each version for local file
-    for version in version_list:
-        url = file_obj.base_url.replace("{VER}", version)
-
-        if file_obj.filename:
-            filename = file_obj.filename.replace("{VER}", version)
-        else:
-            filename = None
-
-        try:
-            if url.startswith("$"):
-                # determine if any versions exist locally
-                if filename:
-                    local_files = url_regex_files(filename, file_obj.key_path)
-                else:
-                    local_files = url_regex_files(url, file_obj.key_path)
-
-                if len(local_files) > 0 and not force_download:
-                    file_obj.file_path = local_files[-1]
-                    file_obj.version = version
-                    file_obj.ready = True
-
-                    return
-            else:
-                # determine if any versions exist locally
-                if filename:
-                    file_obj.file_path = os.path.join(file_obj.key_path, filename)
-                else:
-                    file_obj.file_path = os.path.join(
-                        file_obj.key_path, os.path.basename(file_obj.base_url)
-                    )
-
-                if os.path.isfile(file_obj.file_path) and os.path.getsize(file_obj.file_path) > 0:
-                    file_obj.version = version
-                    file_obj.ready = True
-
-                    return
-        except Exception as e:
-            logger.warning("exception when checking local file %s (%s)", file_obj.base_url, e)
-            continue
+    if not force_download:
+        if file_obj.local():
+            return
 
     if skip_download:
         logger.error('skipping data file "%s"', os.path.basename(file_obj.base_url))
@@ -397,69 +306,32 @@ def prepare_file(file_obj, force_download: bool = False, skip_download: bool = F
     if compression == "gz" and not file_obj.base_url.endswith("gz"):
         file_obj.base_url = file_obj.base_url + ".gz"
 
-    # check each version for remote file
-    _url_pre = None
+    if file_obj.download():
+        return
 
-    for version in version_list:
-        url = file_obj.base_url.replace("{VER}", version)
+    logger.error("failed to fetch data file (%s)", os.path.basename(file_obj.base_url))
 
-        # skip if url does not change with version
-        if _url_pre and url == _url_pre:
-            continue
 
-        _url_pre = url
+def read_file(file_obj: DataFile, *args: Tuple[Any]) -> Tuple[np.ndarray, np.ndarray]:
+    return file_obj.read(*args)
 
-        if file_obj.filename:
-            filename = file_obj.filename.replace("{VER}", version)
-            file_obj.file_path = os.path.join(file_obj.key_path, filename)
-        else:
-            file_obj.file_path = os.path.join(file_obj.key_path, os.path.basename(url))
 
-        try:
-            if url.startswith("$"):
-                url = str(url_regex_resolve(url, reduce=True))
+def replace_date_string(string: str, day: dt.datetime) -> str:
+    string = string.replace("{YYYY}", str(day.year))
+    string = string.replace("{YY}", "{0:02d}".format(day.year % 100))
+    string = string.replace("{MM}", "{:02d}".format(day.month))
+    string = string.replace("{MONTH}", day.strftime("%B")[:3].upper())
+    string = string.replace("{DD}", "{:02d}".format(day.day))
+    string = string.replace("{DOY}", "{:03d}".format(day.timetuple().tm_yday))
 
-                logger.info('fetch "%s"', url)
-                file_data = fetch_url(url)
+    doym1 = dt_utc(day.year, day.month, 1)
 
-                file_obj.file_path = os.path.join(file_obj.key_path, os.path.basename(url))
+    if day.month == 12:
+        doym2 = dt_utc(day.year + 1, 1, 1) - dt.timedelta(days=1)
+    else:
+        doym2 = dt_utc(day.year, day.month + 1, 1) - dt.timedelta(days=1)
 
-                with open(file_obj.file_path, "wb") as fh:
-                    fh.write(file_data)
+    string = string.replace("{DOYM1}", "{:03d}".format(doym1.timetuple().tm_yday))
+    string = string.replace("{DOYM2}", "{:03d}".format(doym2.timetuple().tm_yday))
 
-                file_obj.file_url = url
-                file_obj.version = version
-                file_obj.ready = True
-
-                # decompress
-                if file_obj._json["keys"][file_obj.data_key].get("compression", None) == "gz":
-                    with gzip.open(file_obj.file_path, "rb") as file_gz:
-                        with open(
-                            ".".join(file_obj.file_path.split(".")[:-1]), "wb"
-                        ) as file_extracted:
-                            shutil.copyfileobj(file_gz, file_extracted)
-
-                    os.remove(file_obj.file_path)
-
-                    file_obj.file_path = ".".join(file_obj.file_path.split(".")[:-1])
-
-                return
-            else:
-                logger.info('fetch "%s"', url)
-                file_data = fetch_url(url)
-
-                file_obj.file_path = os.path.join(file_obj.key_path, os.path.basename(url))
-
-                with open(file_obj.file_path, "wb") as fh:
-                    fh.write(file_data)
-
-                file_obj.file_url = url
-                file_obj.version = version
-                file_obj.ready = True
-
-                return
-        except Exception as e:
-            logger.info('failed to fetch data file ("%s")', e)
-            continue
-
-    logger.error('failed to fetch data file "%s"', os.path.basename(file_obj.base_url))
+    return string

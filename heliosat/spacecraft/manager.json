@@ -4,9 +4,11 @@
     "spacecraft" : [
         "bepi",
         "dscovr",
+        "mes",
         "psp",
         "solo",
         "stereo",
+        "vex",
         "wind"
     ]
 }
