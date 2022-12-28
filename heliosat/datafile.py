@@ -18,8 +18,7 @@ from netCDF4 import Dataset
 import heliosat
 
 from .transform import transform_reference_frame
-from .util import (dt_utc_from_str, fetch_url, url_regex_files,
-                   url_regex_resolve)
+from .util import dt_utc_from_str, fetch_url, url_regex_files, url_regex_resolve
 
 
 class DataFile(object):
