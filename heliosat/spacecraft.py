@@ -28,7 +28,13 @@ class Body(object):
     name: str
     name_naif: str
 
-    def __init__(self, name: str, name_naif: str, kernel_group: Optional[str] = None, **kwargs: Any) -> None:
+    def __init__(
+        self,
+        name: str,
+        name_naif: str,
+        kernel_group: Optional[str] = None,
+        **kwargs: Any
+    ) -> None:
         self.name = name
         self.name_naif = name_naif
 
@@ -39,7 +45,11 @@ class Body(object):
             heliosat._skm.load_group(kernel_group, **kwargs)
 
     def trajectory(
-        self, dtp: Union[dt.datetime, Sequence[dt.datetime]], observer: str = "SUN", units: str = "AU", **kwargs: Any
+        self,
+        dtp: Union[dt.datetime, Sequence[dt.datetime]],
+        observer: str = "SUN",
+        units: str = "AU",
+        **kwargs: Any
     ) -> np.ndarray:
         dtp = sanitize_dt(dtp)
 
@@ -79,13 +89,37 @@ class Spacecraft(Body):
     data_file_class = DataFile
 
     def __init__(self, **kwargs: Any) -> None:
-        super(Spacecraft, self).__init__(self.name, self.name_naif, self.kernel_group, **kwargs)
+        super(Spacecraft, self).__init__(
+            self.name, self.name_naif, self.kernel_group, **kwargs
+        )
 
         # legacy support
         self.get_data = self.get
 
+    @property
+    def data_keys(self) -> List[str]:
+        return list(self._json["keys"].keys())
+
+    def data_key_resolve(self, data_key: str) -> str:
+        if data_key not in self._json["keys"]:
+            resolved = False
+
+            for key in self._json["keys"]:
+                if data_key in self._json["keys"][key].get("alt_keys", []):
+                    data_key = key
+                    resolved = True
+                    break
+
+            if not resolved:
+                raise KeyError('data_key "{0!s}" not found'.format(data_key))
+
+        return data_key
+
     def get(
-        self, dtp: Union[str, dt.datetime, Sequence[str], Sequence[dt.datetime]], data_key: str, **kwargs: Any
+        self,
+        dtp: Union[str, dt.datetime, Sequence[str], Sequence[dt.datetime]],
+        data_key: str,
+        **kwargs: Any
     ) -> Tuple[np.ndarray, np.ndarray]:
         logger = lg.getLogger(__name__)
 
@@ -131,12 +165,7 @@ class Spacecraft(Body):
 
         # use dt list as endpoints
         if kwargs.pop("as_endpoints", False):
-            if len(dtp) < 2:
-                raise ValueError("datetime list must be of length larger of 2 to use endpoints")
-
-            n_dtp = int((dtp[-1].timestamp() - dtp[0].timestamp()) // sampling_freq)
-            _ = np.linspace(dtp[0].timestamp(), dtp[-1].timestamp(), n_dtp)
-            dtp = [dt.datetime.fromtimestamp(_, dt.timezone.utc) for _ in _]
+            dtp = _generate_endpoints(dtp, sampling_freq)
 
         dtp_r, dk_r = self._get_data(dtp[0], dtp[-1], data_key, **kwargs)
 
@@ -144,25 +173,74 @@ class Spacecraft(Body):
             dtp_r, dk_r = smooth_data(dtp, dtp_r, dk_r, **smoothing_kwargs)
 
         if return_datetimes:
-            _dtp = list(dtp_r)
-
-            for i in range(len(_dtp)):
-                if _dtp[i] != np.nan:
-                    _dtp[i] = dt_utc_from_ts(dtp_r[i])
-
-            dtp_r = np.array(_dtp)
+            dtp_r = dt_utc_from_ts(dtp_r)
 
         if remove_nans:
             nanfilter = np.invert(np.any(np.isnan(dk_r[:, :]), axis=1))
 
-            dtp_r = dtp_r[nanfilter]
+            if not return_datetimes:
+                dtp_r = dtp_r[nanfilter]
+
             dk_r = dk_r[nanfilter]
+
+            # temporary test
+            assert len(dtp_r) == len(dk_r)
 
         if use_cache:
             logger.info('generating cache entry "%s"', cache_key)
             cache_add_entry(cache_key, (dtp_r, dk_r))
 
         return dtp_r, dk_r
+
+    def _get_files(
+        self,
+        dt_start: dt.datetime,
+        dt_end: dt.datetime,
+        data_key: str,
+        force_download: bool = False,
+        skip_download: bool = False,
+    ) -> List[DataFile]:
+        # adjust ranges slightly
+        if (dt_end - dt_start).days > 1:
+            dt_start -= dt.timedelta(
+                hours=dt_start.hour, minutes=dt_start.minute, seconds=dt_start.second
+            )
+            if dt_end.hour == 0 and dt_end.minute == 0 and dt_end.second == 0:
+                dt_end -= dt.timedelta(seconds=1)
+
+        files = []
+
+        # prepare urls
+        for day in [
+            dt_start + dt.timedelta(days=i) for i in range((dt_end - dt_start).days + 1)
+        ]:
+            url = _replace_date_string(self._json["keys"][data_key]["base_url"], day)
+
+            if self._json["keys"][data_key].get("file_expr", None):
+                file_expr = _replace_date_string(
+                    self._json["keys"][data_key]["file_expr"], day
+                )
+            else:
+                file_expr = None
+
+            files.append(self.data_file_class(url, file_expr, data_key, self._json))
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=25) as executor:
+            futures = [
+                executor.submit(_prepare_file, file, force_download, skip_download)
+                for file in files
+            ]
+
+            for future in concurrent.futures.as_completed(futures):
+                _ = future.result()
+
+        files_ready = []
+
+        for file in files:
+            if file.ready:
+                files_ready.append(file)
+
+        return files_ready
 
     def _get_data(
         self, dt_start: dt.datetime, dt_end: dt.datetime, data_key: str, **kwargs: Any
@@ -205,10 +283,12 @@ class Spacecraft(Body):
 
         max_workers = min([mp.cpu_count(), len(files)])
 
-        with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
+        with concurrent.futures.ProcessPoolExecutor(
+            max_workers=max_workers
+        ) as executor:
             futures = [
                 executor.submit(
-                    read_file,
+                    _read_file,
                     file,
                     dt_start,
                     dt_end,
@@ -227,68 +307,21 @@ class Spacecraft(Body):
 
         return dtp_r, dk_r
 
-    def _get_files(
-        self,
-        dt_start: dt.datetime,
-        dt_end: dt.datetime,
-        data_key: str,
-        force_download: bool = False,
-        skip_download: bool = False,
-    ) -> List[DataFile]:
-        # adjust ranges slightly
-        if (dt_end - dt_start).days > 1:
-            dt_start -= dt.timedelta(hours=dt_start.hour, minutes=dt_start.minute, seconds=dt_start.second)
-            if dt_end.hour == 0 and dt_end.minute == 0 and dt_end.second == 0:
-                dt_end -= dt.timedelta(seconds=1)
 
-        files = []
+def _generate_endpoints(
+    dtp: Sequence[dt.datetime], sampling_freq: int
+) -> Sequence[dt.datetime]:
+    if len(dtp) < 2:
+        raise ValueError("datetime list must be of length larger of 2 to use endpoints")
 
-        # prepare urls
-        for day in [dt_start + dt.timedelta(days=i) for i in range((dt_end - dt_start).days + 1)]:
-            url = replace_date_string(self._json["keys"][data_key]["base_url"], day)
-
-            if self._json["keys"][data_key].get("file_expr", None):
-                file_expr = replace_date_string(self._json["keys"][data_key]["file_expr"], day)
-            else:
-                file_expr = None
-
-            files.append(self.data_file_class(url, file_expr, data_key, self._json))
-
-        with concurrent.futures.ThreadPoolExecutor(max_workers=25) as executor:
-            futures = [executor.submit(prepare_file, file, force_download, skip_download) for file in files]
-
-            for future in concurrent.futures.as_completed(futures):
-                _ = future.result()
-
-        files_ready = []
-
-        for file in files:
-            if file.ready:
-                files_ready.append(file)
-
-        return files_ready
-
-    @property
-    def data_keys(self) -> List[str]:
-        return list(self._json["keys"].keys())
-
-    def data_key_resolve(self, data_key: str) -> str:
-        if data_key not in self._json["keys"]:
-            resolved = False
-
-            for key in self._json["keys"]:
-                if data_key in self._json["keys"][key].get("alt_keys", []):
-                    data_key = key
-                    resolved = True
-                    break
-
-            if not resolved:
-                raise KeyError('data_key "{0!s}" not found'.format(data_key))
-
-        return data_key
+    n_dtp = int((dtp[-1].timestamp() - dtp[0].timestamp()) // sampling_freq)
+    _ = np.linspace(dtp[0].timestamp(), dtp[-1].timestamp(), n_dtp)
+    dtp = [dt.datetime.fromtimestamp(_, dt.timezone.utc) for _ in _]
 
 
-def prepare_file(file_obj: DataFile, force_download: bool = False, skip_download: bool = False) -> None:
+def _prepare_file(
+    file_obj: DataFile, force_download: bool = False, skip_download: bool = False
+) -> None:
     logger = lg.getLogger(__name__)
 
     file_obj.ready = False
@@ -312,11 +345,11 @@ def prepare_file(file_obj: DataFile, force_download: bool = False, skip_download
     logger.error("failed to fetch data file (%s)", os.path.basename(file_obj.base_url))
 
 
-def read_file(file_obj: DataFile, *args: Tuple[Any]) -> Tuple[np.ndarray, np.ndarray]:
+def _read_file(file_obj: DataFile, *args: Tuple[Any]) -> Tuple[np.ndarray, np.ndarray]:
     return file_obj.read(*args)
 
 
-def replace_date_string(string: str, day: dt.datetime) -> str:
+def _replace_date_string(string: str, day: dt.datetime) -> str:
     string = string.replace("{YYYY}", str(day.year))
     string = string.replace("{YY}", "{0:02d}".format(day.year % 100))
     string = string.replace("{MM}", "{:02d}".format(day.month))

@@ -12,6 +12,7 @@ import os
 import re
 from typing import Any, List, Optional, Sequence, Union
 
+import numpy as np
 import requests
 import requests_ftp
 from bs4 import BeautifulSoup
@@ -55,11 +56,18 @@ def dt_utc_from_str(string: str, string_format: Optional[str] = None) -> dt.date
     raise ValueError('could not convert "{0!s}", unkown format'.format(string))
 
 
-def dt_utc_from_ts(ts: float) -> dt.datetime:
-    return dt.datetime.fromtimestamp(ts, dt.timezone.utc)
+def dt_utc_from_ts(ts: [float, Sequence[float]]) -> dt.datetime:
+    if isinstance(ts, float):
+        return dt.datetime.fromtimestamp(ts, dt.timezone.utc)
+    elif hasattr(ts, "__iter__"):
+        return [
+            dt.datetime.fromtimestamp(_, dt.timezone.utc) for _ in ts if not np.isnan(_)
+        ]
 
 
-def fetch_url(url: str, return_headers: bool = False) -> bytes:
+def fetch_url(
+    url: str, return_headers: bool = False, minimum_length: int = 2000
+) -> bytes:
     logger = lg.getLogger(__name__)
 
     if url.startswith("http"):
@@ -76,9 +84,10 @@ def fetch_url(url: str, return_headers: bool = False) -> bytes:
 
     if response.ok:
         # fix for url's that return 200 instead of a 404
-        if int(response.headers.get("Content-Length", 1000)) < 1000:
+        if int(response.headers.get("Content-Length", minimum_length)) < minimum_length:
             raise requests.HTTPError(
-                "Content-Length is very small l=%i" "(url is most likely not a valid file)",
+                "Content-Length is very small l=%i"
+                "(url is most likely not a valid file)",
                 int(response.headers.get("Content-Length", 0)),
             )
 
@@ -87,10 +96,14 @@ def fetch_url(url: str, return_headers: bool = False) -> bytes:
         else:
             return response.content
     else:
-        raise requests.HTTPError('failed to fetch url "{0!s}" ({1})'.format(url, response.status_code))
+        raise requests.HTTPError(
+            'failed to fetch url "{0!s}" ({1})'.format(url, response.status_code)
+        )
 
 
-def get_any(kwargs: dict, keys: Sequence[str], default: Any = None) -> Any:
+def get_any(
+    kwargs: dict, keys: Sequence[str], default: Any = None  # noqa: ANN401
+) -> Any:  # noqa: ANN401
     while len(keys) > 0:
         if keys[0] in kwargs:
             return kwargs.get(keys[0])
@@ -133,9 +146,17 @@ def sanitize_dt(
         return dtp
 
 
+def url_basename(url: str) -> str:
+    return url.split("/")[-1]
+
+
+def url_dirname(url: str) -> str:
+    return "/".join(url.split("/")[:-1])
+
+
 def url_regex_files(url: str, folder: str) -> List[str]:
     local_files = os.listdir(folder)
-    url_pattern = os.path.basename(url)
+    url_pattern = url_basename(url)
 
     matched_files = []
     matched_groups = []
@@ -155,21 +176,27 @@ def url_regex_files(url: str, folder: str) -> List[str]:
 
 
 def url_regex_resolve(url: str, reduce: bool = False) -> Union[str, List[str]]:
-    url_parent = os.path.dirname(url[1:])
-    url_regex = os.path.basename(url[1:])
+    url_parent = url_dirname(url[1:])
+    url_regex = url_basename(url[1:])
 
     urls_expanded = []
     urls_groups = []
+
+    print(url_parent)
 
     response = requests.get(url_parent, timeout=20)
 
     if response.ok:
         response_text = response.text
     else:
-        raise requests.HTTPError('failed to fetch url "{0!s}" ({1})'.format(url_parent, response.status_code))
+        raise requests.HTTPError(
+            'failed to fetch url "{0!s}" ({1})'.format(url_parent, response.status_code)
+        )
 
     # match all url's with regex pattern
     soup = BeautifulSoup(response_text, "html.parser")
+
+    print(url)
 
     for url_child in [_.get("href") for _ in soup.find_all("a")]:
         match = re.match(url_regex, url_child)

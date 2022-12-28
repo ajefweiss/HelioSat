@@ -18,8 +18,10 @@ except ImportError:
     logger = lg.getLogger("__name__")
 
     class nb(object):
-        def njit(fn):
-            logger.info("function %s: numba package not installed, function may be slow", fn)
+        def njit(fn):  # noqa: ANN201
+            logger.info(
+                "function %s: numba package not installed, function may be slow", fn
+            )
             return fn
 
 
@@ -35,14 +37,24 @@ def smooth_data(
     if smoothing in ["average", "moving_average", "mean"]:
         _smoothing_mean(time_smooth, dtp_r, dk_r, data_smooth, smoothing_scale)
     elif smoothing in ["kernel", "kernel_gaussian", "gaussian"]:
-        _smoothing_gaussian_kernel(time_smooth, dtp_r, dk_r, data_smooth, smoothing_scale)
+        _smoothing_gaussian_kernel(
+            time_smooth, dtp_r, dk_r, data_smooth, smoothing_scale
+        )
     elif smoothing in ["linear", "linear_interpolation"]:
-        data_smooth = np.array([np.interp(time_smooth, dtp_r, dk_r[:, i]) for i in range(dk_r.shape[1])])
+        data_smooth = np.array(
+            [np.interp(time_smooth, dtp_r, dk_r[:, i]) for i in range(dk_r.shape[1])]
+        )
         data_smooth = data_smooth.T
     elif smoothing in ["closest"]:
-        time_smooth, data_smooth = _smoothing_closest(time_smooth, dtp_r, dk_r, data_smooth)
+        time_smooth, data_smooth = _smoothing_closest(
+            time_smooth, dtp_r, dk_r, data_smooth
+        )
     else:
-        raise NotImplementedError('smoothing method "{0!s}" is not implemented'.format(kwargs.get("smoothing")))
+        raise NotImplementedError(
+            'smoothing method "{0!s}" is not implemented'.format(
+                kwargs.get("smoothing")
+            )
+        )
 
     return time_smooth, data_smooth
 
@@ -103,7 +115,9 @@ def _smoothing_gaussian_kernel(
         vector = np.zeros((dims,))
 
         for j in range(0, len(dk_r)):
-            if np.abs(dtp_r[j] - dtp[i]) < 3 * smoothing_scale and not np.isnan(dk_r[j, 0]):
+            if np.abs(dtp_r[j] - dtp[i]) < 3 * smoothing_scale and not np.isnan(
+                dk_r[j, 0]
+            ):
                 kernel = np.exp(-((dtp_r[j] - dtp[i]) ** 2) / 2 / smoothing_scale**2)
 
                 total += kernel

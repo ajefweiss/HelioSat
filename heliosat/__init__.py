@@ -13,41 +13,41 @@ _skm = _SpiceKernelManager()
 
 
 # common solar system objects
-def Sun():
+def Sun() -> Body:
     return Body("Sun", "SUN")
 
 
-def Mercury():
+def Mercury() -> Body:
     return Body("Mercury", "MERCURY")
 
 
-def Venus():
+def Venus() -> Body:
     return Body("Venus", "VENUS")
 
 
-def Earth():
+def Earth() -> Body:
     return Body("Earth", "EARTH")
 
 
-def Moon():
+def Moon() -> Body:
     return Body("Moon", "MOON")
 
 
-def Mars():
+def Mars() -> Body:
     return Body("Mars", "MARS BARYCENTER")
 
 
-def Jupiter():
+def Jupiter() -> Body:
     return Body("Jupiter", "JUPITER BARYCENTER")
 
 
-def Saturn():
+def Saturn() -> Body:
     return Body("Saturn", "SATURN BARYCENTER")
 
 
-def Uranus():
+def Uranus() -> Body:
     return Body("Uranus", "URANUS BARYCENTER")
 
 
-def Neptune():
+def Neptune() -> Body:
     return Body("Neptune", "NEPTUNE BARYCENTER")

@@ -7,7 +7,7 @@ import concurrent.futures
 import logging as lg
 import os
 from runpy import run_path
-from typing import List, Optional, Union
+from typing import List, Union
 
 import spiceypy
 
@@ -28,6 +28,10 @@ class SpiceKernel(object):
 
         self.file_name = os.path.basename(url)
         self.file_path = os.path.join(data_path, "kernels", self.file_name)
+
+    @property
+    def is_available(self) -> bool:
+        return os.path.isfile(self.file_path) and os.path.getsize(self.file_path) > 0
 
     def prepare(self, force_download: bool = False) -> None:
         logger = lg.getLogger(__name__)
@@ -54,15 +58,15 @@ class SpiceKernel(object):
                     e,
                 )
                 return
-            elif os.path.isfile(self.file_path) and os.path.getsize(self.file_path) == 0:
+            elif (
+                os.path.isfile(self.file_path) and os.path.getsize(self.file_path) == 0
+            ):
                 # special case, clean up
                 os.remove(self.file_path)
 
-        raise Exception('failed to fetch kernel "{0!s}" ({1!s})'.format(self.file_name, e))
-
-    @property
-    def is_available(self) -> bool:
-        return os.path.isfile(self.file_path) and os.path.getsize(self.file_path) > 0
+        raise Exception(
+            'failed to fetch kernel "{0!s}" ({1!s})'.format(self.file_name, e)
+        )
 
     def load(self) -> None:
         spiceypy.furnsh(self.file_path)
@@ -90,7 +94,9 @@ class SpiceKernelManager(object):
 
         base_path = os.path.join(os.path.dirname(heliosat.__file__), "spacecraft")
 
-        self.data_path = os.getenv("HELIOSAT_DATAPATH", os.path.join(os.path.expanduser("~"), ".heliosat"))
+        self.data_path = os.getenv(
+            "HELIOSAT_DATAPATH", os.path.join(os.path.expanduser("~"), ".heliosat")
+        )
 
         logger.debug('using data path "%s"', self.data_path)
 
@@ -100,12 +106,16 @@ class SpiceKernelManager(object):
         json_mang = load_json(json_file)
 
         if json_mang["default_kernel_path"]:
-            self.all_grps = load_json(os.path.join(base_path, json_mang["default_kernel_path"]))["kernels"]
+            self.all_grps = load_json(
+                os.path.join(base_path, json_mang["default_kernel_path"])
+            )["kernels"]
         else:
             self.all_grps = {}
 
         if json_mang["default_spacecraft_path"]:
-            self.all_spcs = load_json(os.path.join(base_path, json_mang["default_spacecraft_path"]))["spacecraft"]
+            self.all_spcs = load_json(
+                os.path.join(base_path, json_mang["default_spacecraft_path"])
+            )["spacecraft"]
         else:
             self.all_spcs = {}
 
@@ -113,10 +123,14 @@ class SpiceKernelManager(object):
         for spacecraft in json_mang["spacecraft"]:
             if os.path.isfile(os.path.join(base_path, "{}.json".format(spacecraft))):
                 self.all_grps.update(
-                    load_json(os.path.join(base_path, "{}.json".format(spacecraft))).get("kernels", {})
+                    load_json(
+                        os.path.join(base_path, "{}.json".format(spacecraft))
+                    ).get("kernels", {})
                 )
                 self.all_spcs.update(
-                    load_json(os.path.join(base_path, "{}.json".format(spacecraft))).get("spacecraft", {})
+                    load_json(
+                        os.path.join(base_path, "{}.json".format(spacecraft))
+                    ).get("spacecraft", {})
                 )
 
         self.load_spacecraft()
@@ -143,14 +157,18 @@ class SpiceKernelManager(object):
                         self.kernel_list[-1].load()
                 elif isinstance(kernels, List):
                     for kernel in kernels:
-                        if kernel.file_name not in [_.file_name for _ in self.kernel_list]:
+                        if kernel.file_name not in [
+                            _.file_name for _ in self.kernel_list
+                        ]:
                             self.kernel_list.append(kernel)
                             self.kernel_list[-1].load()
 
         if kernel_group not in self.group_list:
             self.group_list.append(kernel_group)
 
-    def load_groups(self, kernel_groups: List[str], force_download: bool = False) -> None:
+    def load_groups(
+        self, kernel_groups: List[str], force_download: bool = False
+    ) -> None:
         for kernel_group in kernel_groups:
             self.load_group(kernel_group, force_download)
 
@@ -161,11 +179,15 @@ class SpiceKernelManager(object):
         if url.startswith("$"):
             # figure out if kernels exist locally that match the regex, if any assume its all
             kernels = []
-            local_files, _ = url_regex_files(url, os.path.join(self.data_path, "kernels"))
+            local_files, _ = url_regex_files(
+                url, os.path.join(self.data_path, "kernels")
+            )
 
             if len(local_files) > 0 and not force_download:
                 for local_file in local_files:
-                    resolved_url = os.path.join(os.path.dirname(url), os.path.basename(local_file))
+                    resolved_url = os.path.join(
+                        os.path.dirname(url), os.path.basename(local_file)
+                    )
 
                     kernel = SpiceKernel(resolved_url, self.data_path)
                     kernels.append(kernel)
@@ -217,10 +239,16 @@ class SpiceKernelManager(object):
 
             # allow classes to be accessed by upper case name
             if not spc_v["class_name"].isupper():
-                setattr(heliosat, spc_v["class_name"].upper(), getattr(heliosat, spc_v["class_name"]))
+                setattr(
+                    heliosat,
+                    spc_v["class_name"].upper(),
+                    getattr(heliosat, spc_v["class_name"]),
+                )
 
             # runpy
-            custompy = os.path.join(os.path.dirname(heliosat.__file__), "spacecraft", "{}.py".format(spc_k))
+            custompy = os.path.join(
+                os.path.dirname(heliosat.__file__), "spacecraft", "{}.py".format(spc_k)
+            )
 
             if os.path.isfile(custompy):
                 run_path(custompy)

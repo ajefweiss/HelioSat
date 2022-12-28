@@ -57,13 +57,15 @@ def cache_generate_key(identifiers: dict) -> str:
     return hashobj.hexdigest()
 
 
-def cache_get_entry(key: str) -> Any:
+def cache_get_entry(key: str) -> Any:  # noqa: ANN401
     logger = lg.getLogger(__name__)
 
     if not cache_entry_exists(key):
         raise KeyError('cache key "{0!s}" does not exist'.format(key))
 
-    with open(os.path.join(cache_get_path(), "{0}.cache".format(key)), "rb") as pickle_file:
+    with open(
+        os.path.join(cache_get_path(), "{0}.cache".format(key)), "rb"
+    ) as pickle_file:
         logger.debug('loading cache entry "%s"', key)
         cache_data = pickle.load(pickle_file)
 
@@ -72,6 +74,8 @@ def cache_get_entry(key: str) -> Any:
 
 def cache_get_path() -> str:
     return os.path.join(
-        os.getenv("HELIOSAT_DATAPATH", os.path.join(os.path.expanduser("~"), ".heliosat")),
+        os.getenv(
+            "HELIOSAT_DATAPATH", os.path.join(os.path.expanduser("~"), ".heliosat")
+        ),
         "cache",
     )

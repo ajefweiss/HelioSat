@@ -7,7 +7,107 @@
             "keys": {
                 "vex_mag": {
                     "alt_keys": ["mag"],
-                    "base_url": "ftp://psa.esac.esa.int/pub/mirror/VENUS-EXPRESS/MAG/VEX-V-Y-MAG-4-{V0}V1.0/DATA/ORB{YYYY}{MM}_S004/MAG_{YYYY}{MM}{DD}_DOY{DOY}_S004_V1.TAB",
+                    "base_url": "https://archives.esac.esa.int/psa/ftp/VENUS-EXPRESS/MAG/VEX-V-Y-MAG-4-V1.0/DATA/ORB{YYYY}{MM}_S004/MAG_{YYYY}{MM}{DD}_DOY{DOY}_S004_V1.TAB",
+                    "versions": {
+                        "08": {
+                            "data_columns": [
+                                {
+                                    "indices": [1, 2, 3],
+                                    "load_by_default": true,
+                                    "names": ["B_VSO", "BFIELD"],
+                                    "reference_frame": "VSO",
+                                    "valid_range": [-1e3, 1e3]
+                                }
+                            ],
+                            "text_formatting": {
+                                "skip_rows": 228
+                            },
+                            "time_column": {
+                                "index": 0,
+                                "format": "%Y-%m-%dT%H:%M:%S.%f"
+                            }
+                        }
+                    },
+                    "format": "tab"
+                },
+                "vex_mag_ext1": {
+                    "alt_keys": ["mag1", "mag_1"],
+                    "base_url": "https://archives.esac.esa.int/psa/ftp/VENUS-EXPRESS/MAG/VEX-V-Y-MAG-4-EXT1-V1.0/DATA/ORB{YYYY}{MM}_S004/MAG_{YYYY}{MM}{DD}_DOY{DOY}_S004_V1.TAB",
+                    "versions": {
+                        "08": {
+                            "data_columns": [
+                                {
+                                    "indices": [1, 2, 3],
+                                    "load_by_default": true,
+                                    "names": ["B_VSO", "BFIELD"],
+                                    "reference_frame": "VSO",
+                                    "valid_range": [-1e3, 1e3]
+                                }
+                            ],
+                            "text_formatting": {
+                                "skip_rows": 228
+                            },
+                            "time_column": {
+                                "index": 0,
+                                "format": "%Y-%m-%dT%H:%M:%S.%f"
+                            }
+                        }
+                    },
+                    "format": "tab"
+                },
+                "vex_mag_ext2": {
+                    "alt_keys": ["mag2", "mag_2"],
+                    "base_url": "https://archives.esac.esa.int/psa/ftp/VENUS-EXPRESS/MAG/VEX-V-Y-MAG-4-EXT2-V1.0/DATA/ORB{YYYY}{MM}_S004/MAG_{YYYY}{MM}{DD}_DOY{DOY}_S004_V1.TAB",
+                    "versions": {
+                        "08": {
+                            "data_columns": [
+                                {
+                                    "indices": [1, 2, 3],
+                                    "load_by_default": true,
+                                    "names": ["B_VSO", "BFIELD"],
+                                    "reference_frame": "VSO",
+                                    "valid_range": [-1e3, 1e3]
+                                }
+                            ],
+                            "text_formatting": {
+                                "skip_rows": 228
+                            },
+                            "time_column": {
+                                "index": 0,
+                                "format": "%Y-%m-%dT%H:%M:%S.%f"
+                            }
+                        }
+                    },
+                    "format": "tab"
+                },
+                "vex_mag_ext3": {
+                    "alt_keys": ["mag3", "mag_3"],
+                    "base_url": "https://archives.esac.esa.int/psa/ftp/VENUS-EXPRESS/MAG/VEX-V-Y-MAG-4-EXT3-V1.0/DATA/ORB{YYYY}{MM}_S004/MAG_{YYYY}{MM}{DD}_DOY{DOY}_S004_V1.TAB",
+                    "versions": {
+                        "08": {
+                            "data_columns": [
+                                {
+                                    "indices": [1, 2, 3],
+                                    "load_by_default": true,
+                                    "names": ["B_VSO", "BFIELD"],
+                                    "reference_frame": "VSO",
+                                    "valid_range": [-1e3, 1e3]
+                                }
+                            ],
+                            "text_formatting": {
+                                "skip_rows": 228
+                            },
+                            "time_column": {
+                                "index": 0,
+                                "format": "%Y-%m-%dT%H:%M:%S.%f"
+                            }
+                        }
+                    },
+                    "format": "tab"
+                },
+                "vex_mag_ext4": {
+                    "alt_keys": ["mag4", "mag_4"],
+                    "base_url": "https://archives.esac.esa.int/psa/ftp/VENUS-EXPRESS/MAG/VEX-V-Y-MAG-4-EXT4-V1.0/DATA/ORB{YYYY}{MM}_S004/MAG_{YYYY}{MM}{DD}_DOY{DOY}_S004_V1.TAB",
                     "versions": {
                         "08": {
                             "data_columns": [
