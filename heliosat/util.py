@@ -2,7 +2,8 @@
 
 """util.py
 
-Implement basic utility functions such as datetime conversions. Designed for internal use only.
+Implement basic utility functions such as datetime conversions.
+Designed for internal use only.
 """
 
 import datetime as dt
@@ -57,12 +58,12 @@ def dt_utc_from_str(string: str, string_format: Optional[str] = None) -> dt.date
 
 
 def dt_utc_from_ts(ts: [float, Sequence[float]]) -> dt.datetime:
-    if isinstance(ts, float):
-        return dt.datetime.fromtimestamp(ts, dt.timezone.utc)
-    elif hasattr(ts, "__iter__"):
+    if hasattr(ts, "__iter__"):
         return [
             dt.datetime.fromtimestamp(_, dt.timezone.utc) for _ in ts if not np.isnan(_)
         ]
+    else:
+        return dt.datetime.fromtimestamp(ts, dt.timezone.utc)
 
 
 def fetch_url(
@@ -111,6 +112,26 @@ def get_any(
         keys = keys[1:]
 
     return default
+
+
+def pop_any(
+    kwargs: dict, keys: Sequence[str], default: Any = None  # noqa: ANN401
+) -> Any:  # noqa: ANN401
+    rval = None
+
+    while len(keys) > 0:
+        if keys[0] in kwargs:
+            if rval is None:
+                rval = kwargs.pop(keys[0])
+            else:
+                _ = kwargs.pop(keys[0])
+
+        keys = keys[1:]
+
+    if rval:
+        return rval
+    else:
+        return default
 
 
 def load_json(path: str) -> dict:
@@ -182,8 +203,6 @@ def url_regex_resolve(url: str, reduce: bool = False) -> Union[str, List[str]]:
     urls_expanded = []
     urls_groups = []
 
-    print(url_parent)
-
     response = requests.get(url_parent, timeout=20)
 
     if response.ok:
@@ -195,8 +214,6 @@ def url_regex_resolve(url: str, reduce: bool = False) -> Union[str, List[str]]:
 
     # match all url's with regex pattern
     soup = BeautifulSoup(response_text, "html.parser")
-
-    print(url)
 
     for url_child in [_.get("href") for _ in soup.find_all("a")]:
         match = re.match(url_regex, url_child)

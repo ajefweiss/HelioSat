@@ -1,14 +1,17 @@
 name: continuous integration (run tests)
 
-on: [push]
+on:
+  push:
+    branches:
+      - master
 
 jobs:
   tests:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        python-version: ['3.10', '3.11']
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ['3.9', '3.10', '3.11']
     steps:
       - uses: actions/checkout@v3
       - name: Python v${{ matrix.python-version }}

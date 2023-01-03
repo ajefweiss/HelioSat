@@ -20,7 +20,7 @@ except ImportError:
     class nb(object):
         def njit(fn):  # noqa: ANN201
             logger.info(
-                "function %s: numba package not installed, function may be slow", fn
+                "function %s: numba package not installed, smoothing may be slow", fn
             )
             return fn
 

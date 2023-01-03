@@ -3,6 +3,7 @@ repos:
     rev: 5.8.0
     hooks:
       - id: isort
+        args: ["--profile", "black"]
         exclude: ".*(.fits|.fts|.fit|.txt|tca.*|extern.*|.rst|.md|.svg)$"
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v2.3.0

@@ -11,7 +11,7 @@ from typing import Any, Sequence, Union
 import numpy as np
 
 import heliosat
-from heliosat.transform import transform_reference_frame
+from heliosat.routines import transform_reference_frame
 from heliosat.util import get_any, sanitize_dt
 
 
@@ -24,7 +24,7 @@ def wind_trajectory(
 ) -> np.ndarray:  # type: ignore
     dtp = sanitize_dt(dtp)
 
-    traj_t, traj_p = self.get(dtp, "wind_trajectory", use_cache=True)
+    traj_t, traj_p = self.get(dtp, "wind_trajectory", cached=True)
     reference_frame = get_any(kwargs, ["reference_frame", "frame"], "J2000")
 
     traj_p[:, 0] *= -1

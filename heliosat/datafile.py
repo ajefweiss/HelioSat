@@ -17,7 +17,7 @@ from netCDF4 import Dataset
 
 import heliosat
 
-from .transform import transform_reference_frame
+from .routines import transform_reference_frame
 from .util import dt_utc_from_str, fetch_url, url_regex_files, url_regex_resolve
 
 
@@ -195,7 +195,7 @@ class DataFile(object):
 
         # resolve default columns
         if columns[0] == "~":
-            columns = _resolve_columns(columns, version_dict["data_columns"])
+            columns = _resolve_columns(columns, version_dict)
 
         # resolve alternative columns
         columns, column_dicts = _resolve_alternative_columns(

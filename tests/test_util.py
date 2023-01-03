@@ -42,6 +42,7 @@ def test_dt_utc_from_str():
 
 def test_dt_utc_from_ts():
     assert util.dt_utc_from_ts(1669737000).tzinfo == dt.timezone.utc
+    assert util.dt_utc_from_ts(1669737000.0).tzinfo == dt.timezone.utc
 
 
 def test_fetch_url():

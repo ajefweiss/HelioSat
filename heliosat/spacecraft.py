@@ -23,7 +23,7 @@ from .caching import (
 )
 from .datafile import DataFile
 from .smoothing import smooth_data
-from .util import dt_utc, dt_utc_from_ts, get_any, sanitize_dt
+from .util import dt_utc, dt_utc_from_ts, get_any, pop_any, sanitize_dt
 
 
 class Body(object):
@@ -134,6 +134,9 @@ class Spacecraft(Body):
 
         dtp = sanitize_dt(dtp)
 
+        # extract cache argument before generating identifier
+        cached = pop_any(kwargs, ["cached", "cache", "use_cache"], False)
+
         # caching identifier
         identifiers = {
             "data_key": data_key,
@@ -155,9 +158,7 @@ class Spacecraft(Body):
             if "smoothing" in key:
                 smoothing_kwargs[key] = kwargs.pop(key)
 
-        use_cache = kwargs.pop("use_cache", False)
-
-        if use_cache:
+        if cached:
             cache_key = cache_generate_key(identifiers)
 
             if cache_entry_exists(cache_key):
@@ -190,7 +191,7 @@ class Spacecraft(Body):
             # temporary test
             assert len(dtp_r) == len(dk_r)
 
-        if use_cache:
+        if cached:
             logger.info('generating cache entry "%s"', cache_key)
             cache_add_entry(cache_key, (dtp_r, dk_r))
 
@@ -204,20 +205,18 @@ class Spacecraft(Body):
         force_download: bool = False,
         skip_download: bool = False,
     ) -> List[DataFile]:
+        day = dt_start - dt.timedelta(
+            hours=dt_start.hour, minutes=dt_start.minute, seconds=dt_start.second
+        )
+
         # adjust ranges slightly
-        if (dt_end - dt_start).days > 1:
-            dt_start -= dt.timedelta(
-                hours=dt_start.hour, minutes=dt_start.minute, seconds=dt_start.second
-            )
-            if dt_end.hour == 0 and dt_end.minute == 0 and dt_end.second == 0:
-                dt_end -= dt.timedelta(seconds=1)
+        if dt_end.hour == 0 and dt_end.minute == 0 and dt_end.second == 0:
+            dt_end -= dt.timedelta(seconds=1)
 
         files = []
 
         # prepare urls
-        for day in [
-            dt_start + dt.timedelta(days=i) for i in range((dt_end - dt_start).days + 1)
-        ]:
+        while True:
             url = _replace_date_string(self._json["keys"][data_key]["base_url"], day)
 
             if self._json["keys"][data_key].get("file_expr", None):
@@ -228,6 +227,11 @@ class Spacecraft(Body):
                 file_expr = None
 
             files.append(self.data_file_class(url, file_expr, data_key, self._json))
+
+            day += dt.timedelta(hours=24)
+
+            if day > dt_end:
+                break
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=25) as executor:
             futures = [
@@ -285,31 +289,42 @@ class Spacecraft(Body):
         columns.extend(kwargs.get("extra_columns", []))
         reference_frame = get_any(kwargs, ["reference_frame", "frame"], None)
 
-        max_workers = min([mp.cpu_count(), len(files)])
+        if len(files) > 1:
+            max_workers = min([int(mp.cpu_count() * 1.5), len(files)])
 
-        with concurrent.futures.ProcessPoolExecutor(
-            max_workers=max_workers
-        ) as executor:
-            futures = [
-                executor.submit(
-                    _read_file,
-                    file,
-                    dt_start,
-                    dt_end,
-                    data_key,
-                    columns,
-                    self.kernel_group,
-                    reference_frame,
-                )
-                for file in files
-            ]
+            with concurrent.futures.ProcessPoolExecutor(
+                max_workers=max_workers
+            ) as executor:
+                futures = [
+                    executor.submit(
+                        _read_file,
+                        file,
+                        dt_start,
+                        dt_end,
+                        data_key,
+                        columns,
+                        self.kernel_group,
+                        reference_frame,
+                    )
+                    for file in files
+                ]
 
-        result = [_ for _ in [future.result() for future in futures] if _]
+            result = [_ for _ in [future.result() for future in futures] if _]
 
-        dtp_r = np.concatenate([_[0] for _ in result])
-        dk_r = np.concatenate([_[1] for _ in result])
+            dtp_r = np.concatenate([_[0] for _ in result])
+            dk_r = np.concatenate([_[1] for _ in result])
 
-        return dtp_r, dk_r
+            return dtp_r, dk_r
+        else:
+            return _read_file(
+                files[0],
+                dt_start,
+                dt_end,
+                data_key,
+                columns,
+                self.kernel_group,
+                reference_frame,
+            )
 
 
 def _generate_endpoints(
@@ -321,6 +336,8 @@ def _generate_endpoints(
     n_dtp = int((dtp[-1].timestamp() - dtp[0].timestamp()) // sampling_freq)
     _ = np.linspace(dtp[0].timestamp(), dtp[-1].timestamp(), n_dtp)
     dtp = [dt.datetime.fromtimestamp(_, dt.timezone.utc) for _ in _]
+
+    return dtp
 
 
 def _prepare_file(
