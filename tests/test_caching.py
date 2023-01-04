@@ -13,7 +13,7 @@ import pytest
 from heliosat import caching
 
 
-def test_cache_all():
+def test_cache_all() -> None:
     test_cache_key = caching.cache_generate_key(dict({"prop": True}))
 
     assert (

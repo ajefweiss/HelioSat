@@ -14,7 +14,7 @@
                                 {
                                     "indices": [10, 11, 12],
                                     "load_by_default": true,
-                                    "names": ["B_RTN", "BFIELD"],
+                                    "names": ["B_RTN"],
                                     "reference_frame": "MSGR_RTN",
                                     "valid_range": [-1e3, 1e3]
                                 }

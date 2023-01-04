@@ -6,8 +6,8 @@
             "kernel_group": null,
             "keys": {
                 "wind_mfi_h0": {
-                    "alt_keys": ["mag", "mfi_h0"],
-                    "base_url": "$https://spdf.gsfc.nasa.gov/pub/data/wind/mfi/mfi_h0/{YYYY}/wi_h0_mfi_{YYYY}{MM}{DD}_v([0-9]{2}).cdf",
+                    "alt_keys": ["mag"],
+                    "base_url": "$https://cdaweb.gsfc.nasa.gov/pub/data/wind/mfi/mfi_h0/{YYYY}/wi_h0_mfi_{YYYY}{MM}{DD}_v([0-9]{2}).cdf",
                     "versions": {
                         "01": {
                             "data_columns": [
@@ -16,7 +16,28 @@
                                     "reference_frame": "GSE",
                                     "key": "BGSE",
                                     "load_by_default": true,
-                                    "names": ["BGSE", "B_GSE", "BFIELD"],
+                                    "names": ["BGSE", "B_GSE"],
+                                    "valid_range": [-1e3, 1e3]
+                                }
+                            ],
+                            "time_column": {
+                                "key": "Epoch"
+                            }
+                        }
+                    },
+                    "format": "nasa_cdf"
+                },
+                "wind_mfi_h2": {
+                    "base_url": "$https://cdaweb.gsfc.nasa.gov/pub/data/wind/mfi/mfi_h2/{YYYY}/wi_h2_mfi_{YYYY}{MM}{DD}_v([0-9]{2}).cdf",
+                    "versions": {
+                        "01": {
+                            "data_columns": [
+                                {
+                                    "indices": [0, 1, 2],
+                                    "reference_frame": "GSE",
+                                    "key": "BGSE",
+                                    "load_by_default": true,
+                                    "names": ["BGSE", "B_GSE"],
                                     "valid_range": [-1e3, 1e3]
                                 }
                             ],
@@ -28,8 +49,7 @@
                     "format": "nasa_cdf"
                 },
                 "wind_mfi_k0": {
-                    "alt_keys": ["mfi_k0"],
-                    "base_url": "$https://spdf.gsfc.nasa.gov/pub/data/wind/mfi/mfi_k0/{YYYY}/wi_k0_mfi_{YYYY}{MM}{DD}_v([0-9]{2}).cdf",
+                    "base_url": "$https://cdaweb.gsfc.nasa.gov/pub/data/wind/mfi/mfi_k0/{YYYY}/wi_k0_mfi_{YYYY}{MM}{DD}_v([0-9]{2}).cdf",
                     "versions": {
                         "01": {
                             "data_columns": [
@@ -38,7 +58,7 @@
                                     "reference_frame": "GSE",
                                     "key": "BGSEc",
                                     "load_by_default": true,
-                                    "names": ["BGSE", "B_GSE", "BFIELD"],
+                                    "names": ["BGSE"],
                                     "valid_range": [-1e3, 1e3]
                                 }
                             ],

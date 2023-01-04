@@ -16,12 +16,12 @@ from heliosat.util import get_any, sanitize_dt
 
 
 def wind_trajectory(
-    self,
+    self: object,
     dtp: Union[dt.datetime, Sequence[dt.datetime]],
     observer: str = "SUN",
     units: str = "AU",
     **kwargs: Any
-) -> np.ndarray:  # type: ignore
+) -> np.ndarray:
     dtp = sanitize_dt(dtp)
 
     traj_t, traj_p = self.get(dtp, "wind_trajectory", cached=True)

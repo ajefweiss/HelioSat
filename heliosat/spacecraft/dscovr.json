@@ -15,7 +15,7 @@
                                 {
                                     "key": ["bx_gse", "by_gse", "bz_gse"],
                                     "load_by_default": true,
-                                    "names": ["BGSE", "B_GSE", "BFIELD"],
+                                    "names": ["BGSE", "B_GSE"],
                                     "reference_frame": "GSE",
                                     "valid_range": [-1e3, 1e3]
                                 }
@@ -28,7 +28,7 @@
                     "format": "net_cdf4"
                 },
                 "dscovr_plas": {
-                    "alt_keys": ["proton", "dscovr_plas"],
+                    "alt_keys": ["proton"],
                     "base_url": "$https://www.ngdc.noaa.gov/dscovr/data/{YYYY}/{MM}/oe_f1m_dscovr_s{YYYY}{MM}{DD}000000_e{YYYY}{MM}{DD}235959_p(\\d{14})_pub.nc",
                     "compression": "gz",
                     "versions": {

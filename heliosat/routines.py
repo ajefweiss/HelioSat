@@ -14,6 +14,7 @@ import spiceypy
 from scipy.signal import detrend, welch
 
 
+# TODO: replace with lombscargle
 def power_spectral_density(
     dtp: Sequence[dt.datetime],
     dk: np.ndarray,
@@ -23,7 +24,6 @@ def power_spectral_density(
     If multiple measurements are given the result is averaged over all.
     """
     n_s = int(((dtp[-1] - dtp[0]).total_seconds() / 3600) - 1)
-    n_perseg = np.min([len(dk), 256])
 
     # compute sample frequency
     dtp_ts = np.array([_.timestamp() for _ in dtp])

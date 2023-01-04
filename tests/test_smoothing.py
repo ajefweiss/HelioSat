@@ -9,5 +9,5 @@ import pytest
 
 
 @pytest.mark.skip(reason="wip")
-def test_smooth_data():
+def test_smooth_data() -> None:
     raise NotImplementedError

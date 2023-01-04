@@ -14,7 +14,7 @@
                                 {
                                     "indices": [5, 6, 7],
                                     "load_by_default": true,
-                                    "names": ["B_ECLIPJ2000", "BFIELD"],
+                                    "names": ["B_ECLIPJ2000"],
                                     "reference_frame": "ECLIPJ2000"
                                 }
                             ],
