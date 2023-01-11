@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from .spacecraft import Body
+from .spacecraft import Body, Spacecraft
 from .spice import SpiceKernelManager as _SpiceKernelManager
 
 __author__ = "Andreas J. Weiss"
@@ -51,3 +51,7 @@ def Uranus() -> Body:
 
 def Neptune() -> Body:
     return Body("Neptune", "NEPTUNE BARYCENTER")
+
+
+# legacy support
+Spacecraft.get_data = Spacecraft.get

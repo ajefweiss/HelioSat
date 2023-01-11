@@ -43,7 +43,10 @@ def wind_trajectory(
     else:
         raise ValueError('unit "{0!s}" is not supported'.format(units))
 
-    return traj
+    if len(traj) == 1:
+        return traj[0]
+    else:
+        return traj
 
 
 # overwrite class function

@@ -97,9 +97,6 @@ class Spacecraft(Body):
             self.name, self.name_naif, self.kernel_group, **kwargs
         )
 
-        # legacy support
-        self.get_data = self.get
-
     @property
     def data_keys(self) -> List[str]:
         return list(self._json["keys"].keys())
