@@ -143,7 +143,7 @@ class Spacecraft(Body):
             **kwargs,
         }
 
-        # extract (pop) relevant kwargs
+        # extract relevant kwargs
         remove_nans = kwargs.pop("remove_nans", False)
         return_datetimes = kwargs.pop("return_datetimes", False)
         sampling_freq = kwargs.pop("sampling_freq", 60)
@@ -184,9 +184,6 @@ class Spacecraft(Body):
                 dtp_r = dtp_r[nanfilter]
 
             dk_r = dk_r[nanfilter]
-
-            # temporary test
-            assert len(dtp_r) == len(dk_r)
 
         if cached:
             logger.info('generating cache entry "%s"', cache_key)

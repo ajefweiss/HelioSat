@@ -169,7 +169,6 @@ class SpiceKernelManager(object):
         self, url: str, group: str, force_download: bool = False
     ) -> Union[SpiceKernel, List[SpiceKernel]]:
         # check for regex
-
         if url.startswith("$"):
             # figure out if kernels exist locally that match the regex, if any assume its all
             kernels = []

@@ -20,7 +20,8 @@ except ImportError:
     class nb(object):
         def njit(fn):  # noqa: ANN201
             logger.info(
-                "function %s: numba package not installed, smoothing may be slow", fn
+                "function %s: numba package not installed, smoothing may be slow",
+                fn,
             )
             return fn
 
@@ -59,7 +60,7 @@ def smooth_data(
     return time_smooth, data_smooth
 
 
-@nb.njit
+@nb.njit(fastmath=True)
 def _smoothing_closest(
     dtp: np.ndarray, dtp_r: np.ndarray, dk_r: np.ndarray, data_smooth: np.ndarray
 ) -> Tuple[np.ndarray, np.ndarray]:
@@ -74,7 +75,7 @@ def _smoothing_closest(
     return t_actual, data_smooth
 
 
-@nb.njit
+@nb.njit(fastmath=True)
 def _smoothing_mean(
     dtp: np.ndarray,
     dtp_r: np.ndarray,
@@ -101,7 +102,7 @@ def _smoothing_mean(
                 data_smooth[i, k] = vector[k] / total
 
 
-@nb.njit
+@nb.njit(fastmath=True)
 def _smoothing_gaussian_kernel(
     dtp: np.ndarray,
     dtp_r: np.ndarray,
