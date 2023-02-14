@@ -2,7 +2,8 @@
 
 """util.py
 
-Implement basic utility functions such as datetime conversions. Designed for internal use only.
+Implement basic utility functions such as datetime conversions.
+Designed for internal use only.
 """
 
 import datetime as dt
@@ -10,19 +11,18 @@ import json
 import logging as lg
 import os
 import re
-import requests
-import requests_ftp
-import sys
-
-from bs4 import BeautifulSoup
 from typing import Any, List, Optional, Sequence, Union
 
+import numpy as np
+import requests
+import requests_ftp
+from bs4 import BeautifulSoup
 
 _strptime_formats = [
     "%Y-%m-%dT%H:%M:%S.%f",
     "%Y-%m-%dT%H:%M:%S",
     "%Y-%m-%dT%H:%M",
-    "%Y-%m-%d"
+    "%Y-%m-%d",
 ]
 
 
@@ -54,40 +54,57 @@ def dt_utc_from_str(string: str, string_format: Optional[str] = None) -> dt.date
             dtp = dtp.replace(tzinfo=dt.timezone.utc)
         return dtp
 
-    raise ValueError("could not convert \"{0!s}\", unkown format".format(string))
+    raise ValueError('could not convert "{0!s}", unkown format'.format(string))
 
 
-def dt_utc_from_ts(ts: float) -> dt.datetime:
-    return dt.datetime.fromtimestamp(ts, dt.timezone.utc)
+def dt_utc_from_ts(ts: [float, Sequence[float]]) -> dt.datetime:
+    if hasattr(ts, "__iter__"):
+        return [
+            dt.datetime.fromtimestamp(_, dt.timezone.utc) for _ in ts if not np.isnan(_)
+        ]
+    else:
+        return dt.datetime.fromtimestamp(ts, dt.timezone.utc)
 
 
-def fetch_url(url: str) -> bytes:
+def fetch_url(
+    url: str, return_headers: bool = False, minimum_length: int = 2000
+) -> bytes:
     logger = lg.getLogger(__name__)
 
     if url.startswith("http"):
-        logger.debug("fetching url (http) \"%s\"", url)
+        logger.debug('fetching url (http) "%s"', url)
         response = requests.get(url)
     elif url.startswith("ftp"):
-        logger.debug("fetching url (ftp) \"%s\"", url)
+        logger.debug('fetching url (ftp) "%s"', url)
         requests_ftp.monkeypatch_session()
         s = requests.Session()
         response = s.get(url)
         s.close()
     else:
-        raise requests.HTTPError("invalid url \"{0!s}\"".format(url))
+        raise requests.HTTPError('invalid url "{0!s}"'.format(url))
 
     if response.ok:
         # fix for url's that return 200 instead of a 404
-        if int(response.headers.get("Content-Length", 0)) < 1000:
-            raise requests.HTTPError("Content-Length is very small"
-                                     "(url is most likely not a valid file)")
+        if int(response.headers.get("Content-Length", minimum_length)) < minimum_length:
+            raise requests.HTTPError(
+                "Content-Length is very small l=%i"
+                "(url is most likely not a valid file)",
+                int(response.headers.get("Content-Length", 0)),
+            )
 
-        return response.content
+        if return_headers:
+            return response.content, response.headers
+        else:
+            return response.content
     else:
-        raise requests.HTTPError("failed to fetch url \"{0!s}\" ({1})".format(url, response.status_code))
+        raise requests.HTTPError(
+            'failed to fetch url "{0!s}" ({1})'.format(url, response.status_code)
+        )
 
 
-def get_any(kwargs: dict, keys: Sequence[str], default: Any = None) -> Any:
+def get_any(
+    kwargs: dict, keys: Sequence[str], default: Any = None  # noqa: ANN401
+) -> Any:  # noqa: ANN401
     while len(keys) > 0:
         if keys[0] in kwargs:
             return kwargs.get(keys[0])
@@ -97,6 +114,26 @@ def get_any(kwargs: dict, keys: Sequence[str], default: Any = None) -> Any:
     return default
 
 
+def pop_any(
+    kwargs: dict, keys: Sequence[str], default: Any = None  # noqa: ANN401
+) -> Any:  # noqa: ANN401
+    rval = None
+
+    while len(keys) > 0:
+        if keys[0] in kwargs:
+            if rval is None:
+                rval = kwargs.pop(keys[0])
+            else:
+                _ = kwargs.pop(keys[0])
+
+        keys = keys[1:]
+
+    if rval:
+        return rval
+    else:
+        return default
+
+
 def load_json(path: str) -> dict:
     with open(path, "r") as fh:
         json_dict = dict(json.load(fh))
@@ -104,7 +141,9 @@ def load_json(path: str) -> dict:
     return json_dict
 
 
-def sanitize_dt(dtp: Union[str, dt.datetime, Sequence[str], Sequence[dt.datetime]]) -> Union[dt.datetime, Sequence[dt.datetime]]:
+def sanitize_dt(
+    dtp: Union[str, dt.datetime, Sequence[str], Sequence[dt.datetime]]
+) -> Union[dt.datetime, Sequence[dt.datetime]]:
     if isinstance(dtp, dt.datetime) and dtp.tzinfo is None:
         return dtp.replace(tzinfo=dt.timezone.utc)
     elif isinstance(dtp, dt.datetime) and dtp.tzinfo != dt.timezone.utc:
@@ -112,59 +151,82 @@ def sanitize_dt(dtp: Union[str, dt.datetime, Sequence[str], Sequence[dt.datetime
     elif isinstance(dtp, str):
         return dt_utc_from_str(dtp)
     elif hasattr(dtp, "__iter__"):
-        _dt = list(dtp)
+        _dtp = list(dtp)
 
-        if isinstance(_dt[0], dt.datetime):
-            for i in range(len(_dt)):
-                if _dt[i].tzinfo is None:  
-                    _dt[i] = _dt[i].replace(tzinfo=dt.timezone.utc)  
+        if isinstance(_dtp[0], dt.datetime):
+            for i in range(len(_dtp)):
+                if _dtp[i].tzinfo is None:
+                    _dtp[i] = _dtp[i].replace(tzinfo=dt.timezone.utc)
                 else:
-                    _dt[i] = _dt[i].astimezone(dt.timezone.utc)  
-        elif isinstance(_dt[0], str):
-            _dt = [dt_utc_from_str(_) for _ in _dt]
+                    _dtp[i] = _dtp[i].astimezone(dt.timezone.utc)
+        elif isinstance(_dtp[0], str):
+            _dtp = [dt_utc_from_str(_) for _ in _dtp]
 
-        return _dt  
+        return _dtp
     else:
-        return dtp  
+        return dtp
+
+
+def url_basename(url: str) -> str:
+    return url.split("/")[-1]
+
+
+def url_dirname(url: str) -> str:
+    return "/".join(url.split("/")[:-1])
 
 
 def url_regex_files(url: str, folder: str) -> List[str]:
-    logger = lg.getLogger(__name__)
-
     local_files = os.listdir(folder)
-    url_pattern = os.path.basename(url)
+    url_pattern = url_basename(url)
 
     matched_files = []
+    matched_groups = []
 
     for local_file in local_files:
-        if re.match(url_pattern, local_file):
+        match = re.match(url_pattern, local_file)
+
+        if match:
             matched_files.append(os.path.join(folder, local_file))
-    
-    return matched_files
+
+            groups = match.groups()
+
+            if len(groups) >= 1:
+                matched_groups.append(groups[-1])
+
+    return matched_files, matched_groups
 
 
 def url_regex_resolve(url: str, reduce: bool = False) -> Union[str, List[str]]:
-    url_parent = os.path.dirname(url[1:])
-    url_regex = os.path.basename(url[1:])
+    url_parent = url_dirname(url[1:])
+    url_regex = url_basename(url[1:])
 
     urls_expanded = []
-    
+    urls_groups = []
+
     response = requests.get(url_parent, timeout=20)
 
     if response.ok:
-            response_text = response.text
+        response_text = response.text
     else:
-        raise requests.HTTPError("failed to fetch url \"{0!s}\" ({1})".format(url_parent, response.status_code))
+        raise requests.HTTPError(
+            'failed to fetch url "{0!s}" ({1})'.format(url_parent, response.status_code)
+        )
 
     # match all url's with regex pattern
     soup = BeautifulSoup(response_text, "html.parser")
-    hrefs = [_.get("href") for _ in soup.find_all("a")]
 
     for url_child in [_.get("href") for _ in soup.find_all("a")]:
-        if url_child and re.match(url_regex, url_child):
+        match = re.match(url_regex, url_child)
+
+        if url_child and match:
             urls_expanded.append("/".join([url_parent, url_child]))
+
+            groups = match.groups()
+
+            if len(groups) >= 1:
+                urls_groups.append(groups[-1])
 
     if reduce:
         return urls_expanded[-1]
     else:
-        return urls_expanded
+        return urls_expanded, urls_groups

@@ -15,44 +15,39 @@ import json
 import logging as lg
 import os
 import pickle
-
 from typing import Any
 
 
 def cache_add_entry(key: str, obj: object) -> None:
     logger = lg.getLogger(__name__)
 
-    cache_path = os.path.join(os.getenv('HELIOSAT_DATAPATH', os.path.join(os.path.expanduser("~"), ".heliosat")), "cache")
+    cache_path = cache_get_path()
 
     if not os.path.exists(cache_path):
-        logger.debug("cache path does not exist, creating \"%s\"", cache_path)
+        logger.debug('cache path does not exist, creating "%s"', cache_path)
         os.makedirs(cache_path)
 
-    cache_path = os.path.join(cache_path, "{}.cache".format(key))
+    file_path = os.path.join(cache_path, "{}.cache".format(key))
 
-    with open(cache_path, "wb") as pickle_file:
-        logger.debug("creating cache entry \"%s\"", key)
+    with open(file_path, "wb") as pickle_file:
+        logger.debug('creating cache entry "%s"', key)
         pickle.dump(obj, pickle_file)
 
-    return cache_path
+    return file_path
 
 
 def cache_delete_entry(key: str) -> None:
     logger = lg.getLogger(__name__)
 
-    cache_path = os.path.join(os.getenv('HELIOSAT_DATAPATH', os.path.join(os.path.expanduser("~"), ".heliosat")), "cache")
-
     if not cache_entry_exists(key):
-        raise KeyError("cache entry \"{0!s}\" does not exist".format(key))
+        raise KeyError('cache entry "{0!s}" does not exist'.format(key))
 
-    logger.debug("deleting cache entry \"%s\"", key)
-    os.remove(os.path.join(cache_path, "{0}.cache".format(key)))
+    logger.debug('deleting cache entry "%s"', key)
+    os.remove(os.path.join(cache_get_path(), "{0}.cache".format(key)))
 
 
 def cache_entry_exists(key: str) -> bool:
-    cache_path = os.path.join(os.getenv('HELIOSAT_DATAPATH', os.path.join(os.path.expanduser("~"), ".heliosat")), "cache")
-
-    return os.path.exists(os.path.join(cache_path, "{}.cache".format(key)))
+    return os.path.exists(os.path.join(cache_get_path(), "{}.cache".format(key)))
 
 
 def cache_generate_key(identifiers: dict) -> str:
@@ -62,16 +57,25 @@ def cache_generate_key(identifiers: dict) -> str:
     return hashobj.hexdigest()
 
 
-def cache_get_entry(key: str) -> Any:
+def cache_get_entry(key: str) -> Any:  # noqa: ANN401
     logger = lg.getLogger(__name__)
 
-    cache_path = os.path.join(os.getenv('HELIOSAT_DATAPATH', os.path.join(os.path.expanduser("~"), ".heliosat")), "cache")
-
     if not cache_entry_exists(key):
-        raise KeyError("cache key \"{0!s}\" does not exist".format(key))
+        raise KeyError('cache key "{0!s}" does not exist'.format(key))
 
-    with open(os.path.join(cache_path, "{0}.cache".format(key)), "rb") as pickle_file:
-        logger.debug("loading cache entry \"%s\"", key)
+    with open(
+        os.path.join(cache_get_path(), "{0}.cache".format(key)), "rb"
+    ) as pickle_file:
+        logger.debug('loading cache entry "%s"', key)
         cache_data = pickle.load(pickle_file)
 
     return cache_data
+
+
+def cache_get_path() -> str:
+    return os.path.join(
+        os.getenv(
+            "HELIOSAT_DATAPATH", os.path.join(os.path.expanduser("~"), ".heliosat")
+        ),
+        "cache",
+    )

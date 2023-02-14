@@ -5,22 +5,25 @@
 Unit tests for caching functionality.
 """
 
-import datetime as dt
 import os
 import pickle
+
 import pytest
 
 from heliosat import caching
 
 
-def test_cache_all():
-    # test
+def test_cache_all() -> None:
     test_cache_key = caching.cache_generate_key(dict({"prop": True}))
 
-    assert test_cache_key == "52c3fee076fd00dc6e6e5ecfea7b19a5be15215ce955ca6f201ce527dba348fa"
+    assert (
+        test_cache_key
+        == "52c3fee076fd00dc6e6e5ecfea7b19a5be15215ce955ca6f201ce527dba348fa"
+    )
 
     cache_path = caching.cache_add_entry(test_cache_key, dict({"TEST_KEY": 1}))
 
+    assert os.path.exists(caching.cache_get_path())
     assert isinstance(cache_path, str)
     assert caching.cache_entry_exists(test_cache_key)
     assert os.path.exists(cache_path)

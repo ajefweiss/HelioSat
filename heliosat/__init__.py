@@ -1,24 +1,35 @@
 # -*- coding: utf-8 -*-
 
-from .spacecraft import Body
+import heliosat
+
+from .spacecraft import Body, Spacecraft
 from .spice import SpiceKernelManager as _SpiceKernelManager
 
 __author__ = "Andreas J. Weiss"
 __copyright__ = "Copyright (C) 2019 Andreas J. Weiss"
 __license__ = "MIT"
-__version__ = "0.8.1"
+__version__ = "0.8.3"
 
 
 _skm = _SpiceKernelManager()
 
-# common solar system objects
-Sun = lambda: Body("Sun", "SUN")
-Mercury = lambda: Body("Mercury", "MERCURY")
-Venus = lambda: Body("Venus", "VENUS")
-Earth = lambda: Body("Earth", "EARTH")
-Moon = lambda: Body("Moon", "MOON")
-Mars = lambda: Body("Mars", "MARS BARYCENTER")
-Jupiter = lambda: Body("Jupiter", "JUPITER BARYCENTER")
-Saturn = lambda: Body("Saturn", "SATURN BARYCENTER")
-Uranus = lambda: Body("Uranus", "URANUS BARYCENTER")
-Neptune = lambda: Body("Neptune", "NEPTUNE BARYCENTER")
+
+# define body functions for common solar system objects
+common_bodies = [
+    ["Sun", "SUN"],
+    ["Mercury", "MERCURY"],
+    ["Venus", "VENUS"],
+    ["Earth", "EARTH"],
+    ["Moon", "MOON"],
+    ["Mars", "MARS BARYCENTER"],
+    ["Jupiter", "JUPITER BARYCENTER"],
+    ["Saturn", "SATURN BARYCENTER"],
+    ["Uranus", "URANUS BARYCENTER"],
+    ["Neptune", "NEPTUNE BARYCENTER"],
+]
+
+for (a, b) in common_bodies:
+    setattr(heliosat, a, lambda: Body(a, b))
+
+# legacy support
+Spacecraft.get_data = Spacecraft.get
