@@ -2,6 +2,7 @@
     "default_kernel_path": "kernels.json",
     "default_spacecraft_path": null,
     "spacecraft" : [
+        "ace",
         "bepi",
         "dscovr",
         "mes",

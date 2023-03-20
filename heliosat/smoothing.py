@@ -89,7 +89,7 @@ def _smoothing_mean(
         vector = np.zeros((dims,))
 
         for j in range(0, len(dk_r)):
-            if np.abs(dtp_r[j] - dtp[i]) < smoothing_scale:
+            if np.abs(dtp_r[j] - dtp[i]) < smoothing_scale and not np.isnan(dk_r[j, 0]):
                 total += 1
 
                 for k in range(0, len(vector)):

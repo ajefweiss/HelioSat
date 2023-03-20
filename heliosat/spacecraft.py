@@ -58,6 +58,13 @@ class Body(object):
         dtp = sanitize_dt(dtp)
 
         reference_frame = get_any(kwargs, ["reference_frame", "frame"], "J2000")
+        sampling_freq = get_any(
+            kwargs, ["sampling_freq", "sampling_frequency", "sampling_rate"], 3600
+        )
+
+        # use dt list as endpoints
+        if kwargs.pop("as_endpoints", False):
+            dtp = _generate_endpoints(dtp, sampling_freq)
 
         traj = np.array(
             spiceypy.spkpos(
@@ -146,7 +153,9 @@ class Spacecraft(Body):
         # extract relevant kwargs
         remove_nans = kwargs.pop("remove_nans", False)
         return_datetimes = kwargs.pop("return_datetimes", False)
-        sampling_freq = kwargs.pop("sampling_freq", 60)
+        sampling_freq = get_any(
+            kwargs, ["sampling_freq", "sampling_frequency", "sampling_rate"], 60
+        )
 
         smoothing_kwargs = {"smoothing": kwargs.pop("smoothing", "closest")}
 
@@ -227,7 +236,7 @@ class Spacecraft(Body):
             if day > dt_end:
                 break
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=25) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
             futures = [
                 executor.submit(_prepare_file, file, force_download, skip_download)
                 for file in files
@@ -284,11 +293,7 @@ class Spacecraft(Body):
         reference_frame = get_any(kwargs, ["reference_frame", "frame"], None)
 
         if len(files) > 1:
-            max_workers = min([int(mp.cpu_count() * 1.5), len(files)])
-
-            with concurrent.futures.ProcessPoolExecutor(
-                max_workers=max_workers
-            ) as executor:
+            with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
                 futures = [
                     executor.submit(
                         _read_file,

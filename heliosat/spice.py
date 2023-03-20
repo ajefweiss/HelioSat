@@ -142,7 +142,7 @@ class SpiceKernelManager(object):
         logger.debug('loading kernel group "%s"', kernel_group)
 
         # load groups in parallel (quicker downloads)
-        with concurrent.futures.ThreadPoolExecutor(max_workers=25) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
             futures = [
                 executor.submit(self.load_kernels, urls, kernel_group, force_download)
                 for urls in self.all_grps[kernel_group]
@@ -231,7 +231,9 @@ class SpiceKernelManager(object):
 
             # runpy
             custompy = os.path.join(
-                os.path.dirname(heliosat.__file__), "spacecraft", "{}.py".format(spc_k)
+                os.path.dirname(heliosat.__file__),
+                "spacecraft",
+                "zpy_{}.py".format(spc_k),
             )
 
             if os.path.isfile(custompy):

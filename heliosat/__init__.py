@@ -16,20 +16,20 @@ _skm = _SpiceKernelManager()
 
 # define body functions for common solar system objects
 common_bodies = [
-    ["Sun", "SUN"],
-    ["Mercury", "MERCURY"],
-    ["Venus", "VENUS"],
-    ["Earth", "EARTH"],
-    ["Moon", "MOON"],
-    ["Mars", "MARS BARYCENTER"],
-    ["Jupiter", "JUPITER BARYCENTER"],
-    ["Saturn", "SATURN BARYCENTER"],
-    ["Uranus", "URANUS BARYCENTER"],
-    ["Neptune", "NEPTUNE BARYCENTER"],
+    ("Sun", "SUN"),
+    ("Mercury", "MERCURY"),
+    ("Venus", "VENUS"),
+    ("Earth", "EARTH"),
+    ("Moon", "MOON"),
+    ("Mars", "MARS BARYCENTER"),
+    ("Jupiter", "JUPITER BARYCENTER"),
+    ("Saturn", "SATURN BARYCENTER"),
+    ("Uranus", "URANUS BARYCENTER"),
+    ("Neptune", "NEPTUNE BARYCENTER"),
 ]
 
-for (a, b) in common_bodies:
-    setattr(heliosat, a, lambda: Body(a, b))
+for (_, __) in common_bodies:
+    setattr(heliosat, _, Body(_, __))
 
 # legacy support
 Spacecraft.get_data = Spacecraft.get

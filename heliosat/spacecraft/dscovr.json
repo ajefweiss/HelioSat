@@ -59,6 +59,27 @@
                         }
                     },
                     "format": "net_cdf4"
+                },
+                "dscovr_trajectory": {
+                    "alt_keys": ["pop"],
+                    "base_url": "$https://www.ngdc.noaa.gov/dscovr/data/{YYYY}/{MM}/oe_pop_dscovr_s{YYYY}{MM}{DD}000000_e{YYYY}{MM}{DD}235959_p(\\d{14})_pub.nc",
+                    "compression": "gz",
+                    "versions": {
+                        "01": {
+                            "data_columns": [
+                                {
+                                    "key": ["sat_x_gse", "sat_y_gse", "sat_z_gse"],
+                                    "load_by_default": true,
+                                    "names": ["GSE", "POS"],
+                                    "reference_frame": "GSE"
+                                }
+                            ],
+                            "time_column": {
+                                "key": "time"
+                            }
+                        }
+                    },
+                    "format": "net_cdf4"
                 }
             }
         }
