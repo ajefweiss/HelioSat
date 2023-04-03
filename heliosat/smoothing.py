@@ -60,7 +60,7 @@ def smooth_data(
     return time_smooth, data_smooth
 
 
-@nb.njit(fastmath=True)
+@nb.njit(fastmath=False)
 def _smoothing_closest(
     dtp: np.ndarray, dtp_r: np.ndarray, dk_r: np.ndarray, data_smooth: np.ndarray
 ) -> Tuple[np.ndarray, np.ndarray]:
@@ -75,7 +75,7 @@ def _smoothing_closest(
     return t_actual, data_smooth
 
 
-@nb.njit(fastmath=True)
+@nb.njit(fastmath=False)
 def _smoothing_mean(
     dtp: np.ndarray,
     dtp_r: np.ndarray,
@@ -102,7 +102,7 @@ def _smoothing_mean(
                 data_smooth[i, k] = vector[k] / total
 
 
-@nb.njit(fastmath=True)
+@nb.njit(fastmath=False)
 def _smoothing_gaussian_kernel(
     dtp: np.ndarray,
     dtp_r: np.ndarray,
@@ -110,14 +110,15 @@ def _smoothing_gaussian_kernel(
     data_smooth: np.ndarray,
     smoothing_scale: np.ndarray,
 ) -> None:
+    print("here")
     for i in range(len(dtp)):
         total = 0
         dims = dk_r.shape[1]
         vector = np.zeros((dims,))
 
         for j in range(0, len(dk_r)):
-            if np.abs(dtp_r[j] - dtp[i]) < 3 * smoothing_scale and not np.isnan(
-                dk_r[j, 0]
+            if np.abs(dtp_r[j] - dtp[i]) < 3 * smoothing_scale and not np.any(
+                np.isnan(dk_r[j])
             ):
                 kernel = np.exp(-((dtp_r[j] - dtp[i]) ** 2) / 2 / smoothing_scale**2)
 
