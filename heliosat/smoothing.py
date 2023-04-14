@@ -110,7 +110,6 @@ def _smoothing_gaussian_kernel(
     data_smooth: np.ndarray,
     smoothing_scale: np.ndarray,
 ) -> None:
-    print("here")
     for i in range(len(dtp)):
         total = 0
         dims = dk_r.shape[1]

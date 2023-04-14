@@ -61,6 +61,9 @@ class DataFile(object):
             if url.startswith("$"):
                 results, groups = url_regex_resolve(url)
 
+                if len(groups) == 0:
+                    raise Exception("no version capture groups in URL")
+
                 # groups should be versions, at minimum numbers
                 versions = [int(_) for _ in groups]
 

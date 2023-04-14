@@ -11,6 +11,7 @@ import json
 import logging as lg
 import os
 import re
+import time
 from typing import Any, List, Optional, Sequence, Union
 
 import numpy as np
@@ -99,6 +100,14 @@ def fetch_url(
             return response.content, response.headers
         else:
             return response.content
+    elif response.status_code == 443:
+        # try one more time
+        time.sleep(800)
+
+        try:
+            return fetch_url(url, return_headers, minimum_length)
+        except requests.HTTPError:
+            raise
     else:
         raise requests.HTTPError(
             'failed to fetch url "{0!s}" ({1})'.format(url, response.status_code)
