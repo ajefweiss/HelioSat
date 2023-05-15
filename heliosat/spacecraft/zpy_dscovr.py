@@ -60,13 +60,14 @@ def dscovr_trajectory(
         traj_t = traj_t[::2]
         traj_p = traj_p[::2]
 
-    traj_t, traj_p = smooth_data(
-        dtp,
-        traj_t,
-        traj_p,
-        smoothing=smoothing,
-        smoothing_scale=kwargs.get("smoothing_scale", 7200),
-    )
+    if smoothing:
+        traj_t, traj_p = smooth_data(
+            dtp,
+            traj_t,
+            traj_p,
+            smoothing=smoothing,
+            smoothing_scale=kwargs.get("smoothing_scale", 7200),
+        )
 
     traj_t = dt_utc_from_ts(traj_t)
 
