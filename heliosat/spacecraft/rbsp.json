@@ -1,0 +1,132 @@
+{
+    "spacecraft": {
+        "rbspa": {
+            "body_name": "EARTH",
+            "class_name": "RBSPA",
+            "kernel_group": null,
+            "keys": {
+                "fedu": {
+                    "base_url": "$https://cdaweb.gsfc.nasa.gov/pub/data/rbsp/rbspa/l3/ect/rept/sectors/rel03/{YYYY}/rbspa_rel03_ect-rept-sci-l3_{YYYY}{MM}{DD}_v([0-9])\\.[0-9]*\\.[0-9]*.cdf",
+                    "versions": {
+                        "01": {
+                            "data_columns": [
+                                {
+                                    "key": "FEDU",
+                                    "load_by_default": true,
+                                    "names": ["FEDU"],
+                                    "valid_range": [-1e9, 1e9]
+                                }
+                            ],
+                            "time_column": {
+                                "key": "Epoch"
+                            }
+                        }
+                    },
+                    "format": "nasa_cdf"
+                },
+                "fpdu": {
+                    "base_url": "$https://cdaweb.gsfc.nasa.gov/pub/data/rbsp/rbspa/l3/ect/rept/sectors/rel03/{YYYY}/rbspa_rel03_ect-rept-sci-l3_{YYYY}{MM}{DD}_v([0-9])\\.[0-9]*\\.[0-9]*.cdf",
+                    "versions": {
+                        "01": {
+                            "data_columns": [
+                                {
+                                    "key": "FPDU",
+                                    "load_by_default": true,
+                                    "names": ["FPDU"],
+                                    "valid_range": [-1e9, 1e9]
+                                }
+                            ],
+                            "time_column": {
+                                "key": "Epoch"
+                            }
+                        }
+                    },
+                    "format": "nasa_cdf"
+                },
+                "lshell": {
+                    "base_url": "$https://cdaweb.gsfc.nasa.gov/pub/data/rbsp/rbspa/l3/ect/rept/sectors/rel03/{YYYY}/rbspa_rel03_ect-rept-sci-l3_{YYYY}{MM}{DD}_v([0-9])\\.[0-9]*\\.[0-9]*.cdf",
+                    "versions": {
+                        "01": {
+                            "data_columns": [
+                                {
+                                    "key": "L",
+                                    "load_by_default": true,
+                                    "names": ["L"],
+                                    "valid_range": [-1e9, 1e9]
+                                }
+                            ],
+                            "time_column": {
+                                "key": "Epoch"
+                            }
+                        }
+                    },
+                    "format": "nasa_cdf"
+                }
+            }
+        },
+        "rbspb": {
+            "body_name": "EARTH",
+            "class_name": "RBSPB",
+            "kernel_group": null,
+            "keys": {
+                "fedu": {
+                    "base_url": "$https://cdaweb.gsfc.nasa.gov/pub/data/rbsp/rbspb/l3/ect/rept/sectors/rel03/{YYYY}/rbspb_rel03_ect-rept-sci-l3_{YYYY}{MM}{DD}_v([0-9])\\.[0-9]*\\.[0-9]*.cdf",
+                    "versions": {
+                        "01": {
+                            "data_columns": [
+                                {
+                                    "key": "FEDU",
+                                    "load_by_default": true,
+                                    "names": ["FEDU"],
+                                    "valid_range": [-1e9, 1e9]
+                                }
+                            ],
+                            "time_column": {
+                                "key": "Epoch"
+                            }
+                        }
+                    },
+                    "format": "nasa_cdf"
+                },
+                "fpdu": {
+                    "base_url": "$https://cdaweb.gsfc.nasa.gov/pub/data/rbsp/rbspb/l3/ect/rept/sectors/rel03/{YYYY}/rbspb_rel03_ect-rept-sci-l3_{YYYY}{MM}{DD}_v([0-9])\\.[0-9]*\\.[0-9]*.cdf",
+                    "versions": {
+                        "01": {
+                            "data_columns": [
+                                {
+                                    "key": "FPDU",
+                                    "load_by_default": true,
+                                    "names": ["FPDU"],
+                                    "valid_range": [-1e9, 1e9]
+                                }
+                            ],
+                            "time_column": {
+                                "key": "Epoch"
+                            }
+                        }
+                    },
+                    "format": "nasa_cdf"
+                },
+                "lshell": {
+                    "base_url": "$https://cdaweb.gsfc.nasa.gov/pub/data/rbsp/rbspb/l3/ect/rept/sectors/rel03/{YYYY}/rbspb_rel03_ect-rept-sci-l3_{YYYY}{MM}{DD}_v([0-9])\\.[0-9]*\\.[0-9]*.cdf",
+                    "versions": {
+                        "01": {
+                            "data_columns": [
+                                {
+                                    "key": "L",
+                                    "load_by_default": true,
+                                    "names": ["L"],
+                                    "valid_range": [-1e9, 1e9]
+                                }
+                            ],
+                            "time_column": {
+                                "key": "Epoch"
+                            }
+                        }
+                    },
+                    "format": "nasa_cdf"
+                }
+            }
+        }
+    }
+}

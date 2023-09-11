@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""ace.py
+"""zpy_ace.py
 
 Custom trajectory functions where the trajectory is computed from the given CDF files.
 """

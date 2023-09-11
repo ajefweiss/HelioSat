@@ -4,9 +4,12 @@
     "spacecraft" : [
         "ace",
         "bepi",
+        "cluster",
         "dscovr",
         "mes",
+        "mms",
         "psp",
+        "rbsp",
         "solo",
         "stereo",
         "vex",

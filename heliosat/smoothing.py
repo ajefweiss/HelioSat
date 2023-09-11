@@ -20,8 +20,7 @@ except ImportError:
     class nb(object):
         def njit(fn):  # noqa: ANN201
             logger.info(
-                "function %s: numba package not installed, smoothing may be slow",
-                fn,
+                "function %s: numba package not installed, smoothing may be slow", fn
             )
             return fn
 
@@ -119,7 +118,7 @@ def _smoothing_gaussian_kernel(
             if np.abs(dtp_r[j] - dtp[i]) < 3 * smoothing_scale and not np.any(
                 np.isnan(dk_r[j])
             ):
-                kernel = np.exp(-((dtp_r[j] - dtp[i]) ** 2) / 2 / smoothing_scale**2)
+                kernel = np.exp(-((dtp_r[j] - dtp[i]) ** 2) / 2 / smoothing_scale ** 2)
 
                 total += kernel
 

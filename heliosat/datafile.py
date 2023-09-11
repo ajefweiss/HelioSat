@@ -16,9 +16,16 @@ import numpy as np
 from netCDF4 import Dataset
 
 import heliosat
+from heliosat.util import dt_utc_from_ts
 
 from .routines import transform_reference_frame
-from .util import dt_utc_from_str, fetch_url, url_regex_files, url_regex_resolve
+from .util import (
+    dt_utc_from_str,
+    dt_utc_from_ts,
+    fetch_url,
+    url_regex_files,
+    url_regex_resolve,
+)
 
 
 class DataFile(object):
@@ -176,6 +183,8 @@ class DataFile(object):
         columns: List[str],
         kernel_group: str,
         reference_frame: str,
+        transform_batch_size: Optional[int],
+        skip_sort: Optional[bool],
     ) -> Tuple[np.ndarray, np.ndarray]:
         file_format = self._json["keys"][data_key]["format"]
 
@@ -217,7 +226,15 @@ class DataFile(object):
             )
 
         dtp_r, dk_r = _process_data(
-            dtp_r, dk_r, dt_start, dt_end, column_dicts, reference_frame, kernel_group
+            dtp_r,
+            dk_r,
+            dt_start,
+            dt_end,
+            column_dicts,
+            reference_frame,
+            kernel_group,
+            transform_batch_size,
+            skip_sort,
         )
 
         return dtp_r, np.concatenate(dk_r, axis=1)
@@ -333,6 +350,8 @@ def _process_data(
     column_dicts: List[dict],
     reference_frame: str,
     kernel_group: str,
+    transform_batch_size: int,
+    skip_sort: bool,
 ) -> Tuple[np.ndarray, np.ndarray]:
     if dt_start == dt_end:
         dt_sel = np.argmin(np.abs(dtp_r - dt_start.timestamp()))
@@ -359,9 +378,10 @@ def _process_data(
             )
 
         # some data files aren't sorted by time
-        sort_mask = np.argsort(dtp_r)
-        dtp_r = dtp_r[sort_mask]
-        data_entry = data_entry[sort_mask]
+        if not skip_sort:
+            sort_mask = np.argsort(dtp_r)
+            dtp_r = dtp_r[sort_mask]
+            data_entry = data_entry[sort_mask]
 
         if data_entry.ndim == 1:
             data_entry = data_entry.reshape((-1, 1))
@@ -378,7 +398,11 @@ def _process_data(
                 heliosat._skm.load_group(kernel_group)
 
             data_entry = transform_reference_frame(
-                dtp_r, data_entry, column["reference_frame"], reference_frame
+                dtp_r,
+                data_entry,
+                column["reference_frame"],
+                reference_frame,
+                transform_batch_size,
             )
 
         dk_r[i] = data_entry
@@ -396,10 +420,39 @@ def _read_nasa_cdf(
     if np.sum(epochs == 0) > 0:
         null_filter = epochs != 0
         epochs = epochs[null_filter]
+    # special case when cdf files have negative epoch entries
+    elif np.any(epochs < 0):
+        null_filter = epochs > 0
+        epochs = epochs[null_filter]
     else:
         null_filter = None
 
+    # dummy return
+    if len(epochs) == 0:
+        dtp_r = np.array([])
+
+        dk_r = []
+
+        for column in column_dicts:
+            key = column["key"]
+
+            if isinstance(key, str):
+                indices = column.get("indices", None)
+
+                if indices is not None:
+                    indices = np.array(indices)
+                    dk_r.append(np.array([]))
+                else:
+                    dk_r.append(np.array([]))
+            elif isinstance(key, list):
+                dk_r.append(np.stack(arrays=[np.array([]) for k in key], axis=1))
+            else:
+                raise ValueError("cdf key must be a string or a list thereof")
+        # TODO: fix hardcoded result
+        return dtp_r, [np.zeros((0, 3))]
+
     dtp_r = cdflib.epochs.CDFepoch.unixtime(epochs, to_np=True)
+
     dk_r = []
 
     for column in column_dicts:
@@ -415,10 +468,7 @@ def _read_nasa_cdf(
                 dk_r.append(np.array(cdf_file.varget(key)))
         elif isinstance(key, list):
             dk_r.append(
-                np.stack(
-                    arrays=[np.array(cdf_file.varget(k)) for k in key],
-                    axis=1,
-                )
+                np.stack(arrays=[np.array(cdf_file.varget(k)) for k in key], axis=1)
             )
         else:
             raise ValueError("cdf key must be a string or a list thereof")

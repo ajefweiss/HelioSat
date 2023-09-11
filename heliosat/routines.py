@@ -6,7 +6,7 @@ Implements data routines.
 """
 
 import datetime as dt
-from typing import Sequence, Union
+from typing import Optional, Sequence, Union
 
 import numpy as np
 import spiceypy
@@ -17,6 +17,7 @@ def transform_reference_frame(
     vec_array: np.ndarray,
     reference_frame_from: str,
     reference_frame_to: str,
+    batch_size: Optional[int] = None,
 ) -> np.ndarray:
     if reference_frame_from == reference_frame_to:
         return vec_array
@@ -35,13 +36,21 @@ def transform_reference_frame(
 
     if vec_array.ndim == 2:
         for i in range(0, len(dtp)):
-            vec_array_new[i] = spiceypy.mxv(
-                spiceypy.pxform(
+            if batch_size and batch_size > 1 and isinstance(batch_size, int):
+                if i % batch_size == 0:
+                    pxform = spiceypy.pxform(
+                        reference_frame_from,
+                        reference_frame_to,
+                        spiceypy.datetime2et(dtp[i]),
+                    )
+
+                vec_array_new[i] = spiceypy.mxv(pxform, vec_array[i])
+            else:
+                pxform = spiceypy.pxform(
                     reference_frame_from,
                     reference_frame_to,
                     spiceypy.datetime2et(dtp[i]),
-                ),
-                vec_array[i],
-            )
+                )
+                vec_array_new[i] = spiceypy.mxv(pxform, vec_array[i])
 
     return vec_array_new

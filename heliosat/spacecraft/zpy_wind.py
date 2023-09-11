@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""wind.py
+"""zpy_wind.py
 
 Custom trajectory functions where the trajectory is computed from the given CDF files.
 """

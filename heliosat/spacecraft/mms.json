@@ -1,0 +1,205 @@
+{
+    "spacecraft": {
+        "mms1": {
+            "body_name": "EARTH",
+            "class_name": "MMS1",
+            "kernel_group": null,
+            "keys": {
+                "mms1_fgm": {
+                    "alt_keys": ["fgm", "mag"],
+                    "base_url": "$https://cdaweb.gsfc.nasa.gov/pub/data/mms/mms1/fgm/srvy/l2/{YYYY}/{MM}/mms1_fgm_srvy_l2_{YYYY}{MM}{DD}_v([0-9])\\.[0-9]*\\.[0-9]*.cdf",
+                    "versions": {
+                        "05": {
+                            "data_columns": [
+                                {
+                                    "indices": [0, 1, 2],
+                                    "reference_frame": "GSE",
+                                    "key": "mms1_fgm_b_gse_srvy_l2",
+                                    "load_by_default": true,
+                                    "names": ["BGSE", "B_GSE"],
+                                    "valid_range": [-1e6, 1e6]
+                                }
+                            ],
+                            "time_column": {
+                                "key": "Epoch"
+                            }
+                        }
+                    },
+                    "format": "nasa_cdf"
+                },
+                "mms_trajectory": {
+                    "base_url": "$https://cdaweb.gsfc.nasa.gov/pub/data/mms/mms1/fgm/srvy/l2/{YYYY}/{MM}/mms1_fgm_srvy_l2_{YYYY}{MM}{DD}_v([0-9])\\.[0-9]*\\.[0-9]*.cdf",
+                    "versions": {
+                        "05": {
+                            "data_columns": [
+                                {
+                                    "indices": [0, 1, 2],
+                                    "reference_frame": "GSE",
+                                    "key": "mms1_fgm_r_gse_srvy_l2",
+                                    "load_by_default": true,
+                                    "names": ["GSE", "POS"],
+                                    "valid_range": [-1e9, 1e9]
+                                }
+                            ],
+                            "time_column": {
+                                "key": "Epoch_state"
+                            }
+                        }
+                    },
+                    "format": "nasa_cdf"
+                }
+            }
+        },
+        "mms2": {
+            "body_name": "EARTH",
+            "class_name": "MMS2",
+            "kernel_group": null,
+            "keys": {
+                "mms2_fgm": {
+                    "alt_keys": ["fgm", "mag"],
+                    "base_url": "$https://cdaweb.gsfc.nasa.gov/pub/data/mms/mms2/fgm/srvy/l2/{YYYY}/{MM}/mms2_fgm_srvy_l2_{YYYY}{MM}{DD}_v([0-9])\\.[0-9]*\\.[0-9]*.cdf",
+                    "versions": {
+                        "05": {
+                            "data_columns": [
+                                {
+                                    "indices": [0, 1, 2],
+                                    "reference_frame": "GSE",
+                                    "key": "mms2_fgm_b_gse_srvy_l2",
+                                    "load_by_default": true,
+                                    "names": ["BGSE", "B_GSE"],
+                                    "valid_range": [-1e6, 1e6]
+                                }
+                            ],
+                            "time_column": {
+                                "key": "Epoch"
+                            }
+                        }
+                    },
+                    "format": "nasa_cdf"
+                },
+                "mms_trajectory": {
+                    "base_url": "$https://cdaweb.gsfc.nasa.gov/pub/data/mms/mms2/fgm/srvy/l2/{YYYY}/{MM}/mms2_fgm_srvy_l2_{YYYY}{MM}{DD}_v([0-9])\\.[0-9]*\\.[0-9]*.cdf",
+                    "versions": {
+                        "05": {
+                            "data_columns": [
+                                {
+                                    "indices": [0, 1, 2],
+                                    "reference_frame": "GSE",
+                                    "key": "mms2_fgm_r_gse_srvy_l2",
+                                    "load_by_default": true,
+                                    "names": ["GSE", "POS"],
+                                    "valid_range": [-1e9, 1e9]
+                                }
+                            ],
+                            "time_column": {
+                                "key": "Epoch_state"
+                            }
+                        }
+                    },
+                    "format": "nasa_cdf"
+                }
+            }
+        },
+        "mms3": {
+            "body_name": "EARTH",
+            "class_name": "MMS3",
+            "kernel_group": null,
+            "keys": {
+                "mms1_fgm": {
+                    "alt_keys": ["fgm", "mag"],
+                    "base_url": "$https://cdaweb.gsfc.nasa.gov/pub/data/mms/mms3/fgm/srvy/l2/{YYYY}/{MM}/mms3_fgm_srvy_l2_{YYYY}{MM}{DD}_v([0-9])\\.[0-9]*\\.[0-9]*.cdf",
+                    "versions": {
+                        "05": {
+                            "data_columns": [
+                                {
+                                    "indices": [0, 1, 2],
+                                    "reference_frame": "GSE",
+                                    "key": "mms3_fgm_b_gse_srvy_l2",
+                                    "load_by_default": true,
+                                    "names": ["BGSE", "B_GSE"],
+                                    "valid_range": [-1e6, 1e6]
+                                }
+                            ],
+                            "time_column": {
+                                "key": "Epoch"
+                            }
+                        }
+                    },
+                    "format": "nasa_cdf"
+                },
+                "mms_trajectory": {
+                    "base_url": "$https://cdaweb.gsfc.nasa.gov/pub/data/mms/mms3/fgm/srvy/l2/{YYYY}/{MM}/mms3_fgm_srvy_l2_{YYYY}{MM}{DD}_v([0-9])\\.[0-9]*\\.[0-9]*.cdf",
+                    "versions": {
+                        "05": {
+                            "data_columns": [
+                                {
+                                    "indices": [0, 1, 2],
+                                    "reference_frame": "GSE",
+                                    "key": "mms3_fgm_r_gse_srvy_l2",
+                                    "load_by_default": true,
+                                    "names": ["GSE", "POS"],
+                                    "valid_range": [-1e9, 1e9]
+                                }
+                            ],
+                            "time_column": {
+                                "key": "Epoch_state"
+                            }
+                        }
+                    },
+                    "format": "nasa_cdf"
+                }
+            }
+        },
+        "mms4": {
+            "body_name": "EARTH",
+            "class_name": "MMS4",
+            "kernel_group": null,
+            "keys": {
+                "mms1_fgm": {
+                    "alt_keys": ["fgm", "mag"],
+                    "base_url": "$https://cdaweb.gsfc.nasa.gov/pub/data/mms/mms4/fgm/srvy/l2/{YYYY}/{MM}/mms4_fgm_srvy_l2_{YYYY}{MM}{DD}_v([0-9])\\.[0-9]*\\.[0-9]*.cdf",
+                    "versions": {
+                        "05": {
+                            "data_columns": [
+                                {
+                                    "indices": [0, 1, 2],
+                                    "reference_frame": "GSE",
+                                    "key": "mms4_fgm_b_gse_srvy_l2",
+                                    "load_by_default": true,
+                                    "names": ["BGSE", "B_GSE"],
+                                    "valid_range": [-1e6, 1e6]
+                                }
+                            ],
+                            "time_column": {
+                                "key": "Epoch"
+                            }
+                        }
+                    },
+                    "format": "nasa_cdf"
+                },
+                "mms_trajectory": {
+
+                    "base_url": "$https://cdaweb.gsfc.nasa.gov/pub/data/mms/mms4/fgm/srvy/l2/{YYYY}/{MM}/mms4_fgm_srvy_l2_{YYYY}{MM}{DD}_v([0-9])\\.[0-9]*\\.[0-9]*.cdf",
+                    "versions": {
+                        "05": {
+                            "data_columns": [
+                                {
+                                    "indices": [0, 1, 2],
+                                    "reference_frame": "GSE",
+                                    "key": "mms4_fgm_r_gse_srvy_l2",
+                                    "load_by_default": true,
+                                    "names": ["GSE", "POS"],
+                                    "valid_range": [-1e9, 1e9]
+                                }
+                            ],
+                            "time_column": {
+                                "key": "Epoch_state"
+                            }
+                        }
+                    },
+                    "format": "nasa_cdf"
+                }
+            }
+        }
+    }
+}

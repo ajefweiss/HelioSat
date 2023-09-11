@@ -1,24 +1,22 @@
 # -*- coding: utf-8 -*-
 
-"""zpy_dscovr.py
+"""zpy_cluster4.py
 
 Custom trajectory functions where the trajectory is computed from the given CDF files.
 """
 
 import datetime as dt
-import logging as lg
 from typing import Any, Optional, Sequence, Union
 
 import numpy as np
 
 import heliosat
 from heliosat.routines import transform_reference_frame
-from heliosat.smoothing import smooth_data
 from heliosat.spacecraft import _generate_endpoints
-from heliosat.util import dt_utc_from_ts, get_any, sanitize_dt
+from heliosat.util import get_any, sanitize_dt
 
 
-def dscovr_trajectory(
+def cluster_trajectory(
     self: object,
     dtp: Union[dt.datetime, Sequence[dt.datetime]],
     observer: str = "SUN",
@@ -36,45 +34,22 @@ def dscovr_trajectory(
     if kwargs.pop("as_endpoints", False):
         dtp = _generate_endpoints(dtp, sampling_freq)
 
-    if smoothing:
-        lg.info(
-            "note that smoothing is implemented differently for dscovr trajectories (slower)"
-        )
-
     traj_t, traj_p = self.get(
         dtp,
-        "dscovr_trajectory",
-        return_datetimes=False,
+        "cluster_trajectory",
+        smoothing=smoothing,
+        return_datetimes=True,
+        transform_batch_size=10000,
         cached=kwargs.get("cached", False),
     )
+
     reference_frame = get_any(kwargs, ["reference_frame", "frame"], "J2000")
     return_datetimes = kwargs.pop("return_datetimes", False)
-
-    # dscovr has a quirk where it normally has unevenly spaced data points, this is a dirty fix
-    if 10 * (traj_t[1] - traj_t[0]) < (traj_t[2] - traj_t[1]) and not kwargs.get(
-        "nofix", False
-    ):
-        lg.info(
-            'attempting to "fix" dscovr trajectory data, removing unevely spaced data points (disable nofix=True)'
-        )
-        traj_t = traj_t[::2]
-        traj_p = traj_p[::2]
-
-    if smoothing:
-        traj_t, traj_p = smooth_data(
-            dtp,
-            traj_t,
-            traj_p,
-            smoothing=smoothing,
-            smoothing_scale=kwargs.get("smoothing_scale", 7200),
-        )
-
-    traj_t = dt_utc_from_ts(traj_t)
 
     # convert int array to float
     traj_p = np.array(traj_p, dtype=float)
 
-    if observer == "SUN":
+    if observer.upper() == "SUN":
         traj_p[:, 0] *= -1
         traj_p[:, 1] *= -1
 
@@ -108,4 +83,7 @@ def dscovr_trajectory(
 
 
 # overwrite class functions
-heliosat.DSCOVR.trajectory = dscovr_trajectory
+heliosat.CL1.trajectory = cluster_trajectory
+heliosat.CL2.trajectory = cluster_trajectory
+heliosat.CL3.trajectory = cluster_trajectory
+heliosat.CL4.trajectory = cluster_trajectory

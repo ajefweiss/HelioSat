@@ -267,6 +267,13 @@ class Spacecraft(Body):
 
         force_download = kwargs.get("force_download", False)
         skip_download = kwargs.get("skip_download", False)
+        transform_batch_size = kwargs.get("transform_batch_size", 0)
+        skip_sort = kwargs.get("skip_sort", False)
+
+        if self.__class__.__name__.startswith("CL"):
+            print("fixing cluster ranges")
+            dt_start -= dt.timedelta(days=1)
+            dt_end += dt.timedelta(days=1)
 
         # get necessary files
         files = self._get_files(
@@ -291,6 +298,10 @@ class Spacecraft(Body):
         columns.extend(kwargs.get("extra_columns", []))
         reference_frame = get_any(kwargs, ["reference_frame", "frame"], None)
 
+        if self.__class__.__name__.startswith("CL"):
+            dt_start += dt.timedelta(days=1)
+            dt_end -= dt.timedelta(days=1)
+
         if len(files) > 1:
             with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
                 futures = [
@@ -303,6 +314,8 @@ class Spacecraft(Body):
                         columns,
                         self.kernel_group,
                         reference_frame,
+                        transform_batch_size,
+                        skip_sort,
                     )
                     for file in files
                 ]
@@ -314,7 +327,7 @@ class Spacecraft(Body):
 
             return dtp_r, dk_r
         else:
-            return _read_file(
+            result = _read_file(
                 files[0],
                 dt_start,
                 dt_end,
@@ -322,7 +335,11 @@ class Spacecraft(Body):
                 columns,
                 self.kernel_group,
                 reference_frame,
+                transform_batch_size,
+                skip_sort,
             )
+
+            return result
 
 
 def _generate_endpoints(
