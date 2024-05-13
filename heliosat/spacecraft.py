@@ -84,7 +84,10 @@ class Body(object):
         else:
             raise ValueError('unit "{0!s}" is not supported'.format(units))
 
-        return traj
+        if kwargs.get("return_datetimes", False):
+            return dtp, traj
+        else:
+            return traj
 
 
 class Spacecraft(Body):
@@ -263,7 +266,9 @@ class Spacecraft(Body):
         dt_end = sanitize_dt(dt_end)
 
         if dt_start > dt_end:
-            raise ValueError("starting date must be before final date")
+            raise ValueError(
+                "starting date must be before final date", dt_start, dt_end
+            )
 
         force_download = kwargs.get("force_download", False)
         skip_download = kwargs.get("skip_download", False)

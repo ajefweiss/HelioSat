@@ -25,6 +25,27 @@
                         }
                     },
                     "format": "nasa_cdf"
+                },
+                "solo_mag_l1": {
+                    "alt_keys": ["mag_l1"],
+                    "base_url": "http://soar.esac.esa.int/soar-sl-tap/data?retrieval_type=LAST_PRODUCT&data_item_id=solo_L0_mag-obs-normal_{YYYY}{MM}{DD}&product_type=SCIENCE",
+                    "file_expr": "solo_L2_mag-rtn-normal-1-minute_{YYYY}{MM}{DD}_V(\\d{2}).cdf",
+                    "versions": {
+                        "01": {
+                            "data_columns": [
+                                {
+                                    "key": "B_RTN",
+                                    "load_by_default": true,
+                                    "names": ["BRTN", "B_RTN"],
+                                    "reference_frame": "SOLO_SUN_RTN"
+                                }
+                            ],
+                            "time_column": {
+                                "key": "EPOCH"
+                            }
+                        }
+                    },
+                    "format": "nasa_cdf"
                 }
             }
         }

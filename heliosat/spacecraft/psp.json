@@ -25,6 +25,25 @@
                     },
                     "format": "nasa_cdf"
                 },
+                "psp_fields_l2_hr": {
+                    "base_url": "$https://spdf.gsfc.nasa.gov/pub/data/psp/fields/l2/mag_rtn_4_per_cycle/{YYYY}/psp_fld_l2_mag_rtn_4_sa_per_cyc_{YYYY}{MM}{DD}_v([0-9]{2}).cdf",
+                    "versions": {
+                        "01": {
+                            "data_columns": [
+                                {
+                                    "key": "psp_fld_l2_mag_rtn_4_sa_per_cyc",
+                                    "load_by_default": true,
+                                    "names": ["BRTN", "B_RTN"],
+                                    "reference_frame": "SPP_RTN"
+                                }
+                            ],
+                            "time_column": {
+                                "key": "epoch_mag_rtn_4_sa_per_cyc"
+                            }
+                        }
+                    },
+                    "format": "nasa_cdf"
+                },
                 "psp_spc_l3": {
                     "alt_keys": ["proton"],
                     "base_url": "https://spdf.gsfc.nasa.gov/pub/data/psp/sweap/spc/l3/l3i/{YYYY}/psp_swp_spc_l3i_{YYYY}{MM}{DD}_v([0-9]{2}).cdf",
