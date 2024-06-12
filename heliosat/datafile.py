@@ -451,7 +451,7 @@ def _read_nasa_cdf(
         # TODO: fix hardcoded result
         return dtp_r, [np.zeros((0, 3))]
 
-    dtp_r = cdflib.epochs.CDFepoch.unixtime(epochs, to_np=True)
+    dtp_r = cdflib.epochs.CDFepoch.unixtime(epochs)
 
     dk_r = []
 

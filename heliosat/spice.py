@@ -14,7 +14,7 @@ import spiceypy
 import heliosat
 
 from .spacecraft import Spacecraft
-from .util import fetch_url, load_json, url_basename, url_regex_files, url_regex_resolve
+from .util import fetch_url, load_json, url_basename, url_dirname, url_regex_files, url_regex_resolve
 
 
 class SpiceKernel(object):
@@ -179,7 +179,7 @@ class SpiceKernelManager(object):
             if len(local_files) > 0 and not force_download:
                 for local_file in local_files:
                     resolved_url = os.path.join(
-                        os.path.dirname(url), os.path.basename(local_file)
+                        url_dirname(url), url_basename(local_file)
                     )
 
                     kernel = SpiceKernel(resolved_url, self.data_path)
