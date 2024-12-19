@@ -82,12 +82,8 @@
     },
     "kernels": {
         "psp": [
-            "https://sppgway.jhuapl.edu/MOC/reconstructed_ephemeris/2018/spp_recon_20180812_20181008_v001.bsp",
-            "https://sppgway.jhuapl.edu/MOC/reconstructed_ephemeris/2018/spp_recon_20181008_20190120_v001.bsp",
-            "https://sppgway.jhuapl.edu/MOC/reconstructed_ephemeris/2019/spp_recon_20190120_20190416_v001.bsp",
-            "https://sppgway.jhuapl.edu/MOC/reconstructed_ephemeris/2019/spp_recon_20190416_20190914_v001.bsp",
-            "https://sppgway.jhuapl.edu/MOC/ephemerides//spp_nom_20180812_20250831_v037_RO4.bsp",
-            "https://sppgway.jhuapl.edu/MOC/frame_kernel/spp_dyn_v201.tf"
+            "https://spdf.gsfc.nasa.gov/pub/data/psp/ephemeris/spice/Long_Term_Predicted_Ephemeris/spp_nom_20180812_20250831_v039_RO6.bsp",
+            "https://spdf.gsfc.nasa.gov/pub/data/psp/ephemeris/spice/PSP_Frame_Kernels/spp_dyn_v201.tf"
         ]
     }
 }
