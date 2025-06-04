@@ -5,7 +5,7 @@
             "class_name": "PSP",
             "kernel_group": "psp",
             "keys": {
-                "psp_fields_l2": {
+                "psp_fields_l2_1min": {
                     "alt_keys": ["mag"],
                     "base_url": "$https://spdf.gsfc.nasa.gov/pub/data/psp/fields/l2/mag_rtn_1min/{YYYY}/psp_fld_l2_mag_rtn_1min_{YYYY}{MM}{DD}_v([0-9]{2}).cdf",
                     "versions": {
@@ -20,6 +20,25 @@
                             ],
                             "time_column": {
                                 "key": "epoch_mag_RTN_1min"
+                            }
+                        }
+                    },
+                    "format": "nasa_cdf"
+                },
+                "psp_fields_l2": {
+                    "base_url": "$https://spdf.gsfc.nasa.gov/pub/data/psp/fields/l2/mag_rtn/{YYYY}/psp_fld_l2_mag_rtn_{YYYY}{MM}{DD}_v([0-9]{2}).cdf",
+                    "versions": {
+                        "01": {
+                            "data_columns": [
+                                {
+                                    "key": "psp_fld_l2_mag_rtn",
+                                    "load_by_default": true,
+                                    "names": ["BRTN", "B_RTN"],
+                                    "reference_frame": "SPP_RTN"
+                                }
+                            ],
+                            "time_column": {
+                                "key": "epoch_mag_rtn"
                             }
                         }
                     },

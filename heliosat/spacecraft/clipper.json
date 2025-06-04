@@ -1,0 +1,14 @@
+{
+    "spacecraft": {
+        "clipper": {
+            "body_name": "EUROPA CLIPPER",
+            "class_name": "EUROPACLIPPER",
+            "kernel_group": "clipper"
+        }
+    },
+    "kernels": {
+        "clipper": [
+            "https://naif.jpl.nasa.gov/pub/naif/EUROPACLIPPER/kernels/spk/trj_250215-250614-dco2503101633-MGACU1-FINAL-OD046-v1.bsp"
+        ]
+    }
+}

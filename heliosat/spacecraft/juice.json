@@ -1,0 +1,16 @@
+{
+    "spacecraft": {
+        "juice": {
+            "body_name": "JUICE",
+            "class_name": "Juice",
+            "kernel_group": "juice"
+        }
+    },
+    "kernels": {
+        "juice": [
+            "https://naif.jpl.nasa.gov/pub/naif/JUICE/kernels/spk/juice_cog_000080_230416_250409_v01.bsp",
+            "https://naif.jpl.nasa.gov/pub/naif/JUICE/kernels/sclk/juice_step_250314_v01.tsc",
+            "https://naif.jpl.nasa.gov/pub/naif/JUICE/kernels/spk/juice_crema_5_1_150lb_v01.bsp"
+        ]
+    }
+}
