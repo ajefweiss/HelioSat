@@ -21,11 +21,15 @@ from bs4 import BeautifulSoup
 
 _strptime_formats = [
     "%Y-%m-%d %H:%M:%S.%f",
+    "%Y-%m-%d %H:%M:%S%z",
     "%Y-%m-%d %H:%M:%S",
+    "%Y-%m-%d %H:%M%z",
     "%Y-%m-%d %H:%M",
     "%Y-%m-%dT%H:%M:%S.%f",
     "%Y-%m-%dT%H:%M:%S",
+    "%Y-%m-%dT%H:%M%z",
     "%Y-%m-%dT%H:%M",
+    "%Y-%m-%d%z",
     "%Y-%m-%d",
 ]
 
