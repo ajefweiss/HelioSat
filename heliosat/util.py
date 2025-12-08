@@ -26,6 +26,7 @@ _strptime_formats = [
     "%Y-%m-%d %H:%M%z",
     "%Y-%m-%d %H:%M",
     "%Y-%m-%dT%H:%M:%S.%f",
+    "%d-%m-%YT%H:%M:%S.%f",
     "%Y-%m-%dT%H:%M:%S",
     "%Y-%m-%dT%H:%M%z",
     "%Y-%m-%dT%H:%M",
@@ -158,7 +159,7 @@ def load_json(path: str) -> dict:
 
 
 def sanitize_dt(
-    dtp: Union[str, dt.datetime, Sequence[str], Sequence[dt.datetime]]
+    dtp: Union[str, dt.datetime, Sequence[str], Sequence[dt.datetime]],
 ) -> Union[dt.datetime, Sequence[dt.datetime]]:
     if isinstance(dtp, dt.datetime) and dtp.tzinfo is None:
         return dtp.replace(tzinfo=dt.timezone.utc)

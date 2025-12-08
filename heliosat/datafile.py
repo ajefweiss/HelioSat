@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""datafile.py
-"""
+"""datafile.py"""
 
 import datetime as dt
 import gzip

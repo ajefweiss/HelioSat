@@ -8,6 +8,7 @@ Implements simple smoothing functions. Designed for internal use only.
 import datetime as dt
 import logging as lg
 from typing import Any, Sequence, Tuple
+from scipy.signal import fftconvolve, windows
 
 import numpy as np
 
@@ -40,6 +41,19 @@ def smooth_data(
         _smoothing_gaussian_kernel(
             time_smooth, dtp_r, dk_r, data_smooth, smoothing_scale
         )
+    elif smoothing in ["fftconvolve"]:
+        delta_t = dtp_r[1] - dtp_r[0]
+
+        time_smooth = dtp_r
+        data_smooth = np.zeros((len(dtp_r), dk_r.shape[1]))
+
+        kernel = windows.gaussian(len(dtp_r), smoothing_scale / delta_t)
+        kernel /= np.sum(kernel)
+
+        data_smooth[:, 0] = fftconvolve(dk_r[:, 0], kernel, mode="same")
+        data_smooth[:, 1] = fftconvolve(dk_r[:, 1], kernel, mode="same")
+        data_smooth[:, 2] = fftconvolve(dk_r[:, 2], kernel, mode="same")
+
     elif smoothing in ["linear", "linear_interpolation"]:
         data_smooth = np.array(
             [np.interp(time_smooth, dtp_r, dk_r[:, i]) for i in range(dk_r.shape[1])]
@@ -118,7 +132,7 @@ def _smoothing_gaussian_kernel(
             if np.abs(dtp_r[j] - dtp[i]) < 3 * smoothing_scale and not np.any(
                 np.isnan(dk_r[j])
             ):
-                kernel = np.exp(-((dtp_r[j] - dtp[i]) ** 2) / 2 / smoothing_scale ** 2)
+                kernel = np.exp(-((dtp_r[j] - dtp[i]) ** 2) / 2 / smoothing_scale**2)
 
                 total += kernel
 

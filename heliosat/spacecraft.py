@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""spacecraft.py
-"""
+"""spacecraft.py"""
 
 import concurrent.futures
 import datetime as dt
@@ -308,10 +307,30 @@ class Spacecraft(Body):
             dt_end -= dt.timedelta(days=1)
 
         if len(files) > 1:
-            with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
-                futures = [
-                    executor.submit(
-                        _read_file,
+            try:
+                with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
+                    futures = [
+                        executor.submit(
+                            _read_file,
+                            file,
+                            dt_start,
+                            dt_end,
+                            data_key,
+                            columns,
+                            self.kernel_group,
+                            reference_frame,
+                            transform_batch_size,
+                            skip_sort,
+                        )
+                        for file in files
+                    ]
+
+                result = [_ for _ in [future.result() for future in futures] if _]
+            except AssertionError:
+                logger.info("using single-thread mode")
+
+                result = [
+                    _read_file(
                         file,
                         dt_start,
                         dt_end,
@@ -324,8 +343,6 @@ class Spacecraft(Body):
                     )
                     for file in files
                 ]
-
-            result = [_ for _ in [future.result() for future in futures] if _]
 
             dtp_r = np.concatenate([_[0] for _ in result])
             dk_r = np.concatenate([_[1] for _ in result])
