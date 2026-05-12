@@ -176,7 +176,7 @@ class Spacecraft(Body):
                 logger.info('cache entry "%s" not found', cache_key)
 
         # use dt list as endpoints
-        if kwargs.pop("as_endpoints", False):
+        if kwargs.pop("as_endpoints", False) and smoothing_kwargs["smoothing"]:
             dtp = _generate_endpoints(dtp, sampling_freq)
 
         dtp_r, dk_r = self._get_data(dtp[0], dtp[-1], data_key, **kwargs)

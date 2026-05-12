@@ -6,30 +6,52 @@
             "kernel_group": "stereo",
             "keys": {
                 "sta_impact_l1_mag": {
-                    "alt_keys": ["mag"],
+                    "alt_keys": [
+                        "mag"
+                    ],
                     "base_url": "$https://stereo-ssc.nascom.nasa.gov/data/ins_data/impact/level1/ahead/mag/RTN/{YYYY}/{MM}/STA_L1_MAG_RTN_{YYYY}{MM}{DD}_V([0-9]{2}).cdf",
                     "versions": {
                         "01": {
                             "data_columns": [
                                 {
-                                    "indices": [0, 1, 2],
+                                    "indices": [
+                                        0,
+                                        1,
+                                        2
+                                    ],
                                     "key": "BFIELD",
                                     "load_by_default": true,
-                                    "names": ["BRTN", "B_RTN"],
+                                    "names": [
+                                        "BRTN",
+                                        "B_RTN"
+                                    ],
                                     "reference_frame": "STAHGRTN",
-                                    "valid_range": [-1e3, 1e3]
+                                    "valid_range": [
+                                        -1e3,
+                                        1e3
+                                    ]
                                 },
                                 {
-                                    "indices": [3],
+                                    "indices": [
+                                        3
+                                    ],
                                     "key": "BFIELD",
                                     "load_by_default": false,
-                                    "names": ["BT", "B_T"],
-                                    "valid_range": [-1e3, 1e3]
+                                    "names": [
+                                        "BT",
+                                        "B_T"
+                                    ],
+                                    "valid_range": [
+                                        -1e3,
+                                        1e3
+                                    ]
                                 },
                                 {
                                     "key": "MAGFLAGUC",
                                     "load_by_default": false,
-                                    "names": ["MAGFLAGUC"]
+                                    "names": [
+                                        "MAGFLAGUC"
+                                    ]
                                 }
                             ],
                             "time_column": {
@@ -45,12 +67,22 @@
                         "01": {
                             "data_columns": [
                                 {
-                                    "indices": [0, 1, 2],
+                                    "indices": [
+                                        0,
+                                        1,
+                                        2
+                                    ],
                                     "key": "MAGBField",
                                     "load_by_default": true,
-                                    "names": ["BRTN", "B_RTN"],
+                                    "names": [
+                                        "BRTN",
+                                        "B_RTN"
+                                    ],
                                     "reference_frame": "STAHGRTN",
-                                    "valid_range": [-1e3, 1e3]
+                                    "valid_range": [
+                                        -1e3,
+                                        1e3
+                                    ]
                                 }
                             ],
                             "time_column": {
@@ -61,7 +93,9 @@
                     "format": "nasa_cdf"
                 },
                 "sta_plastic_l2_proton": {
-                    "alt_keys": ["proton"],
+                    "alt_keys": [
+                        "proton"
+                    ],
                     "base_url": "$https://stereo-ssc.nascom.nasa.gov/data/ins_data/plastic/level2/Protons/Derived_from_1D_Maxwellian/ahead/1min/{YYYY}/STA_L2_PLA_1DMax_1min_{YYYY}{MM}{DD}_V([0-9]{2}).cdf",
                     "versions": {
                         "01": {
@@ -69,21 +103,36 @@
                                 {
                                     "key": "proton_number_density",
                                     "load_by_default": true,
-                                    "names": ["density"],
-                                    "valid_range": [-1e6, 1e6]
+                                    "names": [
+                                        "density"
+                                    ],
+                                    "valid_range": [
+                                        -1e6,
+                                        1e6
+                                    ]
                                 },
                                 {
                                     "key": "proton_bulk_speed",
                                     "load_by_default": true,
-                                    "names": ["velocity"],
+                                    "names": [
+                                        "velocity"
+                                    ],
                                     "reference_frame": "SPP_RTN",
-                                    "valid_range": [-1e6, 1e6]
+                                    "valid_range": [
+                                        -1e6,
+                                        1e6
+                                    ]
                                 },
                                 {
                                     "key": "proton_temperature",
                                     "load_by_default": true,
-                                    "names": ["temperature"],
-                                    "valid_range": [-1e6, 1e9]
+                                    "names": [
+                                        "temperature"
+                                    ],
+                                    "valid_range": [
+                                        -1e6,
+                                        1e9
+                                    ]
                                 }
                             ],
                             "time_column": {
