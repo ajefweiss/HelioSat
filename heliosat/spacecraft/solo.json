@@ -31,12 +31,12 @@
                     },
                     "format": "nasa_cdf"
                 },
-                "solo_mag_l1": {
+                "solo_mag_burst": {
                     "alt_keys": [
-                        "mag_l0"
+                        "mag_burst"
                     ],
-                    "base_url": "http://soar.esac.esa.int/soar-sl-tap/data?retrieval_type=LAST_PRODUCT&data_item_id=solo_L0_mag-obs-normal_{YYYY}{MM}{DD}&product_type=SCIENCE",
-                    "file_expr": "solo_L0_mag-obs-normal_{YYYY}{MM}{DD}_V(\\d{2}).cdf",
+                    "base_url": "http://soar.esac.esa.int/soar-sl-tap/data?retrieval_type=LAST_PRODUCT&data_item_id=solo_L2_mag-rtn-burst_{YYYY}{MM}{DD}&product_type=SCIENCE",
+                    "file_expr": "solo_L2_mag-rtn-burst_{YYYY}{MM}{DD}_V(\\d{2}).cdf",
                     "versions": {
                         "01": {
                             "data_columns": [
@@ -47,7 +47,7 @@
                                         "BRTN",
                                         "B_RTN"
                                     ],
-                                    "reference_frame": "SOLO_INS_BOOM_OB"
+                                    "reference_frame": "SOLO_SUN_RTN"
                                 }
                             ],
                             "time_column": {
